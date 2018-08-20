@@ -6,3 +6,6 @@ $ ghcjs myReactiveTest.hs
 $ xdg-open myReactiveTest.jsexe/index.html
 ```
 
+# See also
+
+* https://github.com/ExceLint/ExceLint

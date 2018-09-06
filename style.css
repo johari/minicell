@@ -1,0 +1,32 @@
+.label_1 {
+  background-color: purple;
+  border: 1px solid indigo;
+}
+
+.label_2 {
+  background-color: yellow;
+  border: 1px solid indigo;
+}
+
+.label_url {
+  background-color: cyan;
+  border: 1px solid indigo;
+}
+
+.label_time {
+  background-color: pink;
+  border: 1px solid indigo;
+}
+
+body * {
+  font-family: arial;
+  font-size: 14px;
+}
+
+
+table {
+  border-collapse: collapse;
+}
+table td {
+  border: 1px solid grey;
+}

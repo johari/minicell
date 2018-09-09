@@ -3,13 +3,13 @@ port module Main exposing (Msg(..), main, update, view)
 import Browser
 import Graph.DOT as DOT exposing (..)
 import Html exposing (Html, b, br, button, code, div, h1, hr, input, li, ol, strong, text, ul)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, placeholder)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Encode as E
 import List
 import Pinboard as P exposing (..)
-import Platform.Cmd exposing (map)
+import Platform.Cmd exposing (batch, map)
 import Stylize exposing (..)
 
 
@@ -20,6 +20,7 @@ type Msg
     = Increment
     | Decrement
     | NewJSON (Result Http.Error (List Bookmark))
+    | NewRecommendation (Result Http.Error (List Recommendation))
     | URLSearch String
 
 
@@ -27,6 +28,7 @@ type alias Model =
     { counter : Int
     , urls : List Bookmark
     , description_query : String
+    , recommendations : List Recommendation
     }
 
 
@@ -46,8 +48,11 @@ subscriptions model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model 0 [] "graph"
-    , map (\x -> NewJSON x) getBookmarks
+    ( Model 0 [] "writing" []
+    , batch
+        [ map (\x -> NewJSON x) (getBookmarks "writing")
+        , map (\x -> NewRecommendation x) (getRecommendations "writing")
+        ]
     )
 
 
@@ -64,7 +69,25 @@ update msg model =
                 newModel =
                     { model | description_query = s }
             in
-            ( newModel, repaintGraph (output Just (always Nothing) (dressUp newModel)) )
+            ( newModel
+            , batch
+                [ repaintGraph (output Just (always Nothing) (pinboardGraph newModel.urls))
+                , map (\x -> NewJSON x) (getBookmarks newModel.description_query)
+                , map (\x -> NewRecommendation x) (getRecommendations newModel.description_query)
+                ]
+            )
+
+        NewRecommendation result ->
+            case result of
+                Ok ls ->
+                    let
+                        newModel =
+                            { model | recommendations = ls }
+                    in
+                    ( newModel, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
 
         NewJSON result ->
             case result of
@@ -73,7 +96,7 @@ update msg model =
                         newModel =
                             { model | urls = ls }
                     in
-                    ( newModel, repaintGraph (output Just (always Nothing) (dressUp newModel)) )
+                    ( newModel, repaintGraph (output Just (always Nothing) (pinboardGraph newModel.urls)) )
 
                 Err _ ->
                     ( { model | urls = [] }, Cmd.none )
@@ -85,7 +108,10 @@ view model =
         , div [] [ text (String.fromInt model.counter) ]
         , button [ onClick Increment ] [ text "+" ]
         , div [] [ text "this is a test2" ]
-        , input [ onInput URLSearch ] []
+        , input [ onInput URLSearch, placeholder model.description_query ] []
+        , br [] []
+        , viewRecommendationsText model.recommendations
+        , br [] []
         , br [] []
         , div [] [ viewBookmarkTable model.urls model.description_query ]
         , br [] []

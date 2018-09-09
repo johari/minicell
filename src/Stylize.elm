@@ -1,4 +1,4 @@
-module Stylize exposing (stylizeHostname, vgrep, vgrepRender)
+module Stylize exposing (extractHostName, stylizeHostname, vgrep, vgrepRender)
 
 import Html exposing (Html, b, br, button, code, div, h1, hr, input, li, ol, strong, text, ul)
 import Html.Attributes exposing (class)

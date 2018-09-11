@@ -3,11 +3,13 @@ port module Main exposing (Msg(..), main, update, view)
 import Browser
 import Graph.DOT as DOT exposing (..)
 import Html exposing (Html, b, br, button, code, div, h1, hr, input, li, ol, strong, text, ul)
-import Html.Attributes exposing (class, placeholder)
+import Html.Attributes exposing (class, href, placeholder)
 import Html.Events exposing (onClick, onInput)
 import Http
+import Json.Decode as D
 import Json.Encode as E
 import List
+import List.Extra exposing (intercalate)
 import Pinboard as P exposing (..)
 import Platform.Cmd exposing (batch, map)
 import Stylize exposing (..)
@@ -134,3 +136,37 @@ view model =
             ]
         , code [] [ text (output Just (always Nothing) (dressUp model)) ]
         ]
+
+
+type alias Recommendation =
+    { other_tag : String
+    , correlation : Float
+    }
+
+
+decoderRecommendation : D.Decoder Recommendation
+decoderRecommendation =
+    D.map2 Recommendation
+        (D.field "other_tag" D.string)
+        (D.field "score" D.float)
+
+
+getRecommendations : String -> Cmd (Result Http.Error (List Recommendation))
+getRecommendations query =
+    Http.send (\x -> x) (Http.get ("http://localhost:4567/correlate/tag/" ++ query) (D.list decoderRecommendation))
+
+
+viewRecommendationsText rs =
+    case rs of
+        [] ->
+            Html.span [] [ text "no recommendations" ]
+
+        _ ->
+            Html.span []
+                ([ text "See also: " ]
+                    ++ (List.map (\x -> x.other_tag) rs
+                            |> List.map (\x -> Html.a [ href "#", onClick (URLSearch x) ] [ text x ])
+                            |> List.map (\x -> strong [] [ x, text ", " ])
+                            |> List.take 10
+                       )
+                )

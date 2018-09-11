@@ -1,9 +1,10 @@
-module Pinboard exposing (Bookmark, Recommendation, decoder, dressUp, getBookmarks, getRecommendations, iWantToWearShoes, pinboardGraph, viewBookmarkTable, viewRecommendationsText, viewSingleBookmark)
+module Pinboard exposing (Bookmark, decoder, dressUp, getBookmarks, iWantToWearShoes, pinboardGraph, viewBookmarkTable, viewSingleBookmark)
 
 import Dict
 import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
 import Graph.DOT as DOT exposing (..)
 import Html exposing (Html, b, br, button, code, div, h1, hr, input, li, ol, strong, text, ul)
+import Html.Attributes exposing (href)
 import Http
 import Json.Decode as D
 import List exposing (concat, map)
@@ -12,24 +13,6 @@ import Maybe exposing (withDefault)
 import String exposing (join, split)
 import Stylize exposing (..)
 import Tuple exposing (first, second)
-
-
-type alias Recommendation =
-    { other_tag : String
-    , correlation : Float
-    }
-
-
-decoderRecommendation : D.Decoder Recommendation
-decoderRecommendation =
-    D.map2 Recommendation
-        (D.field "other_tag" D.string)
-        (D.field "score" D.float)
-
-
-getRecommendations : String -> Cmd (Result Http.Error (List Recommendation))
-getRecommendations query =
-    Http.send (\x -> x) (Http.get ("http://localhost:4567/correlate/tag/" ++ query) (D.list decoderRecommendation))
 
 
 
@@ -97,23 +80,6 @@ pinboardGraph bookmarks =
     Graph.fromNodesAndEdges allNodes (concat edges |> map (\( x, y ) -> Edge y x ()))
 
 
-viewRecommendationsText rs =
-    case rs of
-        [] ->
-            Html.span [] [ text "no recommendations" ]
-
-        _ ->
-            Html.span []
-                ([ text "See also: " ]
-                    ++ (List.map (\x -> [ x.other_tag ]) rs
-                            |> intercalate [ ", " ]
-                            |> List.map text
-                            |> List.map (\x -> strong [] [ x ])
-                            |> List.take 10
-                       )
-                )
-
-
 viewBookmarkTable urls description_query =
     Html.table [] (List.map (viewSingleBookmark description_query) urls)
 
@@ -123,9 +89,15 @@ viewSingleBookmark description_query b =
         [ text ""
 
         -- , Html.td [] [ text b.href ]
-        , Html.td [] [ stylizeHostname b.href ]
+        , Html.td []
+            [ Html.a [ href b.href ]
+                [ stylizeHostname b.href
+                ]
+            ]
         , Html.td [] [ vgrep b.description description_query "label_2" ]
-        , Html.td [] [ Html.b [] [ vgrep (join " " b.tags) "tasks" "label_1" ] ]
+        , Html.td []
+            [ Html.b [] [ vgrep (join " " b.tags) "tasks" "label_1" ]
+            ]
 
         -- , Html.td [] [ text (extractHostName b.href) ]
         , Html.td [] [ vgrep b.time "2018-07-" "label_time" ]

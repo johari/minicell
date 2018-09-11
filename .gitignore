@@ -1,3 +1,7 @@
+*~
+*.swp
+*.jsexe/
+elm-stuff/
 dist
 dist-*
 cabal-dev

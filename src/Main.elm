@@ -13,9 +13,13 @@ import List.Extra exposing (intercalate)
 import Pinboard as P exposing (..)
 import Platform.Cmd exposing (batch, map)
 import Stylize exposing (..)
+import Task exposing (perform, succeed)
 
 
 port repaintGraph : String -> Cmd msg
+
+
+port renderPaperOutline : String -> Cmd msg
 
 
 type Msg
@@ -54,6 +58,7 @@ init _ =
     , batch
         [ map (\x -> NewJSON x) (getBookmarks "writing")
         , map (\x -> NewRecommendation x) (getRecommendations "writing")
+        , renderPaperOutline paperOutline
         ]
     )
 
@@ -134,7 +139,7 @@ view model =
                 , strong [] [ text "Declare computation via demonstration (point-and-click)" ]
                 ]
             ]
-        , code [] [ text (output Just (always Nothing) (dressUp model)) ]
+        , code [] [ text (output Just (always Nothing) dressUp) ]
         ]
 
 

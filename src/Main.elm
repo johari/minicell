@@ -1,6 +1,7 @@
 port module Main exposing (Msg(..), main, update, view)
 
 import Browser
+import Examples.Outline exposing (..)
 import Graph.DOT as DOT exposing (..)
 import Html exposing (Html, b, br, button, code, div, h1, hr, input, li, ol, strong, text, ul)
 import Html.Attributes exposing (class, href, placeholder)

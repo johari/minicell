@@ -1,3 +1,6 @@
+svg {
+  max-width: 200%;
+}
 .label_1 {
   background-color: purple;
   border: 1px solid indigo;

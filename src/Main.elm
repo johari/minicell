@@ -12,6 +12,7 @@ import List
 import List.Extra exposing (intercalate)
 import Pinboard as P exposing (..)
 import Platform.Cmd exposing (batch, map)
+import Spreadsheet
 import Stylize exposing (..)
 import Task exposing (perform, succeed)
 
@@ -28,6 +29,7 @@ type Msg
     | NewJSON (Result Http.Error (List Bookmark))
     | NewRecommendation (Result Http.Error (List Recommendation))
     | URLSearch String
+    | SpreadsheetMsg Spreadsheet.Msg
 
 
 type alias Model =
@@ -35,6 +37,7 @@ type alias Model =
     , urls : List Bookmark
     , description_query : String
     , recommendations : List Recommendation
+    , spreadsheet : Spreadsheet.Spreadsheet
     }
 
 
@@ -54,7 +57,7 @@ subscriptions model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model 0 [] "writing" []
+    ( Model 0 [] "writing" [] Spreadsheet.exampleSpreadsheet
     , batch
         [ map (\x -> NewJSON x) (getBookmarks "writing")
         , map (\x -> NewRecommendation x) (getRecommendations "writing")
@@ -65,6 +68,9 @@ init _ =
 
 update msg model =
     case msg of
+        SpreadsheetMsg _ ->
+            ( model, Cmd.none )
+
         Increment ->
             ( { model | counter = model.counter + 1 }, Cmd.none )
 
@@ -111,7 +117,9 @@ update msg model =
 
 view model =
     div []
-        [ button [ onClick Decrement ] [ text "----" ]
+        [ Spreadsheet.view model.spreadsheet |> Html.map SpreadsheetMsg
+        , hr [] []
+        , button [ onClick Decrement ] [ text "----" ]
         , div [] [ text (String.fromInt model.counter) ]
         , button [ onClick Increment ] [ text "+" ]
         , div [] [ text "this is a test2" ]

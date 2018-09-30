@@ -27,17 +27,14 @@ port renderPaperOutline : String -> Cmd msg
 
 
 type Msg
-    = Increment
-    | Decrement
-    | NewJSON (Result Http.Error (List Bookmark))
+    = NewJSON (Result Http.Error (List Bookmark))
     | NewRecommendation (Result Http.Error (List Recommendation))
     | URLSearch String
     | SpreadsheetMsg Spreadsheet.Msg
 
 
 type alias Model =
-    { counter : Int
-    , urls : List Bookmark
+    { urls : List Bookmark
     , description_query : String
     , recommendations : List Recommendation
     , spreadsheet : Spreadsheet.Spreadsheet
@@ -60,7 +57,7 @@ subscriptions model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model 0 [] "writing" [] Spreadsheet.exampleSpreadsheet
+    ( Model [] "writing" [] Spreadsheet.exampleSpreadsheet
     , batch
         [ map (\x -> NewJSON x) (getBookmarks "writing")
         , map (\x -> NewRecommendation x) (getRecommendations "writing")
@@ -73,12 +70,6 @@ update msg model =
     case msg of
         SpreadsheetMsg _ ->
             ( model, Cmd.none )
-
-        Increment ->
-            ( { model | counter = model.counter + 1 }, Cmd.none )
-
-        Decrement ->
-            ( { model | counter = model.counter + 1 }, Cmd.none )
 
         URLSearch s ->
             let
@@ -110,7 +101,7 @@ update msg model =
                 Ok ls ->
                     let
                         newModel =
-                            { model | urls = ls }
+                            { model | urls = ls, spreadsheet = bookmarkTableToSpreadsheet ls model.description_query }
                     in
                     ( newModel, repaintGraph (output Just (always Nothing) (pinboardGraph newModel.urls)) )
 
@@ -119,8 +110,9 @@ update msg model =
 
 
 view model =
-    table []
-        [ tr []
+    table [ id "table-main" ]
+        [ -- this is related to our recommendation engine
+          tr []
             [ td [ attribute "colspan" "2" ]
                 [ text "enter your query: "
                 , input [ onInput URLSearch, placeholder model.description_query ] []
@@ -129,10 +121,17 @@ view model =
                 , viewRecommendationsText model.recommendations
                 ]
             ]
+
+        -- this section pertains to rendering the table and then the d3 visualization
         , tr [ id "tr-sheet-and-visualization" ]
             [ td [ id "td-sheet-1" ] [ subView model ]
             , td [ id "td-stdout-1" ] [ svg [ id "svg-d3", width "300", height "300" ] [] ]
             ]
+
+        -- the following section is where the magic happens:
+        , tr [] [ Spreadsheet.view model.spreadsheet |> Html.map SpreadsheetMsg ]
+
+        -- misc
         , tr [] [ td [ attribute "colspan" "2" ] [ div [ id "svg-container" ] [] ] ]
         ]
 
@@ -144,7 +143,6 @@ subView model =
         --, br [] []
         --, br [] []
         --, hr [] []
-        --, Spreadsheet.view model.spreadsheet |> Html.map SpreadsheetMsg
         ]
 
 

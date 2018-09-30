@@ -1,4 +1,4 @@
-module Pinboard exposing (Bookmark, decoder, getBookmarks, pinboardGraph, viewBookmarkTable, viewSingleBookmark)
+module Pinboard exposing (Bookmark, bookmarkTableToSpreadsheet, bookmarkToSpreadsheetRow, decoder, getBookmarks, pinboardGraph, viewBookmarkTable, viewSingleBookmark)
 
 import Dict
 import Examples.Outline exposing (..)
@@ -11,6 +11,7 @@ import Json.Decode as D
 import List exposing (concat, map)
 import List.Extra exposing (unique, zip)
 import Maybe exposing (withDefault)
+import Spreadsheet exposing (..)
 import String exposing (join, split)
 import Stylize exposing (..)
 import Tuple exposing (first, second)
@@ -90,8 +91,40 @@ tableTopRow el =
         ]
 
 
+
+-- TODO: we need to add the actual columns..
+--       right now this is just to make things work
+
+
 tableLeftColumn el =
     el
+
+
+
+-- The following function creates a Spreadsheet.Model value from the given URLs
+
+
+bookmarkTableToSpreadsheet urls description =
+    Spreadsheet.Spreadsheet
+        (List.map (bookmarkToSpreadsheetRow description) urls)
+        Nothing
+        Spreadsheet.Idle
+
+
+
+-- TODO: Replace the "Nothing"s with proper metadata (see `viewSingleBookmark`)
+
+
+bookmarkToSpreadsheetRow description bookmark =
+    [ ( CellHref bookmark.href, Nothing ) -- A
+    , ( CellString bookmark.description, Nothing ) -- B
+    , ( CellEmpty, Nothing ) -- C
+    , ( CellString bookmark.time, Nothing )
+    ]
+
+
+
+-- viewBookmarkTable and viewSingleBookmark will be depracated soon..
 
 
 viewBookmarkTable urls description_query =

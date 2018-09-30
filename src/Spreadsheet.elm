@@ -1,10 +1,10 @@
-module Spreadsheet exposing (CellValue(..), Formula, Msg, Spreadsheet, exampleSpreadsheet, view)
+module Spreadsheet exposing (CellValue(..), Formula, Msg, PointerState(..), Spreadsheet, exampleSpreadsheet, view)
 
 import Browser
 import Examples.TopoSort exposing (dressUp)
 import Graph exposing (Graph)
-import Html exposing (Html)
-import Html.Attributes exposing (class)
+import Html exposing (..)
+import Html.Attributes exposing (class, href)
 import List
 
 
@@ -17,18 +17,28 @@ type alias CellAddress =
 
 
 type Msg
-    = SelectCell CellAddress
-    | ModifyCell CellAddress CellValue
-    | SelectRange ( CellAddress, CellAddress )
+    = SelectCell CellAddress -- e.g. Select the first column
+    | ModifyCell CellAddress CellValue -- e.g. Change A2 from "foo" to "bar"
+    | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
 
 
 type CellValue
-    = CellInt Int
-    | CellGraph (Graph String ())
-    | CellString String
-    | CellFormula Formula
-    | CellEmpty
-    | HCellList CellValue (List CellValue)
+    = CellInt Int -- e.g. 42
+    | CellGraph (Graph String ()) -- e.g. G = <V, E>
+    | CellString String -- e.g. "Hello World!"
+    | CellFormula Formula -- e.g. =Dijkstra(G1, "Davis", "Berkeley")
+    | CellEmpty -- e.g. ()
+    | CellHref String -- e.g. http://cs.tufts.edu/~nr/...
+    | HCellList CellValue (List CellValue) -- e.g. Shouldn't this be "HCellList (List CellValue)" instead?
+
+
+
+-- Metadata could contain these things:
+-- Information for:
+--     Highlighting of a cell (also label of the highlights)
+--     Class of a cell
+--     "grep" of cells
+--     ...?
 
 
 type alias CellMeta =
@@ -83,19 +93,54 @@ update msg model =
 viewCell ( cellValue, _ ) =
     case cellValue of
         CellInt num ->
-            Html.span [] [ Html.text (String.fromInt num) ]
+            span [] [ text (String.fromInt num) ]
+
+        CellString str ->
+            span [] [ text str ]
+
+        CellHref str ->
+            a [ href str ] [ text str ]
+
+        CellEmpty ->
+            span [] [ text "<empty>" ]
 
         _ ->
-            Html.span [] [ Html.text "rendering not implemented" ]
+            span [] [ text "rendering not implemented" ]
 
 
-viewRow xs =
-    Html.tr [] (List.map (\x -> Html.td [] [ viewCell x ]) xs)
+viewRows table =
+    let
+        zip =
+            List.map2 Tuple.pair
+    in
+    List.map
+        (\( rowNum, tds ) ->
+            tr [] ([ td [] [ text (String.fromInt rowNum) ] ] ++ tds)
+        )
+        (zip (List.range 1 (List.length table)) (List.map listOfTdForRow table))
+
+
+listOfTdForRow xs =
+    List.map (\x -> td [] [ viewCell x ]) xs
+
+
+topRow =
+    tr [ class "top-row" ]
+        [ td [] []
+        , td [] [ text "A" ]
+        , td [] [ text "B" ]
+        , td [] [ text "C" ]
+        , td [] [ text "D" ]
+        , td [] [ text "E" ]
+        , td [] [ text "F" ]
+        , td [] [ text "G" ]
+        , td [] [ text "H" ]
+        ]
 
 
 view : Model -> Html Msg
 view model =
-    Html.table [ class "spreadsheet" ] (List.map viewRow model.table)
+    table [ class "spreadsheet" ] ([ topRow ] ++ viewRows model.table)
 
 
 main =

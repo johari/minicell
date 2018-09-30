@@ -1,5 +1,5 @@
 svg {
-  max-width: 200%;
+  max-width: 100%;
 }
 .label_1 {
   background-color: purple;
@@ -32,4 +32,25 @@ table {
 }
 table td {
   border: 1px solid grey;
+}
+
+
+table.spreadsheet td {
+  white-space: nowrap;
+  overflow: hidden;         
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+
+.top-row {
+  background-color: gray;
+}
+
+#tr-sheet-and-visualization td {
+  width: 50%;
+  vertical-align: top;
+}
+
+#paper-svg-container {
+  display: none;
 }

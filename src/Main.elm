@@ -3,8 +3,8 @@ port module Main exposing (Msg(..), main, update, view)
 import Browser
 import Examples.Outline exposing (..)
 import Graph.DOT as DOT exposing (..)
-import Html exposing (Html, b, br, button, code, div, h1, hr, input, li, ol, strong, text, ul)
-import Html.Attributes exposing (class, href, placeholder)
+import Html exposing (Html, b, br, button, code, div, h1, hr, input, li, node, ol, strong, table, td, text, tr, ul)
+import Html.Attributes exposing (attribute, class, href, id, placeholder)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as D
@@ -15,6 +15,8 @@ import Pinboard as P exposing (..)
 import Platform.Cmd exposing (batch, map)
 import Spreadsheet
 import Stylize exposing (..)
+import Svg exposing (svg)
+import Svg.Attributes exposing (height, width)
 import Task exposing (perform, succeed)
 
 
@@ -117,20 +119,38 @@ update msg model =
 
 
 view model =
+    table []
+        [ tr []
+            [ td [ attribute "colspan" "2" ]
+                [ text "enter your query: "
+                , input [ onInput URLSearch, placeholder model.description_query ] []
+                , br [] []
+                , br [] []
+                , viewRecommendationsText model.recommendations
+                ]
+            ]
+        , tr [ id "tr-sheet-and-visualization" ]
+            [ td [ id "td-sheet-1" ] [ subView model ]
+            , td [ id "td-stdout-1" ] [ svg [ id "svg-d3", width "300", height "300" ] [] ]
+            ]
+        , tr [] [ td [ attribute "colspan" "2" ] [ div [ id "svg-container" ] [] ] ]
+        ]
+
+
+subView model =
     div []
-        [ Spreadsheet.view model.spreadsheet |> Html.map SpreadsheetMsg
-        , hr [] []
-        , button [ onClick Decrement ] [ text "----" ]
-        , div [] [ text (String.fromInt model.counter) ]
-        , button [ onClick Increment ] [ text "+" ]
-        , div [] [ text "this is a test2" ]
-        , input [ onInput URLSearch, placeholder model.description_query ] []
-        , br [] []
-        , viewRecommendationsText model.recommendations
-        , br [] []
-        , br [] []
-        , div [] [ viewBookmarkTable model.urls model.description_query ]
-        , br [] []
+        [ div [] [ viewBookmarkTable model.urls model.description_query ]
+
+        --, br [] []
+        --, br [] []
+        --, hr [] []
+        --, Spreadsheet.view model.spreadsheet |> Html.map SpreadsheetMsg
+        ]
+
+
+misc =
+    div []
+        [ br [] []
         , h1 [] [ text "TODO" ]
         , ol []
             [ li [] [ text "Navigate to cells (goto the cell with the highest in-degree)" ]
@@ -148,7 +168,8 @@ view model =
                 , strong [] [ text "Declare computation via demonstration (point-and-click)" ]
                 ]
             ]
-        , code [] [ text (output Just (always Nothing) dressUp) ]
+
+        --, code [] [ text (output Just (always Nothing) dressUp) ]
         ]
 
 

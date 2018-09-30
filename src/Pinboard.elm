@@ -1,11 +1,11 @@
-module Pinboard exposing (Bookmark, decoder, dressUp, getBookmarks, iWantToWearShoes, pinboardGraph, viewBookmarkTable, viewSingleBookmark)
+module Pinboard exposing (Bookmark, decoder, getBookmarks, pinboardGraph, viewBookmarkTable, viewSingleBookmark)
 
 import Dict
 import Examples.Outline exposing (..)
 import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
 import Graph.DOT as DOT exposing (..)
 import Html exposing (Html, b, br, button, code, div, h1, hr, input, li, ol, strong, text, ul)
-import Html.Attributes exposing (href)
+import Html.Attributes exposing (class, href)
 import Http
 import Json.Decode as D
 import List exposing (concat, map)
@@ -81,8 +81,25 @@ pinboardGraph bookmarks =
     Graph.fromNodesAndEdges allNodes (concat edges |> map (\( x, y ) -> Edge y x ()))
 
 
+tableTopRow el =
+    Html.tr [ class "top-row" ]
+        [ Html.td [] [ text "A" ]
+        , Html.td [] [ text "B" ]
+        , Html.td [] [ text "C" ]
+        , Html.td [] [ text "D" ]
+        ]
+
+
+tableLeftColumn el =
+    el
+
+
 viewBookmarkTable urls description_query =
-    Html.table [] (List.map (viewSingleBookmark description_query) urls)
+    let
+        el =
+            List.map (viewSingleBookmark description_query) urls
+    in
+    Html.table [ class "spreadsheet" ] ([ tableTopRow el ] ++ tableLeftColumn el)
 
 
 viewSingleBookmark description_query b =
@@ -103,79 +120,3 @@ viewSingleBookmark description_query b =
         -- , Html.td [] [ text (extractHostName b.href) ]
         , Html.td [] [ vgrep b.time "2018-07-" "label_time" ]
         ]
-
-
-dressUp =
-    let
-        nodes =
-            [ Node 0 "Socks"
-            , Node 1 "XYZ"
-            , Node 2 "Pants"
-            , Node 3 "Shoes"
-            , Node 4 "XYZ"
-            , Node 5 "Shirt"
-            , Node 6 "Belt"
-            , Node 7 "Tie"
-            , Node 8 "XYZ"
-            , Node 9 "iohk.io"
-            , Node 10 "iohk"
-            , Node 11 "jobs"
-            ]
-
-        e from to =
-            Edge from to ()
-
-        edges =
-            [ e 0 3 -- socks before shoes
-            , e 1 2 -- undershorts before pants
-            , e 1 3 -- undershorts before shoes
-            , e 2 3 -- pants before shoes
-            , e 2 6 -- pants before belt
-            , e 5 6 -- shirt before belt
-            , e 5 7 -- shirt before tie
-            , e 6 8 -- belt before jacket
-            , e 7 8 -- tie before jacket
-            , e 9 10
-            , e 9 11
-            ]
-    in
-    Graph.fromNodesAndEdges nodes edges
-
-
-
--- iWantToWearShoes : List String
-
-
-iWantToWearShoes model =
-    Graph.guidedDfs
-        Graph.alongIncomingEdges
-        -- which edges to follow
-        (Graph.onDiscovery
-            (\ctx list ->
-                -- append node labels on discovery
-                ctx.node.label :: list
-            )
-        )
-        [ 3
-
-        {- "Shoes" NodeId -}
-        ]
-        -- start with the node labelled "Shoes"
-        []
-        -- accumulate starting with the empty list
-        dressUp
-        -- traverse our dressUp graph from above
-        |> Tuple.first
-
-
-
--- ignores the untraversed rest of the graph
--- iWantToWearShoes == ["Pants", "Undershorts", "Socks", "Shoes"]
--- CAUSE OF DEATH                 .
--- toGiphyUrl : String -> String
--- toGiphyUrl topic =
---     Url.crossOrigin "https://api.giphy.com"
---         [ "v1", "gifs", "random" ]
---         [ Url.string "api_key" "dc6zaTOxFJmzC"
---         , Url.string "tag" topic
---         ]

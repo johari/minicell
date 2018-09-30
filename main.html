@@ -1,0 +1,67 @@
+  <!doctype html>
+
+  <head>
+  <link rel="stylesheet" href="style.css" />
+  <script src="elm.js"></script>
+  <script src="vendor/viz/viz.js"></script>
+  <script src="vendor/viz/full.render.js"></script>
+
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <link rel="stylesheet" href="vendor/d3/styles.css" />
+  <script src="vendor/d3/minicell.js"></script>
+
+  </head>
+
+  <body>
+    <div id="elm"></div>
+
+
+    <script>
+      var viz = new Viz();
+      var vizPaperOutline = new Viz();
+    </script>
+
+    <script>
+      var app = Elm.Main.init({ node: document.getElementById("elm") })
+      var svgContainer = document.getElementById("svg-container");
+      var paperSvgContainer = document.getElementById("paper-svg-container");
+
+
+      app.ports.repaintGraph.subscribe(function (dotOutput, stringOutput) {
+        viz.renderSVGElement(dotOutput)
+        .then(function(element) {
+          svgContainer.innerHTML = "";
+          svgContainer.appendChild(element);
+
+          repaintD3Graph();
+          console.log(stringOutput)
+        })
+        .catch(error => {
+          // Create a new Viz instance (@see Caveats page for more info)
+          viz = new Viz();
+
+          // Possibly display the error
+          console.error(error);
+
+        });
+      })
+
+
+      app.ports.renderPaperOutline.subscribe(function (dotOutput) {
+        vizPaperOutline.renderSVGElement(dotOutput)
+        .then(function(element) {
+          paperSvgContainer.innerHTML = "";
+          paperSvgContainer.appendChild(element);
+        })
+        .catch(error => {
+          // Create a new Viz instance (@see Caveats page for more info)
+          vizPaperOutline = new Viz();
+
+          // Possibly display the error
+          console.error(error);
+        });
+      })
+    </script>
+
+
+  </body>

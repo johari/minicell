@@ -1,11 +1,11 @@
 module Spreadsheet exposing (CellValue(..), Formula, Msg, Spreadsheet, exampleSpreadsheet, view)
 
 import Browser
+import Examples.TopoSort exposing (dressUp)
 import Graph exposing (Graph)
 import Html exposing (Html)
 import Html.Attributes exposing (class)
 import List
-import Pinboard exposing (dressUp)
 
 
 type alias Formula =

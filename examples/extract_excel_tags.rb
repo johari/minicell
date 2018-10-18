@@ -54,7 +54,7 @@ end
 class MyApp < Sinatra::Base
   def initialize
     super()
-    @db = PinboardCorpus.new "~/Downloads/pinboard_export(1)"
+    @db = PinboardCorpus.new "~/Downloads/pinboard_export"
     @tag_to_url = @db.tags_to_url_hash
   end
 

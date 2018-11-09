@@ -1,3 +1,15 @@
+.elm-selected-cell {
+  background-color: purple;
+}
+
+.EdgeDemoMode #magic-button-generalize {
+  border: 5px solid green;
+}
+
+.VertexDemoMode #magic-button-demo-edge {
+  border: 5px solid green;
+}
+
 svg {
   max-width: 100%;
 }

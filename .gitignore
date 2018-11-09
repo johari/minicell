@@ -3,6 +3,7 @@
 *.swp
 *.jsexe/
 elm-stuff/
+buid/
 dist
 dist-*
 cabal-dev

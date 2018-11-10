@@ -112,7 +112,9 @@ currentBuffer db addr = Maybe.withDefault emptyCell (Dict.get addr db) |> .buffe
 
 handleArrowInIdleMode model key =
     let
-        addr = model.cellUnderView |> Maybe.withDefault (0,0)
+        addr = case model.mode of
+                    IdleMode (pos) -> pos
+                    _ -> (0, 0)
         nudgeFunction = case key of
                             "ArrowLeft" -> nudgeLeft
                             "ArrowRight" -> nudgeRight
@@ -138,8 +140,7 @@ update msg model =
             ({ model | mode = mode }, Cmd.none)
 
         EditIntent addr ->
-            ( { model | cellUnderModification = Just addr
-                      , mode = EditMode}
+            ( { model | mode = EditMode addr}
             , fixAutoFocusBug cssKeyForEditCellInput)
 
         UpdateCellBuffer addr newInput ->
@@ -147,15 +148,14 @@ update msg model =
 
 
         Save addr ->
-            -- TODO: updateCellValue must update 
-            ({ model | cellUnderModification = Nothing
-                     , database = updateCellValue model.database addr (currentBuffer model.database addr |> parseBufferToEExpr model)
-                     , mode = IdleMode
+            let (rho, kappa) = addr in
+            ({ model | database = updateCellValue model.database addr (currentBuffer model.database addr |> parseBufferToEExpr model)
+                     , mode = IdleMode (rho+1, kappa)
                      }
             , Cmd.none)
 
         ChangeCandidateCell addr ->
-            ( { model | cellUnderView = Just addr }, Cmd.none)
+            ( { model | mode = IdleMode addr }, Cmd.none)
         
         --MoveViewCell direction -> ...
 
@@ -166,37 +166,29 @@ update msg model =
                     Just key ->
                         case key of
                             "Enter" -> case model.mode of
-                                IdleMode ->
-                                    case model.cellUnderView of
-                                        (Just addr) -> update (EditIntent addr) model
-                                        _ -> (model, Cmd.none)
-                                EditMode ->
-                                    case model.cellUnderModification of
-                                        Just addr -> let (newModel, cmd) = update (Save addr) model in
-                                            ({newModel | cellUnderView = addr |> \(x, y) -> Just (x+1, y) }, cmd)
-                                        _ -> (model, Cmd.none)
+                                IdleMode addr -> update (EditIntent addr) model
+                                EditMode addr -> update (Save addr) model
                                 _ -> (model, Cmd.none)
                             "ArrowRight" -> case model.mode of
-                                IdleMode -> handleArrowInIdleMode model key
+                                IdleMode _ -> handleArrowInIdleMode model key
                                 _ -> (model, Cmd.none)
                             "ArrowLeft" -> case model.mode of
-                                IdleMode -> handleArrowInIdleMode model key
+                                IdleMode _ -> handleArrowInIdleMode model key
                                 _ -> (model, Cmd.none)
 
                             "ArrowDown" -> case model.mode of
-                                IdleMode -> handleArrowInIdleMode model key
+                                IdleMode _ -> handleArrowInIdleMode model key
                                 _ -> (model, Cmd.none)
                             "ArrowUp" -> case model.mode of
-                                IdleMode -> handleArrowInIdleMode model key
+                                IdleMode _ -> handleArrowInIdleMode model key
                                 _ -> (model, Cmd.none)
                             _ -> case model.mode of 
-                                IdleMode ->
+                                IdleMode addr ->
                                     if String.length key == 1 then
-                                        let addr = model.cellUnderView |> Maybe.withDefault (0,0) in
-                                            update (EditIntent addr) { model | database = Dict.update addr (\cell ->
-                                                case cell of
-                                                    Nothing -> Just { emptyCell | buffer = key }
-                                                    Just c -> Just { c | buffer = key }) model.database }
+                                        update (EditIntent addr) { model | database = Dict.update addr (\cell ->
+                                            case cell of
+                                                Nothing -> Just { emptyCell | buffer = key }
+                                                Just c -> Just { c | buffer = key }) model.database }
                                      else
                                         (model, Cmd.none)
                                 _ -> (model, Cmd.none)
@@ -296,12 +288,12 @@ viewCellInEditMode addr res  =
 
 oneCell : CellAddress -> Model -> Html Msg
 oneCell addr model =
-    if model.cellUnderModification == Just addr then
+    if model.mode == EditMode addr then
         td [ ] [ viewCellInEditMode addr (Dict.get addr model.database) ]
     else
         let possiblyVertexDemo = if model.mode == VertexDemoMode then [onClick (CollectVertexDemo addr)] else [] in
             td ([ onDoubleClick (EditIntent addr)
-                , class (if model.cellUnderView == Just addr then "elm-selected-cell" else "")
+                , class (if model.mode == IdleMode addr then "elm-selected-cell" else "")
                 ]
                 ++ possiblyVertexDemo) [ viewCell model (Dict.get addr model.database) ]
 
@@ -340,7 +332,7 @@ view model =
     span [ class (Debug.toString model.mode) ] ([ span [] []
              , button [ id "magic-button-demo-vertex", onClick (SwitchToMode VertexDemoMode) ] [ text "demonstrate vertices" ]
              , button [ id "magic-button-demo-edge", onClick (SwitchToMode EdgeDemoMode) ] [ text "demonstrate edges" ]
-             , button [ id "magic-button-generalize", onClick (SwitchToMode IdleMode) ] [ text "generalize" ]
+             , button [ id "magic-button-generalize", onClick (IdleMode (0, 0) |> SwitchToMode) ] [ text "generalize" ]
              , table [ class "spreadsheet" ] ([ topRow ] ++ viewRows model)
              , hr [] []
              ] ++ (debugView model))

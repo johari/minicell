@@ -44,19 +44,19 @@ intCell i = { emptyCell | value = EILit i }
 graphCell g = { emptyCell | value = EGraph dressUp }
 formulaCell formula args = { emptyCell | value = EApp formula args }
 
-emptySpreadsheet = Spreadsheet (Dict.fromList []) (IdleMode) (Nothing) (Just (0,0)) [] [] (millisToPosix 0)
+emptySpreadsheet = Spreadsheet (Dict.fromList []) (IdleMode (0, 0)) [] [] (millisToPosix 0)
 
 type Mode
-    = IdleMode
-    | EditMode
+    = IdleMode CellAddress
+    | EditMode CellAddress
     | VertexDemoMode
     | EdgeDemoMode
 
 
 -- is this necessary?
 toString a = case a of
-    IdleMode -> "IdleMode"
-    EditMode -> "EditMode"
+    IdleMode addr -> "IdleMode " ++ (Debug.toString addr)
+    EditMode addr -> "EditMode" ++ (Debug.toString addr)
     VertexDemoMode -> "Vertex Demonstration Mode"
     EdgeDemoMode -> "Edge Demonstration Mode"
     --_        -> "Some other mode"
@@ -68,8 +68,6 @@ type alias Spreadsheet =
     { database : Database
     --, selectionRange : Maybe ( CellAddress, CellAddress )
     , mode : Mode
-    , cellUnderModification : Maybe CellAddress
-    , cellUnderView : Maybe CellAddress
     , demoVertices : List CellAddress
     , demoEdges : List (CellAddress, CellAddress)
     , currentTime : Posix

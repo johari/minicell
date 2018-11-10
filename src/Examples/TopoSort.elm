@@ -1,7 +1,11 @@
-module Examples.TopoSort exposing (dressUp)
+module Examples.TopoSort exposing (..)
 
 import Graph exposing (..)
 
+
+emptyGraph = Graph.fromNodesAndEdges [] []
+
+vee = Graph.fromNodesAndEdges [ Node 0 "center", Node 1 "left", Node 2 "right" ] [ Edge 0 1 () , Edge 0 2 () ]
 
 dressUp =
     let

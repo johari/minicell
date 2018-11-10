@@ -1,6 +1,7 @@
   <!doctype html>
 
   <head>
+  <meta charset="utf-8">
   <link rel="stylesheet" href="style.css" />
   <script src="spreadsheet.js"></script>
 
@@ -18,7 +19,6 @@
         }
       }, false)
 
-      document.body.overfl
       app.ports.fixAutoFocusBug.subscribe(function(elem_id) {
         setTimeout(function() {
           document.getElementById(elem_id).focus()

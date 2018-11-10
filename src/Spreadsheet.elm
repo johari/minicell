@@ -2,14 +2,21 @@ port module Spreadsheet exposing (..)
 
 import Debug
 import Browser
-import Examples.TopoSort exposing (dressUp)
-import Graph exposing (Graph, nodes)
 import Html exposing (..)
 import Html.Events exposing (onClick, onDoubleClick, onInput, onBlur, onMouseOver, keyCode, on)
 import Html.Attributes exposing (id, class, href, value, autofocus)
 import List
 import Dict
 import Result
+
+import Time
+
+import Spreadsheet.Interpreter.Parser exposing (..)
+import Spreadsheet.Types exposing (..)
+
+import Examples.TopoSort exposing (dressUp)
+
+import Graph exposing (Graph, nodes)
 
 import Json.Decode as Json
 import Json.Encode as E
@@ -25,15 +32,10 @@ type DemonstrationBrush
     | EdgeBrush
     | EdgeAttributeBrush
 
-type alias Formula =
-    String
-
-type alias CellAddress =
-    ( Int, Int )
-
 type Msg
     = ModifyCell CellAddress CellValue -- e.g. Change A2 from "foo" to "bar"
     | EditIntent CellAddress
+
     | UpdateCellBuffer CellAddress String
     | Save CellAddress
     | WindowKeyPress E.Value
@@ -43,70 +45,9 @@ type Msg
 
     | SwitchToMode Mode
     | CollectVertexDemo CellAddress
+    | Tick Time.Posix
     -- | SelectCell CellAddress -- e.g. Select the first column
     -- | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
-
-
-type CellValue
-    = CellEmpty -- e.g. ()
-
-    | CellInt Int -- e.g. 42
-    
-    -- <3 <3 <3
-    | CellGraph (Graph String ()) -- e.g. G = <V, E>
-    -- <3 <3 <3
-
-    | CellString String -- e.g. "Hello World!"
-    | CellFormula Formula -- e.g. =Dijkstra(G1, "Davis", "Berkeley")
-    | CellHref String -- e.g. http://cs.tufts.edu/~nr/...
-    | HCellList CellValue (List CellValue) -- e.g. Shouldn't this be "HCellList (List CellValue)" instead?
-
-type alias CellMeta =
-    String
-
-
-type alias Cell =
-    { value : CellValue
-    , buffer : String 
-    -- Each time you edit a cell, you are modifying the "buffer". 
-    -- Once you press enter the buffer will be parsed, and we replace the "value" attribute with
-    -- the result of the parser
-    --
-    -- the logic for the evaluator can be traced in the code that renders the cells to HTML
-    , meta  : Maybe CellMeta
-    }
-
-emptyCell = Cell CellEmpty "" Nothing
-stringCell str = { emptyCell | value = CellString str }
-intCell i = { emptyCell | value = CellInt i }
-graphCell g = { emptyCell | value = CellGraph dressUp }
-
-type Mode
-    = IdleMode
-    | EditMode
-    | VertexDemoMode
-    | EdgeDemoMode
-
--- is this necessary?
-toString a = case a of
-    IdleMode -> "IdleMode"
-    EditMode -> "EditMode"
-    VertexDemoMode -> "Vertex Demonstration Mode"
-    EdgeDemoMode -> "Edge Demonstration Mode"
-    --_        -> "Some other mode"
-
-type alias Database = Dict.Dict (Int, Int) Cell
-
-type alias Spreadsheet =
-    { database : Database
-    --, selectionRange : Maybe ( CellAddress, CellAddress )
-    , mode : Mode
-    , cellUnderModification : Maybe CellAddress
-    , cellUnderView : Maybe CellAddress
-    , demoVertices : List CellAddress
-    , demoEdges : List (CellAddress, CellAddress)
-    }
-
 
 type alias Model =
     Spreadsheet
@@ -114,10 +55,10 @@ type alias Model =
 
 el : List ((Int, Int), Cell)
 
-el = [ ( (0, 0), stringCell "Hello" )
-     , ( (0, 1), stringCell "world!" )
+el = [ ( (0, 0), intCell 1 )
+     , ( (0, 1), intCell 42 )
+     , ( (0, 2), formulaCell (EApp "+" [(ECellRef (0, 1)), (ECellRef (0, 0))]) )
      , ( (1, 0), graphCell dressUp )
-     , ( (1, 1), intCell 42 )
      , ( (3, 3), graphCell dressUp )
      , ( (4, 3), graphCell dressUp )
      , ( (5, 5), stringCell "Hello" )
@@ -127,7 +68,7 @@ el = [ ( (0, 0), stringCell "Hello" )
      ]
 
 exampleSpreadsheet =
-    Spreadsheet (Dict.fromList el) (IdleMode) (Nothing) (Just (0,0)) [] []
+    { emptySpreadsheet | database = Dict.fromList el }
 
 
 init : () -> ( Model, Cmd Msg )
@@ -149,6 +90,7 @@ elmIsWeirdWithMaybe3 newBuffer arg = case arg of
     Just e -> Just { e | buffer = newBuffer }
     Nothing -> Just { emptyCell | buffer = newBuffer }
 
+
 --updateCellMeta : Database -> CellAddress -> CellMeta -> Database
 --updateCellMeta model addr newMeta = Dict.update addr (elmIsWeirdWithMaybe newMeta) model
 
@@ -157,6 +99,7 @@ updateCellValue model addr newValue = Dict.update addr (elmIsWeirdWithMaybe2 new
 
 updateCellBuffer : Database -> CellAddress -> String -> Database
 updateCellBuffer model addr newValue = Dict.update addr (elmIsWeirdWithMaybe3 newValue) model
+
 
 goto direction addr = let (rho, kappa) = addr in (rho+1, kappa)
 nudgeRight (rho, kappa) = (rho, kappa+1)
@@ -181,9 +124,13 @@ handleArrowInIdleMode model key =
 
                                         
 
-parseBufferToCellValue x = CellString ("I need to learn how to parse " ++ (Debug.toString x))
+parseBufferToCellValue model buffer = buffer |> stringToEExpr |> interpretToCell model
+
 update msg model =
     case msg of
+        Tick t ->
+            ( { model | currentTime = t }, Cmd.none)
+
         CollectVertexDemo addr ->
             ( { model | demoVertices = model.demoVertices ++ [addr] }, Cmd.none)
 
@@ -194,11 +141,15 @@ update msg model =
             ( { model | cellUnderModification = Just addr
                       , mode = EditMode}
             , fixAutoFocusBug cssKeyForEditCellInput)
+
         UpdateCellBuffer addr newInput ->
             ({ model| database = updateCellBuffer model.database addr newInput }, Cmd.none)
+
+
         Save addr ->
+            -- TODO: updateCellValue must update 
             ({ model | cellUnderModification = Nothing
-                     , database = updateCellValue model.database addr (currentBuffer model.database addr |> parseBufferToCellValue)
+                     , database = updateCellValue model.database addr (currentBuffer model.database addr |> parseBufferToCellValue model)
                      , mode = IdleMode
                      }
             , Cmd.none)
@@ -265,7 +216,8 @@ update msg model =
             ( model, Cmd.none )
 
 
-viewCell res =
+viewCell : Spreadsheet -> Maybe Cell -> Html msg
+viewCell model res =
     case res of
         Nothing -> span [] [ text "" ]
         (Just cell) ->
@@ -285,6 +237,9 @@ viewCell res =
                 CellGraph g ->
                     span [] [ text "G = <V, E>", text (g |> nodes |> List.map .id |> Debug.toString) ]
 
+                CellFormula expr ->
+                    let resultOfEvaluation = interpretToCell model (eval model expr) in
+                        viewCell model (Just { cell | value = resultOfEvaluation})
                 v ->
                     span [] [ text "rendering not implemented" ]
 
@@ -343,7 +298,7 @@ oneCell addr model =
             td ([ onDoubleClick (EditIntent addr)
                 , class (if model.cellUnderView == Just addr then "elm-selected-cell" else "")
                 ]
-                ++ possiblyVertexDemo) [ viewCell (Dict.get addr model.database) ]
+                ++ possiblyVertexDemo) [ viewCell model (Dict.get addr model.database) ]
 
 viewRow : Int -> Model -> List (Html Msg)
 viewRow rho model = [ tr []
@@ -400,4 +355,6 @@ main =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model = keyPress WindowKeyPress
+subscriptions model = Sub.batch [ keyPress WindowKeyPress
+                                , Time.every 1000 Tick
+                                ]

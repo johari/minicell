@@ -33,7 +33,7 @@ type DemonstrationBrush
     | EdgeAttributeBrush
 
 type Msg
-    = ModifyCell CellAddress CellValue -- e.g. Change A2 from "foo" to "bar"
+    = ModifyCell CellAddress EExpr -- e.g. Change A2 from "foo" to "bar"
     | EditIntent CellAddress
 
     | UpdateCellBuffer CellAddress String
@@ -57,7 +57,7 @@ el : List ((Int, Int), Cell)
 
 el = [ ( (0, 0), intCell 1 )
      , ( (0, 1), intCell 42 )
-     , ( (0, 2), formulaCell (EApp "+" [(ECellRef (0, 1)), (ECellRef (0, 0))]) )
+     , ( (0, 2), formulaCell "+" [(ECellRef (0, 1)), (ECellRef (0, 0))] )
      , ( (1, 0), graphCell dressUp )
      , ( (3, 3), graphCell dressUp )
      , ( (4, 3), graphCell dressUp )
@@ -94,7 +94,7 @@ elmIsWeirdWithMaybe3 newBuffer arg = case arg of
 --updateCellMeta : Database -> CellAddress -> CellMeta -> Database
 --updateCellMeta model addr newMeta = Dict.update addr (elmIsWeirdWithMaybe newMeta) model
 
-updateCellValue : Database -> CellAddress -> CellValue -> Database
+updateCellValue : Database -> CellAddress -> EExpr -> Database
 updateCellValue model addr newValue = Dict.update addr (elmIsWeirdWithMaybe2 newValue) model
 
 updateCellBuffer : Database -> CellAddress -> String -> Database
@@ -124,7 +124,7 @@ handleArrowInIdleMode model key =
 
                                         
 
-parseBufferToCellValue model buffer = buffer |> stringToEExpr |> interpretToCell model
+parseBufferToEExpr model buffer = buffer |> stringToEExpr
 
 update msg model =
     case msg of
@@ -149,7 +149,7 @@ update msg model =
         Save addr ->
             -- TODO: updateCellValue must update 
             ({ model | cellUnderModification = Nothing
-                     , database = updateCellValue model.database addr (currentBuffer model.database addr |> parseBufferToCellValue model)
+                     , database = updateCellValue model.database addr (currentBuffer model.database addr |> parseBufferToEExpr model)
                      , mode = IdleMode
                      }
             , Cmd.none)
@@ -222,24 +222,29 @@ viewCell model res =
         Nothing -> span [] [ text "" ]
         (Just cell) ->
             case cell.value of
-                CellInt num ->
+                EILit num ->
                     span [] [ text (String.fromInt num) ]
 
-                CellString str ->
+                ESLit str ->
                     span [] [ text str ]
 
-                CellHref str ->
+                EHref str ->
                     a [ href str ] [ text str ]
 
-                CellEmpty ->
+                EBot ->
                     span [] [ text "()" ]
 
-                CellGraph g ->
+                EGraph g ->
                     span [] [ text "G = <V, E>", text (g |> nodes |> List.map .id |> Debug.toString) ]
 
-                CellFormula expr ->
-                    let resultOfEvaluation = interpretToCell model (eval model expr) in
+                EApp f args ->
+                    let resultOfEvaluation = (eval model cell.value) in
                         viewCell model (Just { cell | value = resultOfEvaluation})
+
+                ECellRef addr ->
+                    let resultOfEvaluation = (eval model cell.value) in
+                        viewCell model (Just { cell | value = resultOfEvaluation})
+
                 v ->
                     span [] [ text "rendering not implemented" ]
 

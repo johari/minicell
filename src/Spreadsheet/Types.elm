@@ -8,34 +8,27 @@ import Examples.TopoSort exposing (dressUp)
 -- ^^^^^ This will be removed 
 
 type alias EFunctor = String
-type EExpr = EApp EFunctor (List EExpr) | EILit Int | ESLit String | ECellRef CellAddress | EBot | EGraph (Graph String ())
+type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
+           | EILit Int -- CellInt 
+           | ESLit String --CellString
+           | ECellRef CellAddress 
+           | EBot -- CellEmpty
+           | EGraph (Graph String ()) --CellGraph (<3<3<3)
+           | EError String
+           | EHref String -- CellHref
+           -- Later on, types for sound clips, one frame images, animated images, and videos.
 
 type alias Formula = EExpr
 
 
 type alias CellAddress = ( Int, Int )
 
-
-type CellValue
-    = CellEmpty -- e.g. ()
-
-    | CellInt Int -- e.g. 42
-    
-    -- <3 <3 <3
-    | CellGraph (Graph String ()) -- e.g. G = <V, E>
-    -- <3 <3 <3
-
-    | CellString String -- e.g. "Hello World!"
-    | CellFormula Formula -- e.g. =Dijkstra(G1, "Davis", "Berkeley")
-    | CellHref String -- e.g. http://cs.tufts.edu/~nr/...
-    | HCellList CellValue (List CellValue) -- e.g. Shouldn't this be "HCellList (List CellValue)" instead?
-
 type alias CellMeta =
     String
 
 
 type alias Cell =
-    { value : CellValue
+    { value : EExpr
     , buffer : String 
     -- Each time you edit a cell, you are modifying the "buffer". 
     -- Once you press enter the buffer will be parsed, and we replace the "value" attribute with
@@ -45,11 +38,11 @@ type alias Cell =
     , meta  : Maybe CellMeta
     }
 
-emptyCell = Cell CellEmpty "" Nothing
-stringCell str = { emptyCell | value = CellString str }
-intCell i = { emptyCell | value = CellInt i }
-graphCell g = { emptyCell | value = CellGraph dressUp }
-formulaCell formula = { emptyCell | value = CellFormula formula }
+emptyCell = Cell EBot "" Nothing
+stringCell str = { emptyCell | value = ESLit str }
+intCell i = { emptyCell | value = EILit i }
+graphCell g = { emptyCell | value = EGraph dressUp }
+formulaCell formula args = { emptyCell | value = EApp formula args }
 
 emptySpreadsheet = Spreadsheet (Dict.fromList []) (IdleMode) (Nothing) (Just (0,0)) [] [] (millisToPosix 0)
 

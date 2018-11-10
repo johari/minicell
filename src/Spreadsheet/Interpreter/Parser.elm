@@ -58,24 +58,8 @@ eval model expr = case expr of
                       _ -> ESLit "make sure your expressions evaluate to 2 E(xpression)I(integer)Lit(eral)"
 
                   _ -> ESLit (f ++ " is not implemented")
-  ECellRef addr -> case (Dict.get addr model.database |> withDefault emptyCell).value of
-                    CellGraph g -> EGraph g
-                    CellInt i -> EILit i
-                    CellString s -> ESLit s
-                    CellFormula subexpr -> eval model subexpr
-                    _ -> EBot
+  ECellRef addr -> (Dict.get addr model.database |> withDefault emptyCell).value
   _ -> expr
-
-interpretToCell : Spreadsheet -> Formula -> CellValue
-interpretToCell model expr = case expr of
-  EGraph g -> CellGraph g
-  ESLit s -> CellString s
-  EILit i -> CellInt i
-  --EApp f args -> CellString "pending computation #{f}" -- "λ"
-  EApp f args -> eval model expr |> interpretToCell model
-  ECellRef addr -> CellFormula expr
-  EBot -> CellString "#ERR"
-  --_ -> Debug.log (Debug.toString expr) CellEmpty
 
 stringToEExpr buffer =
   if buffer |> String.startsWith "@" then 

@@ -29,7 +29,8 @@ type alias CellMeta =
 
 type alias Cell =
     { value : EExpr
-    , buffer : String 
+    , buffer : String
+    , addr : CellAddress
     -- Each time you edit a cell, you are modifying the "buffer". 
     -- Once you press enter the buffer will be parsed, and we replace the "value" attribute with
     -- the result of the parser
@@ -38,13 +39,18 @@ type alias Cell =
     , meta  : Maybe CellMeta
     }
 
-emptyCell = Cell EBot "" Nothing
-stringCell str = { emptyCell | value = ESLit str }
-intCell i = { emptyCell | value = EILit i }
-graphCell g = { emptyCell | value = EGraph dressUp }
-formulaCell formula args = { emptyCell | value = EApp formula args }
+emptyGraph = Graph.fromNodesAndEdges [] []
+emptyCell = Cell EBot "" (0, 0) Nothing
+stringCell  addr str = { emptyCell | addr = addr, value = ESLit str }
+intCell     addr i   = { emptyCell | addr = addr, value = EILit i }
+graphCell   addr g   = { emptyCell | addr = addr, value = EGraph emptyGraph }
+formulaCell addr formula args = { emptyCell  | addr = addr, value = EApp formula args }
 
-emptySpreadsheet = Spreadsheet (Dict.fromList []) (IdleMode (0, 0)) [] [] (millisToPosix 0)
+isStringCell cell = case cell.value of
+    ESLit _ -> True
+    _ -> False
+
+emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (millisToPosix 0)
 
 type Mode
     = IdleMode CellAddress
@@ -62,13 +68,14 @@ toString a = case a of
     --_        -> "Some other mode"
 
 
-type alias Database = Dict.Dict CellAddress Cell
+type alias Database = List Cell
 
 type alias Spreadsheet =
     { database : Database
     --, selectionRange : Maybe ( CellAddress, CellAddress )
     , mode : Mode
-    , demoVertices : List CellAddress
-    , demoEdges : List (CellAddress, CellAddress)
+    , demoVertices : TVertexDemo
+    , demoEdges : TEdgeDemo
     , currentTime : Posix
     }
+

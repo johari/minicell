@@ -15,7 +15,8 @@
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
-            "elm-community/graph": "6.0.0"
+            "elm-community/graph": "6.0.0",
+            "elm-community/list-extra": "8.1.0"
         },
         "indirect": {
             "avh4/elm-fifo": "1.0.4",

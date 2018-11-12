@@ -308,8 +308,8 @@ viewCell model res =
                 EBot ->
                     span [] [ text "()" ]
 
-                EGraph g ->
-                    span [] [ text "G = <V, E>", text (g |> nodes |> List.map .id |> Debug.toString) ]
+                ECellGraph g ->
+                    span [] [ text (g |> mapNodes (\cellNode -> cellNode.value |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]
 
                 EApp f args ->
                     let resultOfEvaluation = (eval model cell.value) in

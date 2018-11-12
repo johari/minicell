@@ -2,26 +2,26 @@ module Examples.TopoSort exposing (..)
 
 import Graph exposing (..)
 
+import Spreadsheet.Types exposing (..)
 
-emptyGraph = Graph.fromNodesAndEdges [] []
 
-vee = Graph.fromNodesAndEdges [ Node 0 "center", Node 1 "left", Node 2 "right" ] [ Edge 0 1 () , Edge 0 2 () ]
+vee = Graph.fromNodesAndEdges [ Node 0 (ESLit "center"), Node 1 (ESLit "left"), Node 2 (ESLit "right") ] [ Edge 0 1 () , Edge 0 2 () ]
 
 dressUp =
     let
         nodes =
-            [ Node 0 "Socks"
-            , Node 1 "XYZ"
-            , Node 2 "Pants"
-            , Node 3 "Shoes"
-            , Node 4 "XYZ"
-            , Node 5 "Shirt"
-            , Node 6 "Belt"
-            , Node 7 "Tie"
-            , Node 8 "XYZ"
-            , Node 9 "iohk.io"
-            , Node 10 "iohk"
-            , Node 11 "jobs"
+            [ Node 0     (ESLit "Socks")
+            , Node 1     (ESLit "XYZ")
+            , Node 2     (ESLit "Pants")
+            , Node 3     (ESLit "Shoes")
+            , Node 4     (ESLit "XYZ")
+            , Node 5     (ESLit "Shirt")
+            , Node 6     (ESLit "Belt")
+            , Node 7     (ESLit "Tie")
+            , Node 8     (ESLit "XYZ")
+            , Node 9     (ESLit "excel")
+            , Node 10    (ESLit  "research")
+            , Node 11    (ESLit  "jobs")
             ]
 
         e from to =

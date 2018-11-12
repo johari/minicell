@@ -4,19 +4,55 @@ import Dict
 import Graph exposing (Graph, nodes)
 import Time exposing (Posix, millisToPosix)
 
-import Examples.TopoSort exposing (dressUp)
--- ^^^^^ This will be removed 
+type alias TVertexDemo = List CellAddress
+type alias TEdgeDemo   = List (CellAddress, CellAddress)
 
 type alias EFunctor = String
+
 type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
            | EILit Int -- CellInt 
            | ESLit String --CellString
            | ECellRef CellAddress 
            | EBot -- CellEmpty
-           | EGraph (Graph String ()) --CellGraph (<3<3<3)
+           
+           | ECellGraph (Graph Cell ())
+           -- ^^^ A super fancy type
+           -- that allow you to jump from one cell to another
+           -- if cells are linked with respect to a graph (normally graph inside the cellUnderView)
+
+           | EGraph (Graph String ()) -- Good old "CellGraph" (<3<3<3)
+           | EGraphFromDemo TVertexDemo TEdgeDemo
            | EError String
            | EHref String -- CellHref
-           -- Later on, types for sound clips, one frame images, animated images, and videos.
+
+           -- Later on, types for
+           -- [ ] sound clips,
+           --       [ ] basic values:
+           --             sound of silence (useful for gaps)
+           --             read from file (mp3)
+           --             read from a file (MIDI)
+           --       [ ] basic operations:
+           --             stretching a sound in time
+           --             reverse a sound
+           --             combine 2 sound with each other (back to back)
+           --             combine 2 sound with each other (in parallel)
+           --             play a MIDI using a particular sound font
+           -- [ ] one frame images
+           --       [ ] basic values:
+           --             read from file
+           --       [ ] basic operations:
+           --             whatever "convert" can do (imageMagik)
+           -- [ ] animated images (gif images)
+           --       [ ] basic values:
+           --             read from file (or URL)
+           --       [ ] basic operations
+           --             things Duke mentioned in his system (w.r.t. combining gif images)  
+           -- [ ] and videos
+           --       [ ] basic values
+           --             read from YouTube
+           --             read from DAT
+           --             read from Phone video library
+           --       [ ] basic operations
 
 type alias Formula = EExpr
 

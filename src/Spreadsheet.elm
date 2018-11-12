@@ -290,6 +290,8 @@ update msg model =
             ( model, Cmd.none )
 
 
+-- This is where we get super-detailed about rendering of our widgets
+
 viewCell : Spreadsheet -> Maybe Cell -> Html msg
 viewCell model res =
     case res of
@@ -337,6 +339,9 @@ viewCell model res =
 --listOfTdForRow xs =
 --    List.map (\x -> td [] [ viewCell x ]) xs
 
+
+
+-- It seems like we don't need this one anymore? (see [Keypress Enter])
 onEnter : Msg -> Attribute Msg
 onEnter msg =
     on "keydown" <|
@@ -344,6 +349,7 @@ onEnter msg =
             (always msg)
             (keyCode |> Json.andThen (is_ 13))
 
+-- It seems like we don't need this one anymore? (see [Keypress Down])
 onArrowDown msg =
     on "keydown" <|
             Json.map

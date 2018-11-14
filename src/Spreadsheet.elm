@@ -17,7 +17,7 @@ import Spreadsheet.Interpreter.Parser exposing (..)
 import Spreadsheet.Types exposing (..)
 
 import Examples.TopoSort exposing (dressUp)
-import Spreadsheet.Example exposing (exampleSpreadsheet)
+import Spreadsheet.Example exposing (exampleSpreadsheet, exampleSpreadsheetWithGraph, exampleSpreadsheetAdjacencyListWithGraph)
 
 import Graph exposing (Graph, nodes, mapNodes)
 import Graph.DOT
@@ -58,7 +58,7 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( exampleSpreadsheet
+    ( exampleSpreadsheetAdjacencyListWithGraph
     , Cmd.none
     )
 
@@ -193,7 +193,7 @@ update msg model =
             ( { model | currentTime = t }, Cmd.none)
 
         CollectVertexDemo addr ->
-            ( { model | demoVertices = model.demoVertices ++ [addr] }, Cmd.none)
+            ( { model | demoVertices = model.demoVertices ++ [(EBot, [])] }, Cmd.none) -- FIXME
 
         SwitchToMode mode ->
             ({ model | mode = mode }, Cmd.none)
@@ -309,6 +309,9 @@ viewCell model res =
 
                 EBot ->
                     span [] [ text "()" ]
+
+                ESuperFancyGraph g ->
+                    span [] [ text (g |> mapNodes (\(_, listOfCells) -> List.head listOfCells |> Maybe.withDefault emptyCell |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]
 
                 ECellGraph g ->
                     span [] [ text (g |> mapNodes (\cellNode -> cellNode.value |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]

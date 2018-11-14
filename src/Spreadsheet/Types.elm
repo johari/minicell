@@ -1,11 +1,18 @@
 module Spreadsheet.Types exposing (..)
 
+import Tuple
 import Dict
 import Graph exposing (Graph, nodes)
 import Time exposing (Posix, millisToPosix)
 
-type alias TVertexDemo = List CellAddress
-type alias TEdgeDemo   = List (CellAddress, CellAddress)
+type alias VertexAndPerhapsCells = (EExpr, List Cell)
+type alias EdgeLabel = (Maybe EExpr)
+type alias G = Graph (VertexAndPerhapsCells) EdgeLabel
+
+type alias SuperEdge = (VertexAndPerhapsCells, VertexAndPerhapsCells, EdgeLabel)
+
+type alias TVertexDemo = List VertexAndPerhapsCells
+type alias TEdgeDemo   = List SuperEdge
 
 type alias EFunctor = String
 
@@ -16,6 +23,7 @@ type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
            | EBot -- CellEmpty
            
            | ECellGraph (Graph Cell ())
+           | ESuperFancyGraph G
            -- ^^^ A super fancy type
            -- that allow you to jump from one cell to another
            -- if cells are linked with respect to a graph (normally graph inside the cellUnderView)
@@ -59,12 +67,18 @@ type alias Formula = EExpr
 
 type alias CellAddress = ( Int, Int )
 
+row : CellAddress -> Int
+row = Tuple.first
+
+column : CellAddress -> Int
+column = Tuple.second 
+
 type alias CellMeta =
     String
 
 
 type alias Cell =
-    { value : EExpr
+    { value : Formula
     , buffer : String
     , addr : CellAddress
     -- Each time you edit a cell, you are modifying the "buffer". 

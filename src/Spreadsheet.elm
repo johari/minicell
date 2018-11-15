@@ -50,6 +50,8 @@ type Msg
     | SwitchToMode Mode
     | CollectVertexDemo CellAddress
     | Tick Time.Posix
+
+    | SwitchSpreadsheet Spreadsheet
     -- | SelectCell CellAddress -- e.g. Select the first column
     -- | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
 
@@ -189,6 +191,8 @@ parseBufferToEExpr model buffer = buffer |> stringToEExpr
 
 update msg model =
     case msg of
+        SwitchSpreadsheet db ->
+            ( db, Cmd.none )
         Tick t ->
             ( { model | currentTime = t }, Cmd.none)
 
@@ -449,9 +453,14 @@ topRow =
 view : Model -> Html Msg
 view model =
     span [ class (Debug.toString model.mode) ] ([ span [] []
+             , button [ onClick (SwitchSpreadsheet exampleSpreadsheet) ] [ text "Matrix" ]
+             , button [ onClick (SwitchSpreadsheet exampleSpreadsheetWithGraph) ] [ text "Matrix with Graph" ]
+             , button [ onClick (SwitchSpreadsheet exampleSpreadsheetAdjacencyListWithGraph) ] [ text "Adjacency list with Graph" ]
+             , hr [] []
              , button [ id "magic-button-demo-vertex", onClick (SwitchToMode VertexDemoMode) ] [ text "demonstrate vertices" ]
              , button [ id "magic-button-demo-edge", onClick (SwitchToMode EdgeDemoMode) ] [ text "demonstrate edges" ]
              , button [ id "magic-button-generalize", onClick (IdleMode (0, 0) |> SwitchToMode) ] [ text "generalize" ]
+
              , table [ class "spreadsheet" ] ([ topRow ] ++ viewRows model)
              , hr [] []
              ] ++ (debugView model))

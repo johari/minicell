@@ -52,7 +52,12 @@ kernelVertexWrangling1 demos cell =
 --    sameRowThenEdge x y
 
 databaseToCandidateGraphs : Database -> TVertexDemo -> TEdgeDemo -> List G
-databaseToCandidateGraphs database mode vertexExamples = []
+databaseToCandidateGraphs database vertexDemos edgeDemos =  []
+    --let vertexSet = List.concatMap (kernelVertexWrangling1 []) database
+    --in
+    --    (List.concatMap (kernelEdgeWrangling1 [] vertexSet) database) |> constructFullGraph vertexSet
+
+
     --    -- Let's ignore symmetry and pretend there's only one way for adjacency matrix for now
     --    let vertexSet = List.concatMap (kernelVertexWrangling1 []) database
     --    in

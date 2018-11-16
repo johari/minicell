@@ -5,6 +5,14 @@ import Dict
 import Graph exposing (Graph, nodes)
 import Time exposing (Posix, millisToPosix)
 
+type alias Demonstrations = { vertexDemos : List VertexAndPerhapsCells, edgeDemos : TEdgeDemo }
+type alias Situation = { database : Database, demos : Demonstrations}
+
+emptyDemonstration = { vertexDemos = [], edgeDemos = [] }
+
+type alias Wrangler = (Database -> G)
+type alias Score = Int
+
 type alias VertexAndPerhapsCells = (EExpr, List Cell)
 type alias EdgeLabel = (Maybe EExpr)
 type alias G = Graph (VertexAndPerhapsCells) EdgeLabel

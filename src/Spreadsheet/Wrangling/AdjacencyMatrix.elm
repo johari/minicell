@@ -82,11 +82,14 @@ kernelEdgeWrangling1 _ vertexList cell =
                             Just a  -> [ a ]
                  )
 
-databaseToGraphWithNoEdgeExample : Database -> WranglingMode -> List VertexAndPerhapsCells -> G
-databaseToGraphWithNoEdgeExample database mode vertexExamples = case mode of
-    AdjacencyMatrix ->
-        -- Let's ignore symmetry and pretend there's only one way for adjacency matrix for now
-        let vertexSet = List.concatMap (kernelVertexWrangling1 []) database
-        in
-            (List.concatMap (kernelEdgeWrangling1 [] vertexSet) database) |> constructFullGraph vertexSet
-    _ -> Graph.fromNodesAndEdges [] []
+canonicalMatrixWrangler : Database -> G
+canonicalMatrixWrangler database = matrixWranglerWithVertexExample database []
+
+matrixWranglerWithVertexExample : Database -> List VertexAndPerhapsCells -> G
+matrixWranglerWithVertexExample database vertexExamples =
+    -- FIXME: use vertexExamples!!
+    -- Let's ignore symmetry and pretend there's only one way for adjacency matrix for now
+    --
+    let vertexSet = List.concatMap (kernelVertexWrangling1 []) database
+    in
+        (List.concatMap (kernelEdgeWrangling1 [] vertexSet) database) |> constructFullGraph vertexSet

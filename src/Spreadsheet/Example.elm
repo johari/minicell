@@ -2,11 +2,13 @@ module Spreadsheet.Example exposing (..)
 
 import Spreadsheet.Types exposing (..)
 import Spreadsheet.Wrangling.Types exposing (WranglingMode(..))
-import Spreadsheet.Wrangling.AdjacencyMatrix exposing (databaseToGraphWithNoEdgeExample)
+import Spreadsheet.Wrangling.AdjacencyMatrix as AM
 import Spreadsheet.Wrangling.ListOfVertexTuples as LOVT
+import Spreadsheet.Wrangling.Ranking exposing (..)
 import Examples.TopoSort exposing (dressUp)
 import Dict
-import Graph
+import Graph exposing (nodes, edges)
+import Set
 
 el : List Cell
 
@@ -50,8 +52,16 @@ twitterExample =
 exampleSpreadsheet =
     { emptySpreadsheet | database = theCities }
 
+wranglers database = [
+     (\_ -> (AM.canonicalMatrixWrangler database))
+     ]
+
 exampleSpreadsheetWithGraph =
-     let formula = ((databaseToGraphWithNoEdgeExample exampleSpreadsheet.database AdjacencyMatrix []) |> ESuperFancyGraph)
+     let
+          database = exampleSpreadsheet.database
+          situation = { database = database, demos = emptyDemonstration }
+          bestWrangler = pickBestWithRespectTo situation (wranglers database)
+          formula = (bestWrangler database |> ESuperFancyGraph)
      in
           { exampleSpreadsheet |
                database = exampleSpreadsheet.database ++ [{ emptyCell | value = formula, addr = (10, 0)}]
@@ -67,3 +77,4 @@ exampleSpreadsheetAdjacencyListWithGraph =
           |> ESuperFancyGraph
      in
           { emptySpreadsheet | database = twitterExample ++ [ { emptyCell | value = extractedGraphCell, addr = (10, 0)}]}
+

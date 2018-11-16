@@ -197,11 +197,16 @@ update msg model =
             ( { model | currentTime = t }, Cmd.none)
 
         CollectVertexDemo addr ->
-            case find (\x -> x.addr == addr) model.database of
-                Just cell -> 
-                    ( { model | demoVertices = model.demoVertices ++ [(cell.value, [cell])] }, Cmd.none)
-                Nothing ->
-                    ( model, Cmd.none )
+            if addrInVertexDemo addr model.demoVertices then
+                -- Remove the address from the demo vertices
+                ( { model | demoVertices = removeAddrFromDemoVertices addr model.demoVertices}, Cmd.none )
+            else
+                case find (\x -> x.addr == addr) model.database of
+                    Just cell -> 
+                        ( { model | demoVertices = model.demoVertices ++ [(cell.value, [cell])] }, Cmd.none)
+                    Nothing ->
+                        -- An empty cell cannot be a demonstration!
+                        ( model, Cmd.none )
 
         SwitchToMode mode ->
             ({ model | mode = mode }, Cmd.none)

@@ -29,6 +29,13 @@ addrInVertexDemo addr demoOfVertices =
   |> List.concat
   |> any identity
 
+removeAddrFromDemoVertices : CellAddress -> TVertexDemo -> TVertexDemo
+removeAddrFromDemoVertices addr demoOfVertices = 
+     demoOfVertices
+  |> List.filter
+      (\(_, cells) ->
+        List.map (\x -> x.addr == addr) cells |> any not)
+
 type alias TEdgeDemo   = List SuperEdge
 
 type alias EFunctor = String

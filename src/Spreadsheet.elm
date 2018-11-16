@@ -197,7 +197,11 @@ update msg model =
             ( { model | currentTime = t }, Cmd.none)
 
         CollectVertexDemo addr ->
-            ( { model | demoVertices = model.demoVertices ++ [(EBot, [])] }, Cmd.none) -- FIXME
+            case find (\x -> x.addr == addr) model.database of
+                Just cell -> 
+                    ( { model | demoVertices = model.demoVertices ++ [(cell.value, [cell])] }, Cmd.none)
+                Nothing ->
+                    ( model, Cmd.none )
 
         SwitchToMode mode ->
             ({ model | mode = mode }, Cmd.none)
@@ -407,12 +411,20 @@ computeCellSelectionClass model addr =
                 --        Just _ -> "elm-cell-belongs-to-a-graph"
                 --        Nothing -> ""
                 ""
+        VertexDemoMode ->
+            -- If the passed address is in our demo, we want to distinguish it.
+            if addrInVertexDemo addr model.demoVertices then "elm-cell-part-of-demonstration" else ""
         _ -> ""
 
 oneCell : CellAddress -> Model -> Html Msg
 oneCell addr model =
     if model.mode == EditMode addr then
         td [ ] [ viewCellInEditMode addr (find (\x -> x.addr == addr) model.database) ]
+    else if model.mode == VertexDemoMode then
+        td [ onClick (CollectVertexDemo addr)
+           , class (computeCellSelectionClass model addr)
+           ]
+           [ viewCell model (find (\x -> x.addr == addr) model.database) ]
     else
         let possiblyVertexDemo = if model.mode == VertexDemoMode then [onClick (CollectVertexDemo addr)] else [] in
             td ([ onDoubleClick (EditIntent addr Nothing)

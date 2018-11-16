@@ -4,6 +4,7 @@ import Tuple
 import Dict
 import Graph exposing (Graph, nodes)
 import Time exposing (Posix, millisToPosix)
+import List exposing (any)
 
 type alias Demonstrations = { vertexDemos : List VertexAndPerhapsCells, edgeDemos : TEdgeDemo }
 type alias Situation = { database : Database, demos : Demonstrations}
@@ -20,6 +21,14 @@ type alias G = Graph (VertexAndPerhapsCells) EdgeLabel
 type alias SuperEdge = (VertexAndPerhapsCells, VertexAndPerhapsCells, EdgeLabel)
 
 type alias TVertexDemo = List VertexAndPerhapsCells
+
+addrInVertexDemo : CellAddress -> TVertexDemo -> Bool
+addrInVertexDemo addr demoOfVertices = 
+     demoOfVertices
+  |> List.map (\(_, cells) -> List.map (\x -> x.addr == addr) cells)
+  |> List.concat
+  |> any identity
+
 type alias TEdgeDemo   = List SuperEdge
 
 type alias EFunctor = String

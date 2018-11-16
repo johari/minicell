@@ -1,3 +1,7 @@
+.elm-cell-part-of-demonstration {
+  background-color: pink;
+}
+
 .elm-selected-cell {
   background-color: purple;
 }

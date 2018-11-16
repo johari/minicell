@@ -22,12 +22,14 @@ type alias SuperEdge = (VertexAndPerhapsCells, VertexAndPerhapsCells, EdgeLabel)
 
 type alias TVertexDemo = List VertexAndPerhapsCells
 
-addrInVertexDemo : CellAddress -> TVertexDemo -> Bool
-addrInVertexDemo addr demoOfVertices = 
+
+getCellVertex : CellAddress -> TVertexDemo -> List VertexAndPerhapsCells
+getCellVertex addr demoOfVertices = 
      demoOfVertices
-  |> List.map (\(_, cells) -> List.map (\x -> x.addr == addr) cells)
-  |> List.concat
-  |> any identity
+  |> List.filter (\(_, cells) -> List.map (\x -> x.addr == addr) cells |> any identity)
+
+addrInVertexDemo addr demoOfVertices =
+  (getCellVertex addr demoOfVertices |> List.length) > 0
 
 removeAddrFromDemoVertices : CellAddress -> TVertexDemo -> TVertexDemo
 removeAddrFromDemoVertices addr demoOfVertices = 
@@ -130,7 +132,8 @@ type Mode
     = IdleMode CellAddress
     | EditMode CellAddress
     | VertexDemoMode
-    | EdgeDemoMode
+    | EdgeDemoMode1
+    | EdgeDemoMode2 VertexAndPerhapsCells
 
 
 -- is this necessary?
@@ -138,7 +141,8 @@ toString a = case a of
     IdleMode addr -> "IdleMode " ++ (Debug.toString addr)
     EditMode addr -> "EditMode" ++ (Debug.toString addr)
     VertexDemoMode -> "Vertex Demonstration Mode"
-    EdgeDemoMode -> "Edge Demonstration Mode"
+    EdgeDemoMode1 -> "Edge Demonstration Mode (1/2)"
+    EdgeDemoMode2  cellVertex -> "Edge Demonstration Mode (2/2) " ++ (Debug.toString cellVertex)
     --_        -> "Some other mode"
 
 

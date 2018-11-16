@@ -49,6 +49,10 @@ type Msg
 
     | SwitchToMode Mode
     | CollectVertexDemo CellAddress
+    
+    | CollectEdgeDemo1 CellAddress
+    | CollectEdgeDemo2 VertexAndPerhapsCells CellAddress
+
     | Tick Time.Posix
 
     | SwitchSpreadsheet Spreadsheet
@@ -207,6 +211,30 @@ update msg model =
                     Nothing ->
                         -- An empty cell cannot be a demonstration!
                         ( model, Cmd.none )
+
+        CollectEdgeDemo1 addr ->
+            case getCellVertex addr model.demoVertices of
+                [] -> (model, Cmd.none)
+                -- Switch to mode that collects the (2/2) vertex
+                --(keeping the one that was just shown in its pocket)
+                (cellVertex::_) ->
+                    ( { model | mode = EdgeDemoMode2 cellVertex }, Cmd.none)
+                
+
+        CollectEdgeDemo2 cellVertex1 addr2 ->
+            case getCellVertex addr2 model.demoVertices of
+                (cellVertex2::_) ->
+                    let newSuperEdge = (cellVertex1, cellVertex2, Nothing)
+                        newModel = ( { model | demoEdges = model.demoEdges ++ [ newSuperEdge ]
+                                             , mode = EdgeDemoMode1
+                                     } )
+                    in
+                        -- add edge demonstration (addr1, addr2) into the list of demonstrations
+                        
+                        -- goto the step that collects (1/2 vertex)
+                        (newModel, Cmd.none)
+                [] ->
+                    (model, Cmd.none)
 
         SwitchToMode mode ->
             ({ model | mode = mode }, Cmd.none)
@@ -418,7 +446,11 @@ computeCellSelectionClass model addr =
                 ""
         VertexDemoMode ->
             -- If the passed address is in our demo, we want to distinguish it.
-            if addrInVertexDemo addr model.demoVertices then "elm-cell-part-of-demonstration" else ""
+            if addrInVertexDemo addr model.demoVertices then "elm-cell-part-of-primary-demonstration" else ""
+        EdgeDemoMode1 -> 
+            if addrInVertexDemo addr model.demoVertices then "elm-cell-part-of-secondary-demonstration" else ""
+        EdgeDemoMode2 cellVertex -> 
+            if addrInVertexDemo addr model.demoVertices || addrInVertexDemo addr [ cellVertex ] then "elm-cell-part-of-secondary-demonstration" else ""
         _ -> ""
 
 oneCell : CellAddress -> Model -> Html Msg
@@ -430,12 +462,27 @@ oneCell addr model =
            , class (computeCellSelectionClass model addr)
            ]
            [ viewCell model (find (\x -> x.addr == addr) model.database) ]
+    else if model.mode == EdgeDemoMode1 then
+        td [ onClick (CollectEdgeDemo1 addr)
+           , class (computeCellSelectionClass model addr)
+           ]
+           [ viewCell model (find (\x -> x.addr == addr) model.database) ]
     else
-        let possiblyVertexDemo = if model.mode == VertexDemoMode then [onClick (CollectVertexDemo addr)] else [] in
-            td ([ onDoubleClick (EditIntent addr Nothing)
-                , class (computeCellSelectionClass model addr)
-                ]
-                ++ possiblyVertexDemo) [ viewCell model (find (\x -> x.addr == addr) model.database) ]
+        case model.mode of
+            EdgeDemoMode2 cellVertex ->
+                td [ onClick (CollectEdgeDemo2 cellVertex addr)
+                   , class (computeCellSelectionClass model addr)
+                   ]
+                   [ viewCell model (find (\x -> x.addr == addr) model.database) ]
+            _ ->
+    
+                let possiblyVertexDemo =
+                        if model.mode == VertexDemoMode then [onClick (CollectVertexDemo addr)] else []
+                    in
+                        td ([ onDoubleClick (EditIntent addr Nothing)
+                            , class (computeCellSelectionClass model addr)
+                            ] ++ possiblyVertexDemo)
+                           [ viewCell model (find (\x -> x.addr == addr) model.database) ]
 
 viewRow : Int -> Model -> List (Html Msg)
 viewRow rho model = [ tr []
@@ -474,8 +521,11 @@ view model =
              , button [ onClick (SwitchSpreadsheet exampleSpreadsheetWithGraph) ] [ text "Matrix with Graph" ]
              , button [ onClick (SwitchSpreadsheet exampleSpreadsheetAdjacencyListWithGraph) ] [ text "Adjacency list with Graph" ]
              , hr [] []
-             , button [ id "magic-button-demo-vertex", onClick (SwitchToMode VertexDemoMode) ] [ text "demonstrate vertices" ]
-             , button [ id "magic-button-demo-edge", onClick (SwitchToMode EdgeDemoMode) ] [ text "demonstrate edges" ]
+             , button [ id "magic-button-demo-vertex", onClick (SwitchToMode VertexDemoMode) ]
+                [ text ("demonstrate vertices (" ++ (model.demoVertices |> List.length |> Debug.toString) ++ ")") ]
+             , button [ id "magic-button-demo-edge", onClick (SwitchToMode EdgeDemoMode1) ]
+                --[ text "demonstrate edges" ]
+                [ text ("demonstrate edges (" ++ (model.demoEdges |> List.length |> Debug.toString) ++ ")") ]
              , button [ id "magic-button-generalize", onClick (IdleMode (0, 0) |> SwitchToMode) ] [ text "generalize" ]
 
              , table [ class "spreadsheet" ] ([ topRow ] ++ viewRows model)

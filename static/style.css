@@ -1,5 +1,9 @@
-.elm-cell-part-of-demonstration {
+.elm-cell-part-of-primary-demonstration {
   background-color: pink;
+}
+
+.elm-cell-part-of-secondary-demonstration {
+  background-color: yellow;
 }
 
 .elm-selected-cell {

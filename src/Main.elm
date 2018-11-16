@@ -11,7 +11,7 @@ import Json.Decode as D
 import Json.Encode as E
 import List
 import List.Extra exposing (intercalate)
-import Pinboard as P exposing (..)
+--import Pinboard as P exposing (..)
 import Platform.Cmd exposing (batch, map)
 import Spreadsheet
 import Stylize exposing (..)

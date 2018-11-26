@@ -50,7 +50,8 @@ twitterExample =
      ]
 
 exampleSpreadsheet =
-    { emptySpreadsheet | database = theCities }
+    --{ emptySpreadsheet | database = theCities }
+    { emptySpreadsheet | database = el }
 
 exampleSpreadsheetWithGraph =
      let

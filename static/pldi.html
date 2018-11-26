@@ -5,10 +5,17 @@
   <link rel="stylesheet" href="style.css" />
   <script src="spreadsheet.js"></script>
 
+  <script src="vendor/viz/viz.js"></script>
+  <script src="vendor/viz/full.render.js"></script>
+  <script src="vendor/jquery/jquery-3.3.1.min.js"></script>
+
   </head>
 
   <body>
     <div id="example-graphsheet"></div>
+
+
+    <!-- <svg id="svg-container"></svg> -->
 
     <script>
       var app = Elm.Spreadsheet.init({ node: document.getElementById("example-graphsheet") })
@@ -26,5 +33,50 @@
       })
     </script>
 
+
+    <script>
+      var viz = new Viz();
+      var svgContainer = document.getElementById("svg-container");
+
+      app.ports.graphViz.subscribe(function(dotOutput) {
+        viz.renderSVGElement(dotOutput)
+        .then(function(element) {
+          svgContainer.innerHTML = "";
+          svgContainer.appendChild(element);
+
+          repaintD3Graph();
+        })
+        .catch(error => {
+          // Create a new Viz instance (@see Caveats page for more info)
+          viz = new Viz();
+
+          // Possibly display the error
+          console.error(error);
+
+        });
+      })
+    </script>
+
+    <script>
+      var cache = {}
+      var compileAllGraphviz = function() {
+        var html = $(".vizjs-compile-dot-to-svg")
+        html.each(function(index, elem) {
+          var dotOutput = elem.innerHTML.replace(/\&gt;/g, ">");
+          if(!cache[dotOutput]) {
+            viz.renderSVGElement(dotOutput).then(function(svgElement) {
+              elem.innerHTML = ""
+              cache[dotOutput] = svgElement
+              elem.appendChild(svgElement);
+            })
+          } else {
+            elem.appendChild(cache[dotOutput]);
+          }
+          elem.classList.remove("vizjs-compile-dot-to-svg")
+
+        })
+      }
+      setInterval(compileAllGraphviz, 1000)
+    </script>
 
   </body>

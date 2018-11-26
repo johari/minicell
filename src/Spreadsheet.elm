@@ -378,8 +378,8 @@ viewCell model res =
                     let
                         l1 = Graph.nodes g |> List.length
                         l2 = Graph.edges g |> List.length
-                        textValue = "Graph of size " ++ (fromInt l1) ++ ", with " ++ (fromInt l2) ++ " edges"
-                        textValue2 = 
+                        textValue2 = "Graph of size " ++ (fromInt l1) ++ ", with " ++ (fromInt l2) ++ " edges"
+                        textValue = 
                             (g
                                 |> mapNodes (\(_, listOfCells) -> 
                                     List.head listOfCells
@@ -387,10 +387,10 @@ viewCell model res =
                                         |> Debug.toString)
                                 |> Graph.DOT.output Just (always Nothing))
                     in
-                        span [] [ text textValue ]
+                        span [ class "vizjs-compile-dot-to-svg" ] [ text textValue ]
 
                 ECellGraph g ->
-                    span [] [ text (g |> mapNodes (\cellNode -> cellNode.value |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]
+                    span [ class "vizjs-compile-dot-to-svg" ] [ text (g |> mapNodes (\cellNode -> cellNode.value |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]
 
                 EApp f args ->
                     let resultOfEvaluation = (eval model cell.value) in

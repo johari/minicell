@@ -1,3 +1,73 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.minicell-version {
+   /*vertical-align: sub;*/
+   font-size: 0.7em;
+}
+/*
+#container-app {
+  height: 100%;
+}
+*/
+
+footer {
+  flex-shrink: 0;
+  background-color: lightgoldenrodyellow;
+  padding: 3px;
+
+}
+
+footer table {
+  width: 100%;
+}
+
+footer {
+  font-family: monospace;
+}
+
+#container-demo-buttons {
+  background: green;
+  padding: 10px;
+}
+
+#container-minicell-logo img {
+  height: 30px;
+  padding: 10px;
+  vertical-align: middle;
+}
+
+#container-minicell-logo {
+  background: lightgray;
+  font-family: "Lucida Console", Monaco, monospace;
+}
+
+
+#container-spreadsheet {
+  padding: 10px;
+}
+
+#container-examples {
+  background-color: #C4ACE6;
+}
+
+body #container-content {
+  display: flex;
+  min-height: 90vh;
+  flex-direction: column;
+}
+
+#container-main {
+  flex: 1;
+}
+
+.elm-selected-column {
+  background-color: darkgrey;
+}
+
 .elm-cell-part-of-primary-demonstration {
   background-color: pink;
 }
@@ -41,11 +111,10 @@ svg {
   border: 1px solid indigo;
 }
 
-body * {
+table.spreadsheet * {
   font-family: arial;
   font-size: 14px;
 }
-
 
 table {
   border-collapse: collapse;

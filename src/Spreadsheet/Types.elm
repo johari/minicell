@@ -134,16 +134,18 @@ type Mode
     | VertexDemoMode
     | EdgeDemoMode1
     | EdgeDemoMode2 VertexAndPerhapsCells
+    | RegisterFlushMode Formula
 
 
--- is this necessary?
-toString a = case a of
-    IdleMode addr -> "IdleMode " ++ (Debug.toString addr)
-    EditMode addr -> "EditMode" ++ (Debug.toString addr)
-    VertexDemoMode -> "Vertex Demonstration Mode"
-    EdgeDemoMode1 -> "Edge Demonstration Mode (1/2)"
-    EdgeDemoMode2  cellVertex -> "Edge Demonstration Mode (2/2) " ++ (Debug.toString cellVertex)
-    --_        -> "Some other mode"
+---- is this necessary?
+--toString a = case a of
+--    IdleMode addr -> "IdleMode " ++ (Debug.toString addr)
+--    EditMode addr -> "EditMode" ++ (Debug.toString addr)
+--    VertexDemoMode -> "Vertex Demonstration Mode"
+--    EdgeDemoMode1 -> "Edge Demonstration Mode (1/2)"
+--    EdgeDemoMode2  cellVertex -> "Edge Demonstration Mode (2/2) " ++ (Debug.toString cellVertex)
+--    RegisterFlushMode _ -> "Buffer flush mode"
+--    --_        -> "Some other mode"
 
 
 type alias Database = List Cell

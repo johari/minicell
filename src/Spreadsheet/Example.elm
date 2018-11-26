@@ -52,15 +52,11 @@ twitterExample =
 exampleSpreadsheet =
     { emptySpreadsheet | database = theCities }
 
-wranglers database = [
-     (\_ -> (AM.canonicalMatrixWrangler database))
-     ]
-
 exampleSpreadsheetWithGraph =
      let
           database = exampleSpreadsheet.database
           situation = { database = database, demos = emptyDemonstration }
-          bestWrangler = pickBestWithRespectTo situation (wranglers database)
+          bestWrangler = pickBestWithRespectTo situation (AM.wranglers database)
           formula = (bestWrangler database |> ESuperFancyGraph)
      in
           { exampleSpreadsheet |

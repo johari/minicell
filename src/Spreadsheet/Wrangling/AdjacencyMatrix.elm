@@ -8,6 +8,10 @@ import Graph
 import Spreadsheet.Wrangling.Types exposing (..)
 import Spreadsheet.Types exposing (..)
 
+wranglers database = [
+     (\_ -> (canonicalMatrixWrangler database))
+     ]
+
 --[ _ A B ]
 --[ A _ y ]
 --[ B _ _ ]

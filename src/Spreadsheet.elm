@@ -4,12 +4,14 @@ import Debug
 import Browser
 import Html exposing (..)
 import Html.Events exposing (onClick, onDoubleClick, onInput, onBlur, onMouseOver, keyCode, on)
-import Html.Attributes exposing (id, class, href, value, autofocus)
+import Html.Attributes exposing (id, class, href, value, autofocus, src)
 import List
 import Dict
 import Result
 
-import List.Extra exposing (find, updateIf)
+import String exposing (fromInt)
+
+import List.Extra exposing (find, updateIf, elemIndex)
 
 import Time
 
@@ -18,6 +20,8 @@ import Spreadsheet.Types exposing (..)
 
 import Examples.TopoSort exposing (dressUp)
 import Spreadsheet.Example exposing (exampleSpreadsheet, exampleSpreadsheetWithGraph, exampleSpreadsheetAdjacencyListWithGraph)
+
+import Spreadsheet.Wrangling.AdjacencyMatrix as AM
 
 import Graph exposing (Graph, nodes, mapNodes)
 import Graph.DOT
@@ -37,7 +41,7 @@ type DemonstrationBrush
     | EdgeAttributeBrush
 
 type Msg
-    = ModifyCell CellAddress EExpr -- e.g. Change A2 from "foo" to "bar"
+    = FlushRegister CellAddress EExpr -- e.g. Change A2 from "foo" to "bar"
     | EditIntent CellAddress (Maybe String) -- The string captures the initial value to put to buffer
 
     | UpdateCellBuffer CellAddress String
@@ -56,6 +60,8 @@ type Msg
     | Tick Time.Posix
 
     | SwitchSpreadsheet Spreadsheet
+
+    | ExtractGraphFromIncidenceMatrix
     -- | SelectCell CellAddress -- e.g. Select the first column
     -- | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
 
@@ -64,7 +70,7 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( exampleSpreadsheetAdjacencyListWithGraph
+    ( exampleSpreadsheet
     , Cmd.none
     )
 
@@ -91,7 +97,10 @@ elmIsWeirdWithMaybe2 newValue e = { e | value = newValue }
 --updateCellMeta model addr newMeta = Dict.update addr (elmIsWeirdWithMaybe newMeta) model
 
 updateCellValue : Database -> CellAddress -> EExpr -> Database
-updateCellValue model addr newValue = updateIf (\x -> x.addr == addr) (elmIsWeirdWithMaybe2 newValue) model
+updateCellValue database addr newValue = 
+    case find (\x -> x.addr == addr) database of
+        Just cell -> updateIf (\x -> x.addr == addr) (elmIsWeirdWithMaybe2 newValue) database
+        Nothing -> database ++ [{ emptyCell | value = newValue, addr = addr }]
 
 
 -- ▂▃▅▇█▓▒░ [🔥 updateCellBuffer 💀 folklore 🔥] ░▒▓█▇▅▃▂
@@ -195,6 +204,20 @@ parseBufferToEExpr model buffer = buffer |> stringToEExpr
 
 update msg model =
     case msg of
+        FlushRegister addr expr ->
+            ({ model | database = updateCellValue model.database addr expr
+                     , mode = IdleMode addr
+                     }
+            , Cmd.none)
+
+        ExtractGraphFromIncidenceMatrix ->
+            let
+                -- Elm compiler crashed if the following line was present
+                --formula = (AM.canonicalMatrixWrangler model.database) |> ESuperFancyGraph
+                formula = EBot
+            in
+                ( { model | mode = RegisterFlushMode (((AM.canonicalMatrixWrangler model.database) |> ESuperFancyGraph)) }, Cmd.none )
+
         SwitchSpreadsheet db ->
             ( db, Cmd.none )
         Tick t ->
@@ -352,7 +375,19 @@ viewCell model res =
                     span [] [ text "()" ]
 
                 ESuperFancyGraph g ->
-                    span [] [ text (g |> mapNodes (\(_, listOfCells) -> List.head listOfCells |> Maybe.withDefault emptyCell |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]
+                    let
+                        l1 = Graph.nodes g |> List.length
+                        l2 = Graph.edges g |> List.length
+                        textValue = "Graph of size " ++ (fromInt l1) ++ ", with " ++ (fromInt l2) ++ " edges"
+                        textValue2 = 
+                            (g
+                                |> mapNodes (\(_, listOfCells) -> 
+                                    List.head listOfCells
+                                        |> Maybe.withDefault emptyCell
+                                        |> Debug.toString)
+                                |> Graph.DOT.output Just (always Nothing))
+                    in
+                        span [] [ text textValue ]
 
                 ECellGraph g ->
                     span [] [ text (g |> mapNodes (\cellNode -> cellNode.value |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]
@@ -475,14 +510,14 @@ oneCell addr model =
                    ]
                    [ viewCell model (find (\x -> x.addr == addr) model.database) ]
             _ ->
-    
-                let possiblyVertexDemo =
-                        if model.mode == VertexDemoMode then [onClick (CollectVertexDemo addr)] else []
-                    in
-                        td ([ onDoubleClick (EditIntent addr Nothing)
-                            , class (computeCellSelectionClass model addr)
-                            ] ++ possiblyVertexDemo)
-                           [ viewCell model (find (\x -> x.addr == addr) model.database) ]
+                let clickActions =
+                        case model.mode of
+                            RegisterFlushMode expr ->
+                                [ onClick (FlushRegister addr expr) ]
+                            _ -> [ onDoubleClick (EditIntent addr Nothing) ]
+                in
+                    td ([ class (computeCellSelectionClass model addr) ] ++ clickActions)
+                       [ viewCell model (find (\x -> x.addr == addr) model.database) ]
 
 viewRow : Int -> Model -> List (Html Msg)
 viewRow rho model = [ tr []
@@ -494,49 +529,124 @@ viewRow rho model = [ tr []
                         , oneCell (rho, 4) model
                         , oneCell (rho, 5) model
                         , oneCell (rho, 6) model
+                        , oneCell (rho, 7) model
                         ]
                     ]
 
 viewRows : Model -> List (Html Msg)
 viewRows model = List.range 0 10 |> List.map (\i -> (viewRow i model)) |> List.concat
 
-topRow =
+calculateClassForRow rowLabel model = 
+    case model.mode of
+        IdleMode (rho, kappa) ->
+            if elemIndex rowLabel ["A", "B", "C", "D", "E", "F", "G", "H", "I"] == Just kappa then
+                class "elm-selected-column"
+            else
+                class ""
+        _ -> class ""
+
+topRow model =
     tr [ class "top-row" ]
-        [ td [] [ text " " ]
-        , td [] [ text "A" ]
-        , td [] [ text "B" ]
-        , td [] [ text "C" ]
-        , td [] [ text "D" ]
-        , td [] [ text "E" ]
-        , td [] [ text "F" ]
-        , td [] [ text "G" ]
-        , td [] [ text "H" ]
+        [ td [ ] [ text " " ]
+        , td [ calculateClassForRow "A" model ] [ text "A" ]
+        , td [ calculateClassForRow "B" model ] [ text "B" ]
+        , td [ calculateClassForRow "C" model ] [ text "C" ]
+        , td [ calculateClassForRow "D" model ] [ text "D" ]
+        , td [ calculateClassForRow "E" model ] [ text "E" ]
+        , td [ calculateClassForRow "F" model ] [ text "F" ]
+        , td [ calculateClassForRow "G" model ] [ text "G" ]
+        , td [ calculateClassForRow "H" model ] [ text "H" ]
         ]
 
+clippy : Model -> Html Msg
+clippy model = 
+    case model.mode of
+        IdleMode _ ->
+            span [ ] [ text "👁 Try navigating to a new cell by using arrow keys. Press enter or start typing to edit a cell"]
+        EditMode _ ->
+            span [] [ text "Try typing in a formula like (=1+1)"]
+        VertexDemoMode ->
+            span [] [ text "Show me an example of a few nodes, then click on \"Demonstrate Edges\" once you are done. :)"]
+        EdgeDemoMode1 ->
+            let message = case List.length model.demoEdges of
+                            0 -> "Start providing a demonstration of an edge by clicking on a source vertex"
+                            1 -> "Provide more edges, or click _Done_"
+                            _ -> "If you are happy with the provided demonstration, press _generalize_"
+            in
+                span [] [ text message ]
+        EdgeDemoMode2 _ ->
+            span [] [ text "... click on the second vertex to finalize edge demonstration"]
+        RegisterFlushMode _ ->
+            span [] [ text "click on the desired cell to replace its content" ]
+        -- _ -> span [ ] [ text "I'm not trained to assist you in this mode :(" ]
+
+loadExampleButtons =
+    div [ id "container-examples" ] [
+      button [ onClick (SwitchSpreadsheet exampleSpreadsheet) ]
+        [ text "Example 1: Matrix" ]
+    , button [ onClick (SwitchSpreadsheet exampleSpreadsheetWithGraph) ]
+        [ text "Example 2: Matrix with Graph" ]
+    , button [ onClick (SwitchSpreadsheet exampleSpreadsheetAdjacencyListWithGraph) ]
+        [ text "Example 3: Adjacency list with Graph" ]
+    ]
+
+vertexDemoButtons model = div [ id "container-demo-buttons" ] [
+      button [ id "magic-button-demo-vertex", onClick (SwitchToMode VertexDemoMode) ]
+       [ text ("demonstrate vertices (" ++ (model.demoVertices |> List.length |> Debug.toString) ++ ")") ]
+    --, button [ id "magic-button-demo-edge", onClick (SwitchToMode EdgeDemoMode1) ]
+    --   --[ text "demonstrate edges" ]
+    --   [ text ("demonstrate edges (" ++ (model.demoEdges |> List.length |> Debug.toString) ++ ")") ]
+    , button [ id "magic-button-generalize", onClick (IdleMode (0, 0) |> SwitchToMode) ] [ text "generalize" ]
+    ]
+
+graphExtractionButtons model = div [ id "container-demo-buttons" ]
+    [ button [ onClick ExtractGraphFromIncidenceMatrix ] [ text "extract a weighted graph from incidence matrix" ]
+    , button [ ] [ text "extract graph from adjacency list" ]
+    ]
+
+spreadsheetInterface model = 
+    div [ id "container-spreadsheet" ] [
+        table [ class "spreadsheet" ] ([ topRow model ] ++ viewRows model)
+    ]
+
+mainInterface model =
+    span [ id "container-content" ] [
+      span [] []
+    , div [ ] [ loadExampleButtons ]
+    , div [ id "container-minicell-logo" ]
+        [ img [ src "https://nima.wiki//resources/assets/wiki.png" ] []
+        , text "Minicell" 
+        , sub [ class "minicell-version" ] [ text "(Version 0.1.0)" ]
+        ]
+    --, div [ ] [ vertexDemoButtons model ]
+    , div [ ] [ graphExtractionButtons model ]
+    , spreadsheetInterface model
+    ]
+
+footerContent model =
+    table [] [
+        tr [] [
+          td [ id "clippy" ] [ clippy model ] -- Summon Clippy
+        , td [ ] [ text (Debug.toString model.mode) ]
+        ]
+    ]
 
 view : Model -> Html Msg
 view model =
-    span [ class (Debug.toString model.mode) ] ([ span [] []
-             , button [ onClick (SwitchSpreadsheet exampleSpreadsheet) ] [ text "Matrix" ]
-             , button [ onClick (SwitchSpreadsheet exampleSpreadsheetWithGraph) ] [ text "Matrix with Graph" ]
-             , button [ onClick (SwitchSpreadsheet exampleSpreadsheetAdjacencyListWithGraph) ] [ text "Adjacency list with Graph" ]
-             , hr [] []
-             , button [ id "magic-button-demo-vertex", onClick (SwitchToMode VertexDemoMode) ]
-                [ text ("demonstrate vertices (" ++ (model.demoVertices |> List.length |> Debug.toString) ++ ")") ]
-             , button [ id "magic-button-demo-edge", onClick (SwitchToMode EdgeDemoMode1) ]
-                --[ text "demonstrate edges" ]
-                [ text ("demonstrate edges (" ++ (model.demoEdges |> List.length |> Debug.toString) ++ ")") ]
-             , button [ id "magic-button-generalize", onClick (IdleMode (0, 0) |> SwitchToMode) ] [ text "generalize" ]
-
-             , table [ class "spreadsheet" ] ([ topRow ] ++ viewRows model)
-             , hr [] []
-             ] ++ (debugView model))
+    div [ id "container-app" ]
+            ([ mainInterface model
+             ] ++
+             [ footer [] [ footerContent model ] ]
+             --++ (debugView model)
+             )
 
 debugView model =
-    [ text "mode: ", (text (Debug.toString model.mode))
-    , hr [] []
-    , text (Debug.toString model) ]
-
+    [
+        code []
+            [ text "mode: ", (text (Debug.toString model.mode))
+            , hr [] []
+            , text (Debug.toString model) ]
+    ]
 main =
     Browser.element
         { init = init

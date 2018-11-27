@@ -23,3 +23,4 @@ for graph modeling inside spreadsheets.
 * [Calc Intelligence](https://www.microsoft.com/en-us/research/project/calc-intelligence/) from MSR Cambridge
 * [FlashExtract](https://www.youtube.com/watch?v=apTsnpsPEds)
 * [ExceLint](https://github.com/ExceLint/ExceLint)
+* [Meet the inventor of the electronic spreadsheet (2017)](https://www.youtube.com/watch?v=YDvbDiJZpy0)

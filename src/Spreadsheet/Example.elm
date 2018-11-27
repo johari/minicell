@@ -44,6 +44,15 @@ theCities =
      , intCell (5, 6) 5
      ]
 
+legend = 
+    [ stringCell (0, 0) "Datatypes available in the Minicell environment"
+    , stringCell (1, 0) "Number literal", intCell (1, 1) 42
+    , stringCell (2, 0) "String literal", stringCell (2, 1) "Hello world!"
+    , stringCell (3, 0) "Graph", graphCell (3, 1) dressUp
+    -- , stringCell (3, 0) "List", 
+    -- , stringCell (4, 0) "Referencing other cells",
+    ]
+
 twitterExample = 
      [ stringCell (0, 0) "id1", stringCell (0, 1) "tweet1"
      , stringCell (1, 0) "id2", stringCell (1, 1) "tweet2", stringCell (1, 2) "id1"
@@ -52,6 +61,9 @@ twitterExample =
 exampleSpreadsheet =
     --{ emptySpreadsheet | database = theCities }
     { emptySpreadsheet | database = el }
+
+exampleSpreadsheetLegend =
+    { emptySpreadsheet | database = legend }
 
 exampleSpreadsheetWithGraph =
      let

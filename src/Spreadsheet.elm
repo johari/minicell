@@ -19,7 +19,7 @@ import Spreadsheet.Interpreter.Parser exposing (..)
 import Spreadsheet.Types exposing (..)
 
 import Examples.TopoSort exposing (dressUp)
-import Spreadsheet.Example exposing (exampleSpreadsheet, exampleSpreadsheetWithGraph, exampleSpreadsheetAdjacencyListWithGraph)
+import Spreadsheet.Example exposing (..)
 
 import Spreadsheet.Wrangling.AdjacencyMatrix as AM
 
@@ -70,7 +70,7 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( exampleSpreadsheet
+    ( exampleSpreadsheetLegend
     , Cmd.none
     )
 
@@ -581,8 +581,9 @@ clippy model =
         -- _ -> span [ ] [ text "I'm not trained to assist you in this mode :(" ]
 
 loadExampleButtons =
-    div [ id "container-examples" ] [
-      button [ onClick (SwitchSpreadsheet exampleSpreadsheet) ]
+    div [ id "container-examples" ]
+    [ button [ onClick (SwitchSpreadsheet exampleSpreadsheetLegend) ]  [ text "Example 0: Types" ]
+    , button [ onClick (SwitchSpreadsheet exampleSpreadsheet) ]
         [ text "Example 1: Matrix" ]
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheetWithGraph) ]
         [ text "Example 2: Matrix with Graph" ]

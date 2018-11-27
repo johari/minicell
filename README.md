@@ -8,14 +8,14 @@ This project "extends the range of applications that can be tackled with spreads
 Minicell provides first-class support for networks and graphs inside the spreadsheet environment.
 
 It makes it easy for non-programmers to perform sophisticated graph modeling tasks,
-including optimization problems such as shortest path problem or maximum flow.
+including solving optimization problems such as shortest path problem or maximum flow.
 
 It also eliminates typical pre-processing steps that are required to
 reshape tabular data into a graph model.
 
 We believe graph theory is an important mathematical tool,
 and we believe we can make non-programmers more effective in
-important (often critical tasks) by providing a natural support
+important (often critical) tasks by providing a natural and effective support
 for graph modeling inside spreadsheets.
 
 # See also

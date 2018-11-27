@@ -5,8 +5,11 @@ html, body {
 }
 
 .minicell-version {
-   /*vertical-align: sub;*/
+   vertical-align: middle;
+   display: inline-block;
    font-size: 0.7em;
+   /*display: block;*/
+   float: right;
 }
 /*
 #container-app {
@@ -15,8 +18,8 @@ html, body {
 */
 
 footer {
-  flex-shrink: 0;
   background-color: lightgoldenrodyellow;
+  border-top: 5px solid green;
   padding: 3px;
 
 }
@@ -30,7 +33,7 @@ footer {
 }
 
 #container-demo-buttons {
-  background: green;
+  background: #39C75F;
   padding: 10px;
 }
 
@@ -46,93 +49,71 @@ footer {
 }
 
 
+
+
+
+
+#container-examples {
+  /*background-color: #C4ACE6;*/
+  background-color: black;
+}
+
+body #container-box {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#container-content {
+  width: 100%;
+  /*flex-grow: 1;*/
+  overflow-y: hidden;
+  box-sizing: border-box;
+  height: 100%;
+}
+
 #container-spreadsheet {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+#container-panes {
+  height: 100%;
+}
+#container-panes > table {
+  height: 100%;
+  overflow-y: auto;
+}
+
+#container-panes #pane-a {
+  width: 70%;
+  overflow-y: scroll;
+  /*height: 100%;*/
+}
+
+#container-panes #pane-b {
+  width: 30%;
+}
+
+#container-panes #pane-b img {
+  max-width: 80%;
   padding: 10px;
 }
 
-#container-examples {
-  background-color: #C4ACE6;
-}
-
-body #container-content {
-  display: flex;
-  min-height: 90vh;
-  flex-direction: column;
-}
-
-#container-main {
-  flex: 1;
-}
-
-.elm-selected-column {
-  background-color: darkgrey;
-}
-
-.elm-cell-part-of-primary-demonstration {
-  background-color: pink;
-}
-
-.elm-cell-part-of-secondary-demonstration {
-  background-color: yellow;
-}
-
-.elm-selected-cell {
-  background-color: purple;
-}
-
-.EdgeDemoMode #magic-button-generalize {
+#container-panes >  tr > td {
   border: 5px solid green;
-}
+  vertical-align: top;
+  margin: 0;
+  padding: 0;
 
-.VertexDemoMode #magic-button-demo-edge {
-  border: 5px solid green;
-}
-
-svg {
-  max-width: 100%;
-}
-.label_1 {
-  background-color: purple;
-  border: 1px solid indigo;
-}
-
-.label_2 {
-  background-color: yellow;
-  border: 1px solid indigo;
-}
-
-.label_url {
-  background-color: cyan;
-  border: 1px solid indigo;
-}
-
-.label_time {
-  background-color: pink;
-  border: 1px solid indigo;
-}
-
-table.spreadsheet * {
-  font-family: arial;
-  font-size: 14px;
 }
 
 table {
   border-collapse: collapse;
 }
-table td {
+
+#container-spreadsheet td {
   border: 1px solid grey;
-}
-
-
-table.spreadsheet td {
-  /*white-space: nowrap;*/
-  /*overflow: hidden;         */
-  /*text-overflow: ellipsis;*/
-  max-width: 250px;
-}
-
-.top-row {
-  background-color: gray;
 }
 
 #tr-sheet-and-visualization td {

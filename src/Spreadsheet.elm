@@ -534,7 +534,7 @@ viewRow rho model = [ tr []
                     ]
 
 viewRows : Model -> List (Html Msg)
-viewRows model = List.range 0 10 |> List.map (\i -> (viewRow i model)) |> List.concat
+viewRows model = List.range 0 100 |> List.map (\i -> (viewRow i model)) |> List.concat
 
 calculateClassForRow rowLabel model = 
     case model.mode of
@@ -609,32 +609,55 @@ spreadsheetInterface model =
         table [ class "spreadsheet" ] ([ topRow model ] ++ viewRows model)
     ]
 
-mainInterface model =
-    span [ id "container-content" ] [
-      span [] []
-    , div [ ] [ loadExampleButtons ]
+alternativeViewInterface model =
+    img [ src "https://lisathatcher.files.wordpress.com/2012/06/inspired_bei_mondrian_by_manshonyagger-d35kfou.jpg" ] []
+    --table [ id "container-alternative-view" ] [
+    --    tr [] [
+    --        td [] [ text "Hello" ]
+    --    ,   td [] [ text "World!"]
+    --    ]
+    --]
+
+containerHeader model = div [ id "container-header", class "container-row" ] 
+    [ div [ ] [ loadExampleButtons ]
     , div [ id "container-minicell-logo" ]
         [ img [ src "https://nima.wiki//resources/assets/wiki.png" ] []
         , text "Minicell" 
-        , sub [ class "minicell-version" ] [ text "(Version 0.1.0)" ]
+        , span [ class "minicell-version" ] [ text "(Version 0.1.0)" ]
         ]
     --, div [ ] [ vertexDemoButtons model ]
     , div [ ] [ graphExtractionButtons model ]
-    , spreadsheetInterface model
     ]
 
+containerPanes model =
+    div [ id "container-panes" ] [
+        table [ id "container-panes" ] [
+            tr [] [
+                    td [ id "pane-a" ] [ spreadsheetInterface model ]
+                ,   td [ id "pane-b" ] [ alternativeViewInterface model ]
+                ]
+        ]
+    ]
+mainInterface model =
+    div [ id "container-content", class "container-row" ]
+        [ containerPanes model
+        ]
+
 footerContent model =
-    table [] [
-        tr [] [
-          td [ id "clippy" ] [ clippy model ] -- Summon Clippy
-        , td [ ] [ text (Debug.toString model.mode) ]
+    div [ id "container-footer", class "container-row" ] [
+        table [] [
+            tr [] [
+              td [ id "clippy" ] [ clippy model ] -- Summon Clippy
+            , td [ ] [ text (Debug.toString model.mode) ]
+            ]
         ]
     ]
 
 view : Model -> Html Msg
 view model =
-    div [ id "container-app" ]
-            ([ mainInterface model
+    div [ id "container-box" ]
+            ([ containerHeader model
+             , mainInterface model
              ] ++
              [ footer [] [ footerContent model ] ]
              --++ (debugView model)

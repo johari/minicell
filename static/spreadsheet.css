@@ -1,0 +1,30 @@
+table.spreadsheet {
+  width: 100%;
+}
+
+table.spreadsheet tr td:first-child {
+  width: 10px;
+  background-color: lightgray;
+}
+
+table.spreadsheet td {
+  white-space: nowrap;
+  overflow: hidden;         
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+
+
+.top-row {
+  background-color: lightgray;
+}
+
+table.spreadsheet * {
+  font-family: arial;
+  font-size: 14px;
+}
+
+#container-spreadsheet {
+  /*padding: 10px;*/
+}

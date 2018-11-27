@@ -1,0 +1,51 @@
+.elm-selected-column {
+  background-color: darkgrey;
+}
+
+.elm-cell-part-of-primary-demonstration {
+  background-color: grey;
+}
+
+.elm-cell-part-of-secondary-demonstration {
+  background-color: yellow;
+}
+
+.elm-selected-cell {
+  background-color: purple;
+}
+
+.elm-cell-belongs-to-a-graph {
+  background-color: yellow;
+}
+
+
+.EdgeDemoMode #magic-button-generalize {
+  border: 5px solid green;
+}
+
+.VertexDemoMode #magic-button-demo-edge {
+  border: 5px solid green;
+}
+
+svg {
+  max-width: 100%;
+}
+.label_1 {
+  background-color: purple;
+  border: 1px solid indigo;
+}
+
+.label_2 {
+  background-color: yellow;
+  border: 1px solid indigo;
+}
+
+.label_url {
+  background-color: cyan;
+  border: 1px solid indigo;
+}
+
+.label_time {
+  background-color: pink;
+  border: 1px solid indigo;
+}

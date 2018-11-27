@@ -1,6 +1,7 @@
 # Miniceell
 
-<center>![Minicell screenshot](static/screenshot.png?raw=true "Minicell screenshot (2018)")</center>
+
+![Minicell screenshot (2018)](https://github.com/johari/minicell/blob/master/static/screenshot.png)
 
 This project "extends the range of applications that can be tackled with spreadsheets", "without loss to usability and accessibility to non-experts."
 

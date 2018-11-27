@@ -609,8 +609,22 @@ spreadsheetInterface model =
         table [ class "spreadsheet" ] ([ topRow model ] ++ viewRows model)
     ]
 
+mondrian = 
+    let
+        mondrianSrc = "https://lisathatcher.files.wordpress.com/2012/06/inspired_bei_mondrian_by_manshonyagger-d35kfou.jpg"
+    in
+        img [ src mondrianSrc ] []
+
 alternativeViewInterface model =
-    img [ src "https://lisathatcher.files.wordpress.com/2012/06/inspired_bei_mondrian_by_manshonyagger-d35kfou.jpg" ] []
+    case model.mode of
+        IdleMode addr ->
+            case find (\x -> x.addr == addr) model.database of
+                Just cell ->
+                    case cell.value of
+                        EILit num -> text ("Found a number!" ++ (Debug.toString num))
+                        _ -> code [] [ Debug.toString cell |> text ]
+                Nothing -> mondrian
+        _ -> mondrian
     --table [ id "container-alternative-view" ] [
     --    tr [] [
     --        td [] [ text "Hello" ]

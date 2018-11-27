@@ -20,6 +20,7 @@ html, body {
 footer {
   background-color: lightgoldenrodyellow;
   border-top: 5px solid green;
+
   padding: 3px;
 
 }
@@ -55,7 +56,8 @@ footer {
 
 #container-examples {
   /*background-color: #C4ACE6;*/
-  background-color: black;
+  background-color: grey;
+  padding: 10px;
 }
 
 body #container-box {
@@ -74,11 +76,12 @@ body #container-box {
 
 #container-spreadsheet {
   max-height: 100%;
-  overflow-y: auto;
+  overflow-y: scroll;
 }
 
 #container-panes {
   height: 100%;
+  width: 100%;
 }
 #container-panes > table {
   height: 100%;
@@ -93,10 +96,14 @@ body #container-box {
 
 #container-panes #pane-b {
   width: 30%;
+  overflow-y: scroll;
 }
 
 #container-panes #pane-b img {
   max-width: 80%;
+}
+
+#container-panes #pane-b {
   padding: 10px;
 }
 

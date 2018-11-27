@@ -1,4 +1,4 @@
-# Miniceell
+# Minicell
 
 
 ![Minicell screenshot (2018)](https://github.com/johari/minicell/blob/master/static/screenshot.png)

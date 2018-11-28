@@ -123,6 +123,7 @@ emptyGraph = Graph.fromNodesAndEdges [] []
 emptyCell = Cell EBot "" (0, 0) Nothing
 stringCell  addr str = { emptyCell | addr = addr, value = ESLit str }
 intCell     addr i   = { emptyCell | addr = addr, value = EILit i }
+imageCell   addr src = { emptyCell | addr = addr, value = EImage src }
 graphCell   addr g   = { emptyCell | addr = addr, value = EGraph emptyGraph }
 formulaCell addr formula args = { emptyCell  | addr = addr, value = EApp formula args }
 

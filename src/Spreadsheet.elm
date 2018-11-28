@@ -659,7 +659,6 @@ spreadsheetInterface model =
         table [ class "spreadsheet" ] ([ topRow model ] ++ viewRows model)
     ]
 
-mondrianSrc = "https://lisathatcher.files.wordpress.com/2012/06/inspired_bei_mondrian_by_manshonyagger-d35kfou.jpg"
 mondrian = img [ src mondrianSrc ] []
 
 alternativeViewInterface model =

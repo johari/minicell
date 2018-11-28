@@ -44,11 +44,15 @@ theCities =
      , intCell (5, 6) 5
      ]
 
+mondrianSrc = "https://lisathatcher.files.wordpress.com/2012/06/inspired_bei_mondrian_by_manshonyagger-d35kfou.jpg"
+mondrianSrc2 = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Piet_Mondriaan%2C_1930_-_Mondrian_Composition_II_in_Red%2C_Blue%2C_and_Yellow.jpg/1024px-Piet_Mondriaan%2C_1930_-_Mondrian_Composition_II_in_Red%2C_Blue%2C_and_Yellow.jpg"
+
 legend = 
     [ stringCell (0, 0) "Datatypes available in the Minicell environment"
     , stringCell (1, 0) "Number literal", intCell (1, 1) 42
     , stringCell (2, 0) "String literal", stringCell (2, 1) "Hello world!"
     , stringCell (3, 0) "Graph", graphCell (3, 1) dressUp
+    , stringCell (4, 0) "Image", imageCell (4, 1) mondrianSrc2
     -- , stringCell (3, 0) "List", 
     -- , stringCell (4, 0) "Referencing other cells",
     ]

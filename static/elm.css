@@ -1,3 +1,7 @@
+.elm-active-drop-zone {
+  border-color: cyan;
+  background-color: green;
+}
 .elm-selected-column {
   background-color: darkgrey;
 }

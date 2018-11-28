@@ -3,7 +3,7 @@ port module Spreadsheet exposing (..)
 import Debug
 import Browser
 import Html exposing (..)
-import Html.Events exposing (onClick, onDoubleClick, onInput, onBlur, onMouseOver, keyCode, on)
+import Html.Events exposing (onClick, onDoubleClick, onInput, onBlur, onMouseOver, keyCode, on, preventDefaultOn)
 import Html.Attributes exposing (id, class, href, value, autofocus, src)
 import List
 import Dict
@@ -26,8 +26,12 @@ import Spreadsheet.Wrangling.AdjacencyMatrix as AM
 import Graph exposing (Graph, nodes, mapNodes)
 import Graph.DOT
 
-import Json.Decode as Json
+import Json.Decode as D
 import Json.Encode as E
+
+import File exposing (File)
+
+import Task
 
 port keyPress : (E.Value -> msg) -> Sub msg
 port fixAutoFocusBug : String -> Cmd msg
@@ -62,6 +66,11 @@ type Msg
     | SwitchSpreadsheet Spreadsheet
 
     | ExtractGraphFromIncidenceMatrix
+
+    | DragEnter CellAddress
+    | DragLeave
+    | GotFiles CellAddress File (List File)
+    | GotPreviews CellAddress (List String)
     -- | SelectCell CellAddress -- e.g. Select the first column
     -- | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
 
@@ -96,6 +105,7 @@ elmIsWeirdWithMaybe2 newValue e = { e | value = newValue }
 --updateCellMeta : Database -> CellAddress -> CellMeta -> Database
 --updateCellMeta model addr newMeta = Dict.update addr (elmIsWeirdWithMaybe newMeta) model
 
+-- This is a very useful function now that we replaced Dict with List
 updateCellValue : Database -> CellAddress -> EExpr -> Database
 updateCellValue database addr newValue = 
     case find (\x -> x.addr == addr) database of
@@ -198,12 +208,37 @@ parseBufferToEExpr model buffer = buffer |> stringToEExpr
 -- [/weird]
 
 
-
+retrieveOldModeOrIdleAtTheOrigin mode =
+    case mode of
+        FileDropMode prevMode _ ->
+            prevMode
+        _ -> IdleMode (0, 0)
 
 -- This [update] function is one of our true heroes.. :)
 
 update msg model =
     case msg of
+        DragEnter addr ->
+            case model.mode of
+                FileDropMode prevMode _ ->
+                    ( { model | mode = FileDropMode prevMode addr } , Cmd.none )
+                _ -> 
+                    ( { model | mode = FileDropMode model.mode addr } , Cmd.none )
+
+        DragLeave ->
+            ({ model | mode = retrieveOldModeOrIdleAtTheOrigin model.mode }, Cmd.none)
+
+        GotFiles addr file files ->
+          ( { model | mode = retrieveOldModeOrIdleAtTheOrigin model.mode }
+          , Task.perform (GotPreviews addr) <| Task.sequence <|
+              List.map File.toUrl (file :: files)
+          )
+
+        GotPreviews addr urls ->
+          ( { model | database = updateCellValue  model.database addr (EImage (Maybe.withDefault mondrianSrc (List.head urls))) }
+          , Cmd.none
+          )
+
         FlushRegister addr expr ->
             ({ model | database = updateCellValue model.database addr expr
                      , mode = IdleMode addr
@@ -306,7 +341,7 @@ update msg model =
         
         -- All the [keyboard magic] happen here
         WindowKeyPress payload ->
-            let maybeKey = (Result.toMaybe (Json.decodeValue Json.string payload)) in
+            let maybeKey = (Result.toMaybe (D.decodeValue D.string payload)) in
                 case maybeKey of 
                     Nothing -> (model, Cmd.none)
                     Just key ->
@@ -424,23 +459,23 @@ viewCell model res =
 onEnter : Msg -> Attribute Msg
 onEnter msg =
     on "keydown" <|
-        Json.map
+        D.map
             (always msg)
-            (keyCode |> Json.andThen (is_ 13))
+            (keyCode |> D.andThen (is_ 13))
 
 -- It seems like we don't need this one anymore? (see [Keypress Down])
 onArrowDown msg =
     on "keydown" <|
-            Json.map
+            D.map
                 (always msg)
-                (keyCode |> Json.andThen (is_ 40))
+                (keyCode |> D.andThen (is_ 40))
 
-is_ : Int -> Int -> Json.Decoder ()
+is_ : Int -> Int -> D.Decoder ()
 is_ target code =
     if code == target then
-        Json.succeed ()
+        D.succeed ()
     else
-        Json.fail "not the right key code"
+        D.fail "not the right key code"
 
 viewCellInEditMode addr res  =
     case res of
@@ -488,6 +523,11 @@ computeCellSelectionClass model addr =
             if addrInVertexDemo addr model.demoVertices || addrInVertexDemo addr [ cellVertex ] then "elm-cell-part-of-secondary-demonstration" else ""
         _ -> ""
 
+fileBeingDroppedOn : Mode -> CellAddress -> Bool
+fileBeingDroppedOn mode addr = case mode of
+    FileDropMode _ modeAddr -> modeAddr == addr
+    _ -> False
+
 oneCell : CellAddress -> Model -> Html Msg
 oneCell addr model =
     if model.mode == EditMode addr then
@@ -515,8 +555,15 @@ oneCell addr model =
                             RegisterFlushMode expr ->
                                 [ onClick (FlushRegister addr expr) ]
                             _ -> [ onDoubleClick (EditIntent addr Nothing) ]
+                    dragDropAttributes =
+                        [ hijackOn "dragenter" (D.succeed (DragEnter addr))
+                        , hijackOn "dragover" (D.succeed (DragEnter addr))
+                        , hijackOn "dragleave" (D.succeed DragLeave)
+                        , hijackOn "drop" (dropDecoder addr)
+                        ]
+                    fileDropCSS = if fileBeingDroppedOn model.mode addr then [ class "elm-active-drop-zone" ] else [ ] 
                 in
-                    td ([ class (computeCellSelectionClass model addr) ] ++ clickActions)
+                    td ([ class (computeCellSelectionClass model addr) ] ++ clickActions ++ dragDropAttributes ++ fileDropCSS)
                        [ viewCell model (find (\x -> x.addr == addr) model.database) ]
 
 viewRow : Int -> Model -> List (Html Msg)
@@ -578,6 +625,8 @@ clippy model =
             span [] [ text "... click on the second vertex to finalize edge demonstration"]
         RegisterFlushMode _ ->
             span [] [ text "click on the desired cell to replace its content" ]
+        FileDropMode _ addr ->
+            span [] [ "Drop the file on " ++ (Debug.toString addr) |> text ]
         -- _ -> span [ ] [ text "I'm not trained to assist you in this mode :(" ]
 
 loadExampleButtons =
@@ -610,11 +659,8 @@ spreadsheetInterface model =
         table [ class "spreadsheet" ] ([ topRow model ] ++ viewRows model)
     ]
 
-mondrian = 
-    let
-        mondrianSrc = "https://lisathatcher.files.wordpress.com/2012/06/inspired_bei_mondrian_by_manshonyagger-d35kfou.jpg"
-    in
-        img [ src mondrianSrc ] []
+mondrianSrc = "https://lisathatcher.files.wordpress.com/2012/06/inspired_bei_mondrian_by_manshonyagger-d35kfou.jpg"
+mondrian = img [ src mondrianSrc ] []
 
 alternativeViewInterface model =
     case model.mode of
@@ -622,7 +668,8 @@ alternativeViewInterface model =
             case find (\x -> x.addr == addr) model.database of
                 Just cell ->
                     case cell.value of
-                        EILit num -> text ("Found a number!" ++ (Debug.toString num))
+                        EILit num -> text ("Found a number! " ++ (Debug.toString num))
+                        EImage url -> img [ src url ] [ ]
                         _ -> code [] [ Debug.toString cell |> text ]
                 Nothing -> mondrian
         _ -> mondrian
@@ -698,3 +745,32 @@ subscriptions : Model -> Sub Msg
 subscriptions model = Sub.batch [ keyPress WindowKeyPress
                                 , Time.every 1000 Tick
                                 ]
+
+
+
+--viewPreview : String -> Html msg
+--viewPreview url =
+--  div
+--    [ style "width" "60px"
+--    , style "height" "60px"
+--    , style "background-image" ("url('" ++ url ++ "')")
+--    , style "background-position" "center"
+--    , style "background-repeat" "no-repeat"
+--    , style "background-size" "contain"
+--    ]
+--    []
+
+
+dropDecoder : CellAddress -> D.Decoder Msg
+dropDecoder addr =
+  D.at ["dataTransfer","files"] (D.oneOrMore (GotFiles addr) File.decoder)
+
+
+hijackOn : String -> D.Decoder msg -> Attribute msg
+hijackOn event decoder =
+  preventDefaultOn event (D.map hijack decoder)
+
+
+hijack : msg -> (msg, Bool)
+hijack msg =
+  (msg, True)

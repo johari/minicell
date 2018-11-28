@@ -59,6 +59,20 @@ type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
            | EError String
            | EHref String -- CellHref
 
+           -- [ ] one frame images
+           --       [ ] basic values:
+           --             read from file
+           --       [ ] basic operations:
+           --             whatever "convert" can do (imageMagik)
+
+           | EImage String -- url
+
+           -- [ ] animated images (gif images)
+           --       [ ] basic values:
+           --             read from file (or URL)
+           --       [ ] basic operations
+           --             things Duke mentioned in his system (w.r.t. combining gif images)  
+
            -- Later on, types for
            -- [ ] sound clips,
            --       [ ] basic values:
@@ -71,16 +85,6 @@ type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
            --             combine 2 sound with each other (back to back)
            --             combine 2 sound with each other (in parallel)
            --             play a MIDI using a particular sound font
-           -- [ ] one frame images
-           --       [ ] basic values:
-           --             read from file
-           --       [ ] basic operations:
-           --             whatever "convert" can do (imageMagik)
-           -- [ ] animated images (gif images)
-           --       [ ] basic values:
-           --             read from file (or URL)
-           --       [ ] basic operations
-           --             things Duke mentioned in his system (w.r.t. combining gif images)  
            -- [ ] and videos
            --       [ ] basic values
            --             read from YouTube
@@ -126,11 +130,12 @@ isStringCell cell = case cell.value of
     ESLit _ -> True
     _ -> False
 
-emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (millisToPosix 0)
+emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (millisToPosix 0) []
 
 type Mode
     = IdleMode CellAddress
     | EditMode CellAddress
+    | FileDropMode Mode CellAddress -- One is the cell that the drop is hapening in, the other is the mode we switch back to when drag is over
     | VertexDemoMode
     | EdgeDemoMode1
     | EdgeDemoMode2 VertexAndPerhapsCells
@@ -157,5 +162,6 @@ type alias Spreadsheet =
     , demoVertices : TVertexDemo
     , demoEdges : TEdgeDemo
     , currentTime : Posix
+    , previews : List String
     }
 

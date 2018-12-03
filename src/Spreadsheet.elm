@@ -439,13 +439,7 @@ viewCell model res =
                         l1 = Graph.nodes g |> List.length
                         l2 = Graph.edges g |> List.length
                         textValue2 = "Graph of size " ++ (fromInt l1) ++ ", with " ++ (fromInt l2) ++ " edges"
-                        textValue = 
-                            (g
-                                |> mapNodes (\(_, listOfCells) -> 
-                                    List.head listOfCells
-                                        |> Maybe.withDefault emptyCell
-                                        |> Debug.toString)
-                                |> Graph.DOT.output Just (always Nothing))
+                        textValue = toGraphviz g
                     in
                         span [ class "vizjs-compile-dot-to-svg" ] [ text textValue ]
 
@@ -662,14 +656,16 @@ clippy model =
 loadExampleButtons =
     div [ id "container-examples" ]
     [ button [ onClick (SwitchSpreadsheet exampleSpreadsheetLegend) ]  [ text "Example 0: Types" ]
+    , button [ onClick (SwitchSpreadsheet exampleSpreadsheetTheCities) ]
+        [ text "Example 1: The Cities" ]
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheet) ]
-        [ text "Example 1: Matrix" ]
+        [ text "Example 2: Matrix" ]
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheetWithGraph) ]
-        [ text "Example 2: Matrix with Graph" ]
+        [ text "Example 3: Matrix with Graph" ]
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheetAdjacencyListWithGraph) ]
-        [ text "Example 3: Adjacency list with Graph" ]
+        [ text "Example 4: Adjacency list with Graph" ]
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheetRemote) ]
-        [ text "Example 4: Haskell Backend" ]
+        [ text "Example 5: Haskell Backend" ]
     ]
 
 vertexDemoButtons model = div [ id "container-demo-buttons" ] [
@@ -701,6 +697,7 @@ alternativeViewInterface model =
                     case cell.value of
                         EILit num -> text ("Found a number! " ++ (Debug.toString num))
                         EImage url -> img [ src url ] [ ]
+                        ESuperFancyGraph g -> pre [ ] [ toGraphviz g |> text ]
                         _ -> code [] [ Debug.toString cell |> text ]
                 Nothing -> mondrian
         _ -> mondrian
@@ -807,9 +804,19 @@ hijack : msg -> (msg, Bool)
 hijack msg =
   (msg, True)
 
+
 cometUpdate : CometKey -> Cmd Msg
 cometUpdate cometKey =
   Http.get
     { url = ("http://shiraz.local:8001/minicell/" ++ cometKey ++ ".json")
     , expect = Http.expectJson (CometUpdate cometKey) D.value
     }
+
+toGraphviz g = 
+  (g
+      |> mapNodes (\(_, listOfCells) -> 
+          List.head listOfCells
+              |> Maybe.withDefault emptyCell
+              |> Debug.toString)
+      |> Graph.DOT.output Just (always Nothing))
+

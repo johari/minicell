@@ -58,8 +58,9 @@ legend =
     ]
 
 twitterExample = 
-     [ stringCell (0, 0) "id1", stringCell (0, 1) "tweet1"
-     , stringCell (1, 0) "id2", stringCell (1, 1) "tweet2", stringCell (1, 2) "id1"
+     [ stringCell (0, 0) "tweet_id", stringCell (0, 1) "body", stringCell (0, 2) "in_reply_to"
+     , stringCell (1, 0) "id1", stringCell (1, 1) "tweet1"
+     , stringCell (2, 0) "id2", stringCell (2, 1) "tweet2", stringCell (2, 2) "id1"
      ]
 
 exampleTableRemote = 
@@ -73,8 +74,11 @@ exampleSpreadsheet =
     { emptySpreadsheet | database = el }
 
 exampleSpreadsheetRemote =
-    --{ emptySpreadsheet | database = theCities }
     { emptySpreadsheet | database = exampleTableRemote }
+
+exampleSpreadsheetTheCities = 
+    { emptySpreadsheet | database = theCities }
+
 
 exampleSpreadsheetLegend =
     { emptySpreadsheet | database = legend }
@@ -99,5 +103,5 @@ exampleSpreadsheetAdjacencyListWithGraph =
           |> List.head |> Maybe.withDefault (Graph.fromNodesAndEdges [] [])
           |> ESuperFancyGraph
      in
-          { emptySpreadsheet | database = twitterExample ++ [ { emptyCell | value = extractedGraphCell, addr = (10, 0)}]}
-
+          --{ emptySpreadsheet | database = twitterExample ++ [ { emptyCell | value = extractedGraphCell, addr = (10, 0)}]}
+          { emptySpreadsheet | database = twitterExample }

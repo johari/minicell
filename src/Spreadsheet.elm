@@ -715,7 +715,7 @@ containerHeader model = div [ id "container-header", class "container-row" ]
     , div [ id "container-minicell-logo" ]
         [ img [ src "https://nima.wiki//resources/assets/wiki.png" ] []
         , text "Minicell" 
-        , span [ class "minicell-version" ] [ text "(Version 0.0.1)" ]
+        , span [ class "minicell-version" ] [ text "(Version 0.0.2)" ]
         ]
     --, div [ ] [ vertexDemoButtons model ]
     , div [ ] [ graphExtractionButtons model ]

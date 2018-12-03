@@ -13,14 +13,18 @@ excelStyleAddr =
     row <- many1 digit
     return $ Addr ((read row) - 1) ((digitToInt column) - 10)
 
+addrToExcelStyle addr = 
+    let columnString = [(['A'..] !! (column addr))] in
+    mconcat [columnString, show (row addr)]
+
 addrToPath addr =
     let columnString = [(['A'..] !! (column addr))] in
-    mconcat [columnString, show (row addr), ".cell" ]
+    mconcat [columnString, show (row addr), ".json" ]
 
 pathToAddr :: GenParser Char st Addr
 pathToAddr =
     do
         string "/"
         addr <- excelStyleAddr
-        string ".cell"
+        string ".json"
         return $ addr

@@ -1,4 +1,12 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Minicell.Types where
+
+import GHC.Generics
+import Data.Aeson
+
+import Data.Text as T
 
 import qualified Data.Map.Strict as Map
 
@@ -9,7 +17,20 @@ type MColumn = Int
 data MColor = MRed | MGreen | MBlue
 
 
-data Addr = Addr { row :: MRow, column :: MColumn } deriving (Eq, Show, Ord)
+data Addr = Addr { row :: MRow, column :: MColumn } deriving (Eq, Show, Ord, Generic)
+
+instance ToJSON Addr
+instance FromJSON Addr
+
+data CometValue = CometAddr Addr
+
+instance ToJSON CometValue where
+  toJSON (CometAddr addr) =
+    object
+      [ (T.pack "value") .= (42 :: Int)
+      , (T.pack "valueType") .= (T.pack "EILit")
+      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      ]
 
 type MKnowledgeBase = Map.Map Addr MCell
 

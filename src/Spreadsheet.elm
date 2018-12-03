@@ -9,6 +9,8 @@ import List
 import Dict
 import Result
 
+import Http
+
 import String exposing (fromInt)
 
 import List.Extra exposing (find, updateIf, elemIndex)
@@ -71,6 +73,9 @@ type Msg
     | DragLeave
     | GotFiles CellAddress File (List File)
     | GotPreviews CellAddress (List String)
+
+    | CometUpdate CometKey (Result Http.Error E.Value)
+
     -- | SelectCell CellAddress -- e.g. Select the first column
     -- | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
 
@@ -79,8 +84,8 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( exampleSpreadsheetLegend
-    , Cmd.none
+    ( exampleSpreadsheetRemote
+    , Cmd.batch [ cometUpdate "A1" ]
     )
 
 
@@ -339,7 +344,27 @@ update msg model =
         ChangeCandidateCell addr ->
             ( { model | mode = IdleMode addr }, Cmd.none)
         
-        -- All the [keyboard magic] happen here
+
+
+        CometUpdate cometKey res ->
+            case res of
+                Ok payload ->
+                    let
+                        valueType = D.decodeValue (D.field "valueType" D.string) payload
+                        val = case valueType of
+                            Ok "EILit" ->
+                                case D.decodeValue (D.field "value" D.int) payload of
+                                    Ok i -> EILit i
+                                    Err err -> EError (Debug.toString err)
+                            _ -> EError "COMET value not implemented"
+                    in
+                        ( { model | cometStorage = Dict.insert cometKey (Debug.log (Debug.toString cometKey) val) model.cometStorage}, Cmd.none )
+
+                Err err ->
+                    ( { model | cometStorage = Dict.insert cometKey (Debug.toString err |> EError) model.cometStorage}, Cmd.none )
+
+
+        -- All the [keyboard magic] happen here            
         WindowKeyPress payload ->
             let maybeKey = (Result.toMaybe (D.decodeValue D.string payload)) in
                 case maybeKey of 
@@ -434,6 +459,11 @@ viewCell model res =
                 ECellRef addr ->
                     let resultOfEvaluation = (eval model cell.value) in
                         viewCell model (Just { cell | value = resultOfEvaluation})
+
+                EComet cometKey ->
+                     case (Dict.get cometKey model.cometStorage) of
+                        Just val -> viewCell model (Just { cell | value = val })
+                        _ -> span [] [ text ("comet pending.." ++ cometKey) ]
 
                 v ->
                     span [] [ text "rendering not implemented" ]
@@ -638,6 +668,8 @@ loadExampleButtons =
         [ text "Example 2: Matrix with Graph" ]
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheetAdjacencyListWithGraph) ]
         [ text "Example 3: Adjacency list with Graph" ]
+    , button [ onClick (SwitchSpreadsheet exampleSpreadsheetRemote) ]
+        [ text "Example 4: Haskell Backend" ]
     ]
 
 vertexDemoButtons model = div [ id "container-demo-buttons" ] [
@@ -706,10 +738,11 @@ mainInterface model =
 
 footerContent model =
     div [ id "container-footer", class "container-row" ] [
-        table [] [
-            tr [] [
-              td [ id "clippy" ] [ clippy model ] -- Summon Clippy
-            , td [ ] [ text (Debug.toString model.mode) ]
+        table []
+            [ tr [] [ td [ id "clippy" ] [ clippy model ] -- Summon Clippy
+                  , td [ ] [ text (Debug.toString model.mode)
+                  ]
+            , tr [] [ td [] [ text (Debug.toString model.cometStorage) ] ]
             ]
         ]
     ]
@@ -773,3 +806,10 @@ hijackOn event decoder =
 hijack : msg -> (msg, Bool)
 hijack msg =
   (msg, True)
+
+cometUpdate : CometKey -> Cmd Msg
+cometUpdate cometKey =
+  Http.get
+    { url = ("http://shiraz.local:8001/minicell/" ++ cometKey ++ ".json")
+    , expect = Http.expectJson (CometUpdate cometKey) D.value
+    }

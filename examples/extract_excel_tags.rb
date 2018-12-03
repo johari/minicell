@@ -59,7 +59,7 @@ class MyApp < Sinatra::Base
   end
 
   before do
-    response['Access-Control-Allow-Origin'] = 'http://localhost:8000'
+    response['Access-Control-Allow-Origin'] = 'http://shiraz.local:8000'
   end
   
   get "/api/*" do
@@ -86,6 +86,10 @@ class MyApp < Sinatra::Base
       }
     }
     json res.to_a.sort.reverse
+  end
+
+  get "/fuse/:cometKey" do
+    json File.open(File.expand_path("~/mnt/minicell/#{cometKey}.json")).read 
   end
 end
 

@@ -1,5 +1,6 @@
 {-# LANGUAGE TupleSections #-}
 
+
 module Minicell.FUSE.SpredsheetFS where
 
 
@@ -11,8 +12,10 @@ module Minicell.FUSE.SpredsheetFS where
 
 import Data.Char (chr, ord)
 import Data.Monoid ((<>))
+import Data.Aeson
 
 import qualified Data.ByteString.Char8 as B
+import qualified Data.ByteString.Lazy as BL
 import Foreign.C.Error
 import System.Posix.Types
 import System.Posix.Files
@@ -46,7 +49,7 @@ main = do
   print $ show visibleAddrs
 
   writeFile "/tmp/SpreadsheetFS.pid" (show pid)
-  case (parse pathToAddr "" "/A25.cell") of
+  case (parse pathToAddr "" "/A25.json") of
     Left err -> print err
     Right xs -> print xs
 
@@ -77,6 +80,8 @@ helloOpen path mode flags
 
 -- "read" a path
 
+contentOfCellInAddr addr = (BL.toStrict $ encode $ CometAddr addr)
+
 takeAndDrop byteCount offset bs = B.take (fromIntegral byteCount) $ B.drop (fromIntegral offset) bs
 
 helloRead :: FilePath -> HT -> ByteCount -> FileOffset -> IO (Either Errno B.ByteString)
@@ -88,7 +93,7 @@ helloRead path _ byteCount offset
         case (parse pathToAddr "" path) of
           Right addr -> do
             fuseLog "helloRead" (path ++ " is a cell and is read! :> ")
-            return $ Right $ takeAndDrop byteCount offset (B.pack $ show addr <> "\n")
+            return $ Right $ takeAndDrop byteCount offset (contentOfCellInAddr addr)
           Left err -> return $ Left eNOENT
 
 -- STAT
@@ -100,14 +105,14 @@ helloGetFileStat "/" = do
 
 helloGetFileStat path | path == helloPath = do
     ctx <- getFuseContext
-    return $ Right $ fileStat ctx
+    return $ Right $ fileStat helloString ctx
 
 helloGetFileStat path = do
   case (parse pathToAddr "" path) of
     Right addr -> do
       fuseLog "stat" ("found cell at " ++ path)
       ctx <- getFuseContext
-      return $ Right $ fileStat ctx
+      return $ Right $ fileStat (contentOfCellInAddr addr) ctx
     _ -> do
       fuseLog "stat" (path ++ " not found!")
       return $ Left eNOENT
@@ -121,13 +126,14 @@ helloReadDirectory :: FilePath -> IO (Either Errno [(FilePath, FileStat)])
 helloReadDirectory "/" = do
     ctx <- getFuseContext
 
-    let visibleCellFiles = (, fileStat ctx) <$> addrToPath <$> visibleAddrs -- FIXME: fileStat ctx gives wrong size. You could also play with modification time, etc..
+    -- FIXME: fileStat ctx gives wrong size. You could also play with modification time, etc..
+    let visibleCellFiles = (\addr -> (addrToPath addr, fileStat (contentOfCellInAddr addr) ctx)) <$> visibleAddrs
 
     fuseLog "visibleCellFiles" (show visibleCellFiles)
 
     return $ Right $ [ (".",          dirStat  ctx)
                      , ("..",         dirStat  ctx)
-                     , (helloName,    fileStat ctx)
+                     , (helloName,    fileStat helloString ctx)
                      ] ++ visibleCellFiles
 
     where (_:helloName) = helloPath
@@ -173,7 +179,7 @@ dirStat ctx = FileStat { statEntryType = Directory
                        , statStatusChangeTime = 0
                        }
 
-fileStat ctx = FileStat { statEntryType = RegularFile
+fileStat val ctx = FileStat { statEntryType = RegularFile
                         , statFileMode = foldr1 unionFileModes
                                            [ ownerReadMode
                                            , groupReadMode
@@ -183,7 +189,7 @@ fileStat ctx = FileStat { statEntryType = RegularFile
                         , statFileOwner = fuseCtxUserID ctx
                         , statFileGroup = fuseCtxGroupID ctx
                         , statSpecialDeviceID = 0
-                        , statFileSize = fromIntegral $ B.length helloString
+                        , statFileSize = fromIntegral $ B.length val
                         , statBlocks = 1
                         , statAccessTime = 0
                         , statModificationTime = 0

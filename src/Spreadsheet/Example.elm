@@ -47,7 +47,7 @@ theCities =
 mondrianSrc = "https://lisathatcher.files.wordpress.com/2012/06/inspired_bei_mondrian_by_manshonyagger-d35kfou.jpg"
 mondrianSrc2 = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Piet_Mondriaan%2C_1930_-_Mondrian_Composition_II_in_Red%2C_Blue%2C_and_Yellow.jpg/1024px-Piet_Mondriaan%2C_1930_-_Mondrian_Composition_II_in_Red%2C_Blue%2C_and_Yellow.jpg"
 
-legend = 
+legend =
     [ stringCell (0, 0) "Datatypes available in the Minicell environment"
     , stringCell (1, 0) "Number literal", intCell (1, 1) 42
     , stringCell (2, 0) "String literal", stringCell (2, 1) "Hello world!"
@@ -62,9 +62,19 @@ twitterExample =
      , stringCell (1, 0) "id2", stringCell (1, 1) "tweet2", stringCell (1, 2) "id1"
      ]
 
+exampleTableRemote = 
+  [ cometCell (0, 0) "A1", cometCell (1, 0) "A2", cometCell (2, 0) "A3"
+  , cometCell (0, 1) "B1", cometCell (1, 1) "B2", cometCell (2, 1) "B3"
+  , cometCell (0, 2) "C1", cometCell (1, 2) "C2", cometCell (2, 2) "C3"
+  ]
+
 exampleSpreadsheet =
     --{ emptySpreadsheet | database = theCities }
     { emptySpreadsheet | database = el }
+
+exampleSpreadsheetRemote =
+    --{ emptySpreadsheet | database = theCities }
+    { emptySpreadsheet | database = exampleTableRemote }
 
 exampleSpreadsheetLegend =
     { emptySpreadsheet | database = legend }

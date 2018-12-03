@@ -67,6 +67,8 @@ type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
 
            | EImage String -- url
 
+           | EComet CometKey
+
            -- [ ] animated images (gif images)
            --       [ ] basic values:
            --             read from file (or URL)
@@ -106,6 +108,7 @@ column = Tuple.second
 type alias CellMeta =
     String
 
+type alias CometKey = String
 
 type alias Cell =
     { value : Formula
@@ -125,13 +128,15 @@ stringCell  addr str = { emptyCell | addr = addr, value = ESLit str }
 intCell     addr i   = { emptyCell | addr = addr, value = EILit i }
 imageCell   addr src = { emptyCell | addr = addr, value = EImage src }
 graphCell   addr g   = { emptyCell | addr = addr, value = EGraph emptyGraph }
-formulaCell addr formula args = { emptyCell  | addr = addr, value = EApp formula args }
+
+formulaCell addr formula args = { emptyCell | addr = addr, value = EApp formula args }
+cometCell   addr endpoint     = { emptyCell | addr = addr, value = EComet endpoint }
 
 isStringCell cell = case cell.value of
     ESLit _ -> True
     _ -> False
 
-emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (millisToPosix 0) []
+emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (millisToPosix 0) [] (Dict.fromList [])
 
 type Mode
     = IdleMode CellAddress
@@ -164,5 +169,6 @@ type alias Spreadsheet =
     , demoEdges : TEdgeDemo
     , currentTime : Posix
     , previews : List String
+    , cometStorage : Dict.Dict CometKey EExpr
     }
 

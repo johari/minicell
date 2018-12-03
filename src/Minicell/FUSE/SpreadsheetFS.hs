@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module Minicell.FUSE.SpredsheetFS where
 
 
@@ -6,6 +8,9 @@ module Minicell.FUSE.SpredsheetFS where
 -- import System.Log.Handler.Simple
 -- import System.Log.Handler (setFormatter)
 -- import System.Log.Formatter
+
+import Data.Char (chr, ord)
+import Data.Monoid ((<>))
 
 import qualified Data.ByteString.Char8 as B
 import Foreign.C.Error
@@ -19,17 +24,29 @@ import System.Posix.Process
 import System.Fuse
 
 import Minicell.FUSE.RouteParser
+import Minicell.Types
 
 import Text.ParserCombinators.Parsec (parse)
 
+
+visibleColumns = ['A'..'C']
+visibleRows = [1..5]
+
+visibleAddrs :: [Addr]
+visibleAddrs = do
+  c <- visibleColumns
+  r <- visibleRows
+  return $ Addr { row = r, column = (ord c) - (ord 'A') }
 
 type HT = ()
 
 main :: IO ()
 main = do
   pid <- getProcessID
+  print $ show visibleAddrs
+
   writeFile "/tmp/SpreadsheetFS.pid" (show pid)
-  case (parse cellAddressPath "" "/A25.cell") of
+  case (parse pathToAddr "" "/A25.cell") of
     Left err -> print err
     Right xs -> print xs
 
@@ -43,6 +60,7 @@ main = do
 
 fuseLog component str = do
   createProcess (proc "notify-send" [component, str])
+  appendFile ("/tmp/SpreadsheetFS-" ++ component ++ ".log") str
 
 -- "open" syscall
 
@@ -51,7 +69,10 @@ helloOpen path mode flags
     | path == helloPath = case mode of
                             ReadOnly -> return (Right ())
                             _        -> return (Left eACCES) -- TODO: implement write access :)
-    | otherwise         = return (Left eNOENT)
+    | otherwise         = 
+        case (parse pathToAddr "" path) of
+          Left err -> return (Left eNOENT)
+          Right addr -> return (Right ())
 
 
 -- "read" a path
@@ -64,8 +85,10 @@ helloRead path _ byteCount offset
         fuseLog "helloRead" (path ++ " has a new visitor! :)")
         return $ Right $ takeAndDrop byteCount offset helloString
     | otherwise         =
-        case (parse cellAddressPath "" path) of
-          Right addr -> return $ Right $ takeAndDrop byteCount offset (B.pack $ show addr)
+        case (parse pathToAddr "" path) of
+          Right addr -> do
+            fuseLog "helloRead" (path ++ " is a cell and is read! :> ")
+            return $ Right $ takeAndDrop byteCount offset (B.pack $ show addr <> "\n")
           Left err -> return $ Left eNOENT
 
 -- STAT
@@ -80,8 +103,14 @@ helloGetFileStat path | path == helloPath = do
     return $ Right $ fileStat ctx
 
 helloGetFileStat path = do
-    fuseLog "stat" (path ++ " not found!")
-    return $ Left eNOENT
+  case (parse pathToAddr "" path) of
+    Right addr -> do
+      fuseLog "stat" ("found cell at " ++ path)
+      ctx <- getFuseContext
+      return $ Right $ fileStat ctx
+    _ -> do
+      fuseLog "stat" (path ++ " not found!")
+      return $ Left eNOENT
 
 --  OPEN DIRECTORY
 
@@ -91,10 +120,16 @@ helloOpenDirectory _   = return eNOENT
 helloReadDirectory :: FilePath -> IO (Either Errno [(FilePath, FileStat)])
 helloReadDirectory "/" = do
     ctx <- getFuseContext
-    return $ Right [(".",          dirStat  ctx)
-                   ,("..",         dirStat  ctx)
-                   ,(helloName,    fileStat ctx)
-                   ]
+
+    let visibleCellFiles = (, fileStat ctx) <$> addrToPath <$> visibleAddrs -- FIXME: fileStat ctx gives wrong size. You could also play with modification time, etc..
+
+    fuseLog "visibleCellFiles" (show visibleCellFiles)
+
+    return $ Right $ [ (".",          dirStat  ctx)
+                     , ("..",         dirStat  ctx)
+                     , (helloName,    fileStat ctx)
+                     ] ++ visibleCellFiles
+
     where (_:helloName) = helloPath
 helloReadDirectory _ = return (Left (eNOENT))
 
@@ -127,7 +162,7 @@ dirStat ctx = FileStat { statEntryType = Directory
                                           , otherReadMode
                                           , otherExecuteMode
                                           ]
-                       , statLinkCount = 2
+                       , statLinkCount = 100
                        , statFileOwner = fuseCtxUserID ctx
                        , statFileGroup = fuseCtxGroupID ctx
                        , statSpecialDeviceID = 0
@@ -163,7 +198,7 @@ helloGetFileSystemStats str =
     , fsStatBlockCount = 1
     , fsStatBlocksFree = 1
     , fsStatBlocksAvailable = 1
-    , fsStatFileCount = 5
+    , fsStatFileCount = 10
     , fsStatFilesFree = 10
     , fsStatMaxNameLength = 255
     }

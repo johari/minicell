@@ -13,8 +13,12 @@ excelStyleAddr =
     row <- many1 digit
     return $ Addr ((read row) - 1) ((digitToInt column) - 10)
 
-cellAddressPath :: GenParser Char st Addr
-cellAddressPath =
+addrToPath addr =
+    let columnString = [(['A'..] !! (column addr))] in
+    mconcat [columnString, show (row addr), ".cell" ]
+
+pathToAddr :: GenParser Char st Addr
+pathToAddr =
     do
         string "/"
         addr <- excelStyleAddr

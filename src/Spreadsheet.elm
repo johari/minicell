@@ -666,6 +666,8 @@ loadExampleButtons =
         [ text "Example 4: Adjacency list with Graph" ]
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheetRemote) ]
         [ text "Example 5: Haskell Backend" ]
+    , button [ onClick (SwitchSpreadsheet exampleSpreadsheetJSON) ]
+        [ text "Example 6: Organization Chart (JSON)" ]
     ]
 
 vertexDemoButtons model = div [ id "container-demo-buttons" ] [

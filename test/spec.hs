@@ -12,7 +12,8 @@ import Data.Graph.Inductive.Query.SP
 import Data.Graph.Inductive.Basic (grev)
 import Data.Graph.Inductive.Dot
 
-import ExampleGraphs
+
+import ExampleGraphs 
 
 import Database.MySQL.Simple
 import System.Environment
@@ -48,8 +49,11 @@ main = hspec $ do
                                   ]
               fourtyTwoSpreadsheet = emptySpreadsheet { database = fourtyTwoDatabase }
 
-main_hspec = hspec $ do
-  describe "MiniCell" $ do
+          res <- eval fourtyTwoSpreadsheet (ECellRef (0, 0))
+          res `shouldBe` (EILit 42)
+
+          res2 <- eval fourtyTwoSpreadsheet (ECellRef (1, 0))
+          res2 `shouldBe` (EILit 43)
 
     describe "GraphFill" $ do
       it "can find the hosrtest path of the trivial graph"
@@ -84,6 +88,16 @@ main_hspec = hspec $ do
 
         let Just y = spLength 3 1 mygraph3
         let Just x  = spLength 1 3 mygraph3
+
+        let dot = showDot (fglToDot mygraph3)
+        writeFile "/tmp/3.dot" dot
+
+        let dot2 = showDot (fglToDot $ grev $ mygraph3)
+        writeFile "/tmp/4.dot" dot2
+        
+        -- system("dot -Tpng -ofile.png file.dot")
+
+
         x `shouldBe` 20
         y `shouldBe` 15
 

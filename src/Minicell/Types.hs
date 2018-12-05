@@ -29,7 +29,7 @@ instance ToJSON CometValue where
     object
       [ (T.pack "value") .= (42 :: Int)
       , (T.pack "valueType") .= (T.pack "EILit")
-      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "cometKey") .= (T.pack "A1") -- (T.pack $ addrToExcelStyle addr)
       ]
 
 type MKnowledgeBase = Map.Map Addr MCell

@@ -1,11 +1,23 @@
 module Spreadsheet.Evaluator.Parser where
 
+-- Haskell stuff
+
 import Data.List
 
+-- Minicell stuff
 import Spreadsheet.Types 
-import Text.ParserCombinators.Parsec
+import Spreadsheet.Examples.Graphs
 
+-- Graph stuff
+
+import Data.Graph.Inductive.Basic (grev)
+
+-- Parsec stuff
+import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Char
+
+
+
 
 cellContent :: Parser EExpr
 cellContent = do
@@ -102,4 +114,10 @@ eval model expr = case expr of
       Nothing ->
         return $ EError "Cell not found"
       Just cell -> eval model (value cell)
+  
+  
+  EApp "reverseEdges" [g] -> do
+    EGraphFGL g' <- eval model g
+    return $ EGraphFGL $ grev g'
+
   _ -> return expr

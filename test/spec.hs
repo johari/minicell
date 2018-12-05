@@ -9,11 +9,14 @@ import Control.Exception (evaluate)
 
 
 import Data.Graph.Inductive.Query.SP
+
 import Data.Graph.Inductive.Basic (grev)
+import Data.Graph.Inductive.Query.MaxFlow
+
 import Data.Graph.Inductive.Dot
 
 
-import ExampleGraphs 
+import Spreadsheet.Examples.Graphs 
 
 import Database.MySQL.Simple
 import System.Environment
@@ -54,6 +57,19 @@ main = hspec $ do
 
           res2 <- eval fourtyTwoSpreadsheet (ECellRef (1, 0))
           res2 `shouldBe` (EILit 43)
+        
+        describe "Graph primitives" $ do
+          let simpleExample = emptySpreadsheet { database = [ (emptyCell { value = EGraphFGL helloGraph, addr = (0, 0) }) ] }
+
+          it "can reverse edges of a graph" $ do  
+            res <- eval simpleExample (EApp "reverseEdges" [ ECellRef (0, 0) ])
+            res `shouldBe` (EGraphFGL $ grev $ helloGraph)
+          
+          it "can compute max flow" $ do
+            (maxFlow helloGraph 1 3) `shouldBe` 10
+
+          it "can compute the union of two graphs" pending
+
 
     describe "GraphFill" $ do
       it "can find the hosrtest path of the trivial graph"

@@ -1,11 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+import Text.ParserCombinators.Parsec
 
 import Test.Hspec
 import Test.QuickCheck
 import Control.Exception (evaluate)
+
+
 import Data.Graph.Inductive.Query.SP
+import Data.Graph.Inductive.Basic (grev)
+import Data.Graph.Inductive.Dot
 
 import ExampleGraphs
 
@@ -14,18 +19,34 @@ import System.Environment
 
 import Data.List
 
-writeCardToFile fileName contents = do
-  writeFile (mconcat ["/tmp/phd/", fileName, ".tex"]) contents
+import Spreadsheet.Evaluator.Parser
+import Spreadsheet.Types
 
-main :: IO ()
-main = do
-  pass <- getEnv "MINICELL_PASS"
-  conn <- connect defaultConnectInfo { connectHost = "127.0.0.1", connectUser = "root", connectPassword = pass, connectPort = 3307, connectDatabase = "phd" }
-  -- (el :: [(Maybe Int, Maybe String)]) <- query_ conn "select (card_id, card_markdown) from writing_card_based where manuscript = 2 ORDER BY CHAR_LENGTH(card_markdown) DESC"
-  (el :: [(Maybe Int, Maybe String)]) <- query conn "select card_id, card_markdown from writing_card_based where card_manuscript_id = 2 ORDER BY CHAR_LENGTH(card_markdown)" ()
-  
-  sequence_ $ (\(Just a, Just b) -> writeCardToFile (show a) b) <$> el
-  -- main_hspec
+main = hspec $ do
+  describe "Minicell" $ do
+
+    describe "Formula" $ do
+      describe "Parser" $ do
+        it "can parse integer literals" $ do
+          (parse cellContent "" "42") `shouldBe` (Right $ EILit 42)
+          (parse cellContent "" "-5") `shouldBe` (Right $ EILit (-5))
+        
+        it "can parse string literals" $ do
+          (parse cellContent "" "Hello World!") `shouldBe` (Right $ ESLit "Hello World!")
+
+        it "can parse reference to cells" $ do
+          (parse cellContent "" "=B2") `shouldBe` (Right $ ECellRef (1, 1))
+          (parse cellContent "" "=A3") `shouldBe` (Right $ ECellRef (2, 0))
+
+        it "can parse functions that as an argument take a reference to a cell" $ do
+          (parse cellContent "" "=OP(A1, 42)") `shouldBe` (Right $ EApp "OP" [ECellRef (0, 0), EILit 42])
+
+      describe "Evaluator" $ do
+        it "can resolve references" $ do
+          let fourtyTwoDatabase = [ (emptyCell { value = EILit 42, addr = (0, 0) }) 
+                                  , (emptyCell { value = EILit 43, addr = (1, 0) })
+                                  ]
+              fourtyTwoSpreadsheet = emptySpreadsheet { database = fourtyTwoDatabase }
 
 main_hspec = hspec $ do
   describe "MiniCell" $ do
@@ -35,9 +56,9 @@ main_hspec = hspec $ do
 
         pending
 
-      it "can find the hosrtest path of K_2"
+      it "can find the hosrtest path of K_2" $ do
 
-        pending
+        pendingWith "need graph support in cells first"
 
       it "can fill the blank cells in the T1 as following (T2)" $ do
         -- ╔═════╤═════╤═════╤═════╗

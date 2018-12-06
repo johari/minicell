@@ -1,4 +1,4 @@
-module Minicell.Examples.ExampleTables where
+module Examples.ExampleTables where
 
 salesTableExample = [
     [ "Sales Manager"   , "Product" , "Date"     , "Sales" , "", "Manager Name"]

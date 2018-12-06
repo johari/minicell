@@ -123,7 +123,7 @@ eval model expr = case expr of
     EGraphFGL g' <- eval model g
     return $ EGraphFGL $ grev g'
 
-  EApp "maxFlow" [ s, t, g ] -> do
+  EApp op [ s, t, g ] | op == "maxFlow" || op == "shortestPath" -> do
     -- TODO: Return EError when pattern matching fails
 
     (ESLit s') <- eval model s
@@ -136,6 +136,10 @@ eval model expr = case expr of
     let ((_, n1, _, _):_) = nn1
     let ((_, n2, _, _):_) = nn2
 
-    return $ EILit (maxFlow g' n1 n2)
+    case op of
+        "maxFlow" -> return (EILit $ maxFlow g' n1 n2)
+        -- "shortestPath" -> sp n1 n2 g'
+        _ -> return (EError $ "error evaluating " ++ op)
+
 
   _ -> return expr

@@ -38,14 +38,17 @@ data MCell = MCell { address :: Addr, cellAddress :: Addr, cellValue :: CellValu
 data MVertex = MVertex {color :: MColor, vertexAddress :: Addr, vertexLabel :: CellValue }
 data MEdge = MEdge { from :: MVertex, to :: MVertex, edgeLabel :: CellValue }
 
-data CellValue
-  = CellInt Int                         -- e.g. 42
-  -- | CellGraph (Graph String ())      -- e.g. G = <V, E>
-  | CellString String                   -- e.g. "Hello World!"
-  | CellFormula Formula                 -- e.g. =Dijkstra(G1, "Davis", "Berkeley")
-  | CellEmpty                           -- e.g. ()
-  | CellHref String                     -- e.g. http://cs.tufts.edu/~nr/...
-  -- | HCellList CellValue [CellValue]     -- e.g. Shouldn't this be "HCellList (List CellValue)" instead?
-  | CellHole String                     -- i.e. x@??
-  -- | CellKB MKnowledgeBase
-  deriving (Show, Eq)
+
+                  
+-- | CellHref String                     -- e.g. http://cs.tufts.edu/~nr/...
+-- | HCellList CellValue [CellValue]     -- e.g. Shouldn't this be "HCellList (List CellValue)" instead?
+-- | CellGraph (Graph String ())      -- e.g. G = <V, E>
+-- | CellKB MKnowledgeBase
+
+
+data CellValue = CellInt Int                         -- e.g. 42
+                  | CellString String                   -- e.g. "Hello World!"
+                  | CellFormula Formula                 -- e.g. =Dijkstra(G1, "Davis", "Berkeley")
+                  | CellEmpty                           -- e.g. ()
+                  | CellHole String                     -- i.e. x@??
+                  deriving (Show, Eq)

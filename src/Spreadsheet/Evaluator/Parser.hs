@@ -10,7 +10,8 @@ import Spreadsheet.Examples.Graphs
 
 -- Graph stuff
 
-import Data.Graph.Inductive.Basic (grev)
+import Data.Graph.Inductive.Query.MaxFlow
+import Data.Graph.Inductive.Basic
 
 -- Parsec stuff
 import Text.ParserCombinators.Parsec
@@ -117,7 +118,24 @@ eval model expr = case expr of
   
   
   EApp "reverseEdges" [g] -> do
+    -- TODO: Return EError when pattern matching fails
+
     EGraphFGL g' <- eval model g
     return $ EGraphFGL $ grev g'
+
+  EApp "maxFlow" [ s, t, g ] -> do
+    -- TODO: Return EError when pattern matching fails
+
+    (ESLit s') <- eval model s
+    (ESLit t') <- eval model t
+    (EGraphFGL g') <- eval model g
+
+    let nn1 = gsel (\(_, _, label, _) -> label == s') g'
+    let nn2 = gsel (\(_, _, label, _) -> label == t') g'
+
+    let ((_, n1, _, _):_) = nn1
+    let ((_, n2, _, _):_) = nn2
+
+    return $ EILit (maxFlow g' n1 n2)
 
   _ -> return expr

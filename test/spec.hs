@@ -11,7 +11,6 @@ import Control.Exception (evaluate)
 import Data.Graph.Inductive.Query.SP
 
 import Data.Graph.Inductive.Basic (grev)
-import Data.Graph.Inductive.Query.MaxFlow
 
 import Data.Graph.Inductive.Dot
 
@@ -64,9 +63,14 @@ main = hspec $ do
           it "can reverse edges of a graph" $ do  
             res <- eval simpleExample (EApp "reverseEdges" [ ECellRef (0, 0) ])
             res `shouldBe` (EGraphFGL $ grev $ helloGraph)
-          
+
+
           it "can compute max flow" $ do
-            (maxFlow helloGraph 1 3) `shouldBe` 10
+            res <- eval simpleExample (EApp "maxFlow" [ ESLit "Hello", ESLit "World!", ECellRef (0, 0) ] )
+            res `shouldBe` (EILit 10)
+
+            res2 <- eval simpleExample (EApp "maxFlow" [ ESLit "Interconnected", ESLit "World!", ECellRef (0, 0) ] )
+            res2 `shouldBe` (EILit 20)
 
           it "can compute the union of two graphs" pending
 

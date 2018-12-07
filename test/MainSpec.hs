@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+module MainSpec where 
+
 import Text.ParserCombinators.Parsec
 
 import Test.Hspec
@@ -17,7 +19,7 @@ import Data.Graph.Inductive.Dot
 
 import Spreadsheet.Examples.Graphs 
 
-import Database.MySQL.Simple
+-- import Database.MySQL.Simple
 import System.Environment
 
 import Data.List
@@ -25,7 +27,7 @@ import Data.List
 import Spreadsheet.Evaluator.Parser
 import Spreadsheet.Types
 
-main = hspec $ do
+spec = do
   describe "Minicell" $ do
 
     describe "Formula" $ do

@@ -2,6 +2,14 @@
 
 module Spreadsheet.Types where
 
+import Text.ParserCombinators.Parsec
+import Text.Parsec.Char (string)
+import Data.Char (digitToInt)
+
+
+import Data.Aeson
+import qualified Data.Text as T
+
 import Data.Tuple
 import qualified Data.Map
 -- import Graph (Graph, nodes)
@@ -177,3 +185,43 @@ data Spreadsheet = Spreadsheet
     -- , currentTime :: Posix
     }
 
+
+
+-- instance ToJSON CellAddress
+-- instance FromJSON CellAddress
+
+excelStyleAddr :: GenParser Char st CellAddress
+excelStyleAddr =
+  do
+    column <- letter
+    row <- many1 digit
+    return $ (((read row) - 1), ((digitToInt column) - 10)) -- This is ultra buggy (works only for A-F)
+
+cometKeyToAddr cometKey =
+  case parse excelStyleAddr "" cometKey of
+    Right addr -> addr
+    Left err  -> (-1, -1)
+
+
+addrToExcelStyle (rho, kappa) = 
+    let columnString = [['A'..] !! kappa] in
+    mconcat [columnString, show (rho)]
+
+
+data CometValue = CometAddr CellAddress
+                | CometString CellAddress String
+
+instance ToJSON CometValue where 
+  toJSON (CometAddr addr) =
+    object
+      [ (T.pack "value") .= (show addr :: String)
+      , (T.pack "valueType") .= (T.pack "ESLit")
+      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      ]
+
+  toJSON (CometString addr str) = 
+    object
+      [ (T.pack "value") .= str
+      , (T.pack "valueType") .= (T.pack "ESLit")
+      , (T.pack "cometKey") .= (T.pack $ str)
+      ]

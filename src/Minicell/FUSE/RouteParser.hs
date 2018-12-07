@@ -1,3 +1,5 @@
+-- Deprecated
+
 module Minicell.FUSE.RouteParser where
 
 import Text.ParserCombinators.Parsec

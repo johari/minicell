@@ -85,7 +85,16 @@ type alias Model =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( exampleSpreadsheetRemote
-    , Cmd.batch [ cometUpdate "A1" ]
+    , Cmd.batch [ cometUpdate "A1"
+                , cometUpdate "A2"
+                , cometUpdate "A3"
+                , cometUpdate "B1"
+                , cometUpdate "B2"
+                , cometUpdate "B3"
+                , cometUpdate "C1"
+                , cometUpdate "C2"
+                , cometUpdate "C3"
+                ]
     )
 
 
@@ -355,6 +364,10 @@ update msg model =
                             Ok "EILit" ->
                                 case D.decodeValue (D.field "value" D.int) payload of
                                     Ok i -> EILit i
+                                    Err err -> EError (Debug.toString err)
+                            Ok "ESLit" -> 
+                                case D.decodeValue (D.field "value" D.string) payload of
+                                    Ok i -> ESLit i
                                     Err err -> EError (Debug.toString err)
                             _ -> EError "COMET value not implemented"
                     in
@@ -691,16 +704,27 @@ spreadsheetInterface model =
 
 mondrian = img [ src mondrianSrc ] []
 
+alternativeViewByEExpr model value = 
+    case value of
+        EILit num -> text ("Found a number! " ++ (Debug.toString num))
+        EImage url -> img [ src url ] [ ]
+        ESuperFancyGraph g -> pre [ ] [ toGraphviz g |> text ]
+        EComet cometKey ->
+            case (Dict.get cometKey model.cometStorage) of
+                Just resolvedVal ->
+                    span [] [ text ("Resolved comet value with key " ++ cometKey)
+                            , hr [] []
+                            , alternativeViewByEExpr model resolvedVal ]
+                Nothing ->
+                    text ("Non-resolved comet value with key " ++ cometKey)
+        _ -> code [] [ Debug.toString value |> text ]
+
 alternativeViewInterface model =
     case model.mode of
         IdleMode addr ->
             case find (\x -> x.addr == addr) model.database of
                 Just cell ->
-                    case cell.value of
-                        EILit num -> text ("Found a number! " ++ (Debug.toString num))
-                        EImage url -> img [ src url ] [ ]
-                        ESuperFancyGraph g -> pre [ ] [ toGraphviz g |> text ]
-                        _ -> code [] [ Debug.toString cell |> text ]
+                    alternativeViewByEExpr model cell.value
                 Nothing -> mondrian
         _ -> mondrian
     --table [ id "container-alternative-view" ] [
@@ -810,7 +834,7 @@ hijack msg =
 cometUpdate : CometKey -> Cmd Msg
 cometUpdate cometKey =
   Http.get
-    { url = ("http://shiraz.local:8001/minicell/" ++ cometKey ++ ".json")
+    { url = ("http://localhost:3000/minicell/" ++ cometKey ++ "/show.json")
     , expect = Http.expectJson (CometUpdate cometKey) D.value
     }
 

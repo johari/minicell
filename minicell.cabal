@@ -64,7 +64,7 @@ test-suite spec
 
 library
   -- Modules exported by the library.
-  exposed-modules:     Main, Spreadsheet.Evaluator.Parser, Spreadsheet.Examples.Graphs, Spreadsheet.Types, Spreadsheet.Wrangling.ListOfVertexTuples, Examples.ExampleTables, Minicell.Types, Minicell.Pluck, Minicell.Examples.Tables, Minicell.Examples.Graphs, Solver.Example
+  exposed-modules:     Main, Spreadsheet.Evaluator.Parser, Spreadsheet.Examples.Graphs, Spreadsheet.Types, Spreadsheet.Wrangling.ListOfVertexTuples
 
   -- Modules included in this library but not exported.
   -- other-modules:

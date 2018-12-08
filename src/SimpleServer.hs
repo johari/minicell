@@ -19,25 +19,23 @@ import Control.Monad.IO.Class (liftIO)
 import Data.String
 
 import Spreadsheet.Types
+import Spreadsheet as Mini
 
 import Spreadsheet.Evaluator.Parser
 import Text.ParserCombinators.Parsec
 
-
 import Network.Wai.Middleware.Cors
-
-type Cache = Int
 
 main = do
     let port = 3000
-    cache <- atomically $ newTVar 0
+    modelTVar <- atomically $ newTVar emptySpreadsheet
 
     putStrLn $ "Listening on port " ++ show port
-    run port (app cache)
+    run port (app modelTVar)
 
-app :: TVar Cache -> Application
-app cache =
-    websocketsOr  defaultConnectionOptions wsApp (simpleCors $ anyRoute cache)
+app :: TVar Spreadsheet -> Application
+app modelTVar =
+    websocketsOr  defaultConnectionOptions wsApp (simpleCors $ anyRoute modelTVar)
 
 wsApp :: ServerApp
 wsApp pending_conn = do
@@ -52,23 +50,27 @@ wsApp pending_conn = do
 dummyJsonData :: CometValue
 dummyJsonData = CometAddr (0, 0)
 
-anyRoute cache req res =
+anyRoute modelTVar req res =
     case pathInfo req of
-        -- [ "version" ] -> CometString "0.0.1"
-        -- parsedUrl -> CometString $ show $ parsedUrl
         [ "minicell", cometKey, "show.json" ] -> do
-            counterValue <- atomically $ do
-                modifyTVar cache (+1)
-                readTVar cache 
-            
-            print $ pathInfo req
+            let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
+            -- counterValue <- atomically $ do
+            --     modifyTVar modelTVar (+1)
+            --     readTVar modelTVar 
 
-            let val = CometString (cometKeyToAddr $ T.unpack $ cometKey) (show counterValue)
+            val <- do
+                model <- readTVarIO modelTVar
+                res <- eval model (ECellRef cometAddress)
+                return $ CometString cometAddress (show res)
+
+            -- let val = CometString  (mconcat ["Hello ", show cometKey, " from Haskell!"])
 
             res $ responseLBS status200
                                   [(hContentType, "application/json")]
                                   (encode val)
         [ "minicell", cometKey, "write.json" ] -> do
+            let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
+
             (params, files) <- parseRequestBody lbsBackEnd req
             print (params, length files)
             -- TODO: do something with files!
@@ -77,7 +79,7 @@ anyRoute cache req res =
             
             case parse cellContent "REPL" (BU.toString formula) of 
                 Left err -> do
-                    let val = CometString (cometKeyToAddr $ T.unpack $ cometKey) (show err)
+                    let val = CometString cometAddress (show err)
                     res $ responseLBS status200
                                           [(hContentType, "application/json")]
                                           (encode val)
@@ -85,6 +87,9 @@ anyRoute cache req res =
                 Right ast -> do
                     -- TODO: update the global database
                     -- TODO: delegate CometString transformation to a separate function
+
+                    atomically $ do
+                        modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress ast)
 
                     let val = CometString (cometKeyToAddr $ T.unpack $ cometKey) (show ast)
                     res $ responseLBS status200

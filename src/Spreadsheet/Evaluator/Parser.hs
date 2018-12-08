@@ -3,6 +3,7 @@ module Spreadsheet.Evaluator.Parser where
 -- Haskell stuff
 
 import Data.List
+import Data.Char (ord, toLower)
 
 -- Minicell stuff
 import Spreadsheet.Types 
@@ -38,10 +39,23 @@ formula = do
   s <- choice [ formulaCellRef, formulaWithOperands ]
   return s
 
+cometKeyToAddr cometKey =
+  case parse excelStyleAddr "" cometKey of
+    Right addr -> addr
+    Left err  -> (-1, -1)
+
+excelStyleAddr :: Parser CellAddress
+excelStyleAddr =
+  do
+    column <- letter
+    row <- many1 digit
+    return $ (((read row) - 1), ((ord $ toLower $ column) - (ord 'a'))) -- This is ultra buggy (works only for A-F)
+
 formulaCellRef = do 
-  column <- try $ many1 letter
-  row <- try $ many1 digit
-  return $ ECellRef (0, 0)
+  -- column <- try $ many1 letter
+  -- row <- try $ many1 digit
+  parsedAddress <- excelStyleAddr
+  return $ ECellRef parsedAddress
 
 formulaWithOperands = do
   operation <- try $ many1 letter
@@ -113,7 +127,7 @@ eval model expr = case expr of
   ECellRef lookupAddr -> do
     case find (\x -> addr x == lookupAddr) (database model) of
       Nothing ->
-        return $ EError "Cell not found"
+        return $ EError $ "#REF " ++ (addrToExcelStyle lookupAddr)
       Just cell -> eval model (value cell)
   
   

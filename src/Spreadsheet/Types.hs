@@ -4,8 +4,6 @@ module Spreadsheet.Types where
 
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Char (string)
-import Data.Char (digitToInt)
-
 
 import Data.Aeson
 import qualified Data.Text as T
@@ -190,22 +188,10 @@ data Spreadsheet = Spreadsheet
 -- instance ToJSON CellAddress
 -- instance FromJSON CellAddress
 
-excelStyleAddr :: GenParser Char st CellAddress
-excelStyleAddr =
-  do
-    column <- letter
-    row <- many1 digit
-    return $ (((read row) - 1), ((digitToInt column) - 10)) -- This is ultra buggy (works only for A-F)
-
-cometKeyToAddr cometKey =
-  case parse excelStyleAddr "" cometKey of
-    Right addr -> addr
-    Left err  -> (-1, -1)
-
 
 addrToExcelStyle (rho, kappa) = 
     let columnString = [['A'..] !! kappa] in
-    mconcat [columnString, show (rho)]
+    mconcat [columnString, show (rho+1)]
 
 
 data CometValue = CometAddr CellAddress
@@ -223,5 +209,5 @@ instance ToJSON CometValue where
     object
       [ (T.pack "value") .= str
       , (T.pack "valueType") .= (T.pack "ESLit")
-      , (T.pack "cometKey") .= (T.pack $ str)
+      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
       ]

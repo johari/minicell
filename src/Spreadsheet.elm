@@ -40,6 +40,11 @@ port fixAutoFocusBug : String -> Cmd msg
 
 cssKeyForEditCellInput = "magic-input-cell-editor"
 
+preferences =
+    {
+        vimMode = True
+    }
+
 type DemonstrationBrush
     = VertexBrush
     | VertexAttributeBrush
@@ -406,10 +411,27 @@ update msg model =
                                 _ -> (model, Cmd.none)
                             _ -> case model.mode of 
                                 IdleMode addr ->
-                                    if String.length key == 1 then
-                                        update (EditIntent addr (Just key)) model
-                                     else
-                                        (model, Cmd.none)
+                                    if preferences.vimMode then
+                                        -- VIM shortcuts
+                                        if key == "=" then
+                                            update (EditIntent addr (Just key)) model
+                                        else if key == "j" then
+                                            handleArrowInIdleMode model "ArrowDown"
+                                        else if key == "k" then
+                                            handleArrowInIdleMode model "ArrowUp"
+                                        else if key == "l" then
+                                            handleArrowInIdleMode model "ArrowRight"
+                                        else if key == "h" then
+                                            handleArrowInIdleMode model "ArrowLeft"
+                                        else if String.length key == 1 then
+                                            update (EditIntent addr (Just key)) model 
+                                        else
+                                            (model, Cmd.none) 
+                                    else
+                                        if String.length key == 1 then
+                                            update (EditIntent addr (Just key)) model
+                                        else
+                                            (model, Cmd.none)
                                 _ -> (model, Cmd.none)
 
 

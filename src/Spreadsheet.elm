@@ -700,7 +700,7 @@ loadExampleButtons =
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheetAdjacencyListWithGraph) ]
         [ text "Example 4: Adjacency list with Graph" ]
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheetRemote) ]
-        [ text "Example 5: Haskell Backend" ]
+        [ text "Example 5: Remote search" ]
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheetJSON) ]
         [ text "Example 6: Organization Chart (JSON)" ]
     ]
@@ -708,9 +708,9 @@ loadExampleButtons =
 vertexDemoButtons model = div [ id "container-demo-buttons" ] [
       button [ id "magic-button-demo-vertex", onClick (SwitchToMode VertexDemoMode) ]
        [ text ("demonstrate vertices (" ++ (model.demoVertices |> List.length |> Debug.toString) ++ ")") ]
-    --, button [ id "magic-button-demo-edge", onClick (SwitchToMode EdgeDemoMode1) ]
-    --   --[ text "demonstrate edges" ]
-    --   [ text ("demonstrate edges (" ++ (model.demoEdges |> List.length |> Debug.toString) ++ ")") ]
+      , button [ id "magic-button-demo-edge", onClick (SwitchToMode EdgeDemoMode1) ]
+       --[ text "demonstrate edges" ]
+       [ text ("demonstrate edges (" ++ (model.demoEdges |> List.length |> Debug.toString) ++ ")") ]
     , button [ id "magic-button-generalize", onClick (IdleMode (0, 0) |> SwitchToMode) ] [ text "generalize" ]
     ]
 
@@ -763,7 +763,7 @@ containerHeader model = div [ id "container-header", class "container-row" ]
         , text "Minicell" 
         , span [ class "minicell-version" ] [ text "(Version 0.0.2)" ]
         ]
-    --, div [ ] [ vertexDemoButtons model ]
+    , div [ ] [ vertexDemoButtons model ]
     , div [ ] [ graphExtractionButtons model ]
     ]
 
@@ -787,7 +787,7 @@ footerContent model =
             [ tr [] [ td [ id "clippy" ] [ clippy model ] -- Summon Clippy
                   , td [ ] [ text (Debug.toString model.mode)
                   ]
-            , tr [] [ td [] [ text (Debug.toString model.cometStorage) ] ]
+            --, tr [] [ td [] [ text (Debug.toString model.cometStorage) ] ]
             ]
         ]
     ]

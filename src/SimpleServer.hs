@@ -88,6 +88,7 @@ anyRoute modelTVar req res =
                     -- TODO: update the global database
                     -- TODO: delegate CometString transformation to a separate function
 
+                    -- res <- eval model ast
                     atomically $ do
                         modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress ast)
 

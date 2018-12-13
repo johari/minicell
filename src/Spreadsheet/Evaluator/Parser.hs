@@ -4,6 +4,7 @@ module Spreadsheet.Evaluator.Parser where
 
 import Data.List
 import Data.Char (ord, toLower)
+import Data.Maybe 
 
 -- Minicell stuff
 import Spreadsheet.Types 
@@ -14,11 +15,11 @@ import Spreadsheet.Examples.Graphs
 import Data.Graph.Inductive.Query.MaxFlow
 import Data.Graph.Inductive.Basic
 
+import Data.Graph.Inductive.Query.SP
+
 -- Parsec stuff
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Char
-
-
 
 
 cellContent :: Parser EExpr
@@ -54,7 +55,7 @@ excelStyleAddr =
 formulaCellRef = do 
   -- column <- try $ many1 letter
   -- row <- try $ many1 digit
-  parsedAddress <- excelStyleAddr
+  parsedAddress <- try $ excelStyleAddr
   return $ ECellRef parsedAddress
 
 formulaWithOperands = do
@@ -137,7 +138,7 @@ eval model expr = case expr of
     EGraphFGL g' <- eval model g
     return $ EGraphFGL $ grev g'
 
-  EApp op [ s, t, g ] | op == "maxFlow" || op == "shortestPath" -> do
+  EApp op [ s, t, g ] | elem (map toLower op) ["mf", "sp"] -> do
     -- TODO: Return EError when pattern matching fails
 
     (ESLit s') <- eval model s
@@ -150,9 +151,9 @@ eval model expr = case expr of
     let ((_, n1, _, _):_) = nn1
     let ((_, n2, _, _):_) = nn2
 
-    case op of
-        "maxFlow" -> return (EILit $ maxFlow g' n1 n2)
-        -- "shortestPath" -> sp n1 n2 g'
+    case (map toLower op) of
+        "mf" -> return (EILit $ maxFlow g' n1 n2)
+        "sp" -> return (EILit $ fromMaybe 0 $ spLength n1 n2  g')
         _ -> return (EError $ "error evaluating " ++ op)
 
 

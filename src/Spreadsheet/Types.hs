@@ -2,15 +2,22 @@
 
 module Spreadsheet.Types where
 
-import Text.ParserCombinators.Parsec
-import Text.Parsec.Char (string)
+-- Graph stuff
+
+import Data.Graph.Inductive.Example
+
+-- Text and JSON stuff
 
 import Data.Aeson
 import qualified Data.Text as T
+import Text.ParserCombinators.Parsec
+import Text.Parsec.Char (string)
+
+-- Haskell stuff
 
 import Data.Tuple
 import qualified Data.Map
--- import Graph (Graph, nodes)
+
 -- import Time (Posix, millisToPosix)
 -- import List (any)
 
@@ -143,7 +150,7 @@ emptyGraph = ([], [])
 emptyCell = Cell EBot "" (0, 0) Nothing
 stringCell  addr str = emptyCell { addr = addr, value = ESLit str }
 intCell     addr i   = emptyCell { addr = addr, value = EILit i }
--- graphCell   addr g   = emptyCell { addr = addr, value = EGraph emptyGraph }
+graphCell   addr g   = emptyCell { addr = addr, value = EGraphFGL g }
 formulaCell addr formula args = emptyCell {  addr = addr, value = EApp formula args }
 
 isStringCell cell = case value cell of
@@ -153,6 +160,10 @@ isStringCell cell = case value cell of
 -- emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (millisToPosix 0)
 emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] []
 
+
+
+
+spreadsheetWithOneGraph = Spreadsheet [ graphCell (0, 0) vor ] (IdleMode (0, 0)) [] []
 
 data Mode
     = IdleMode CellAddress

@@ -33,3 +33,12 @@ $ python -m SimpleHTTPServer
 ```
 
 Then open your web browser to [](http://localhost:8000/pldi.html) to try your local Minicell installation.
+
+# See if everything works
+
+```
+$ curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=SP(A1)'
+```
+
+Then goto [](http://localhost:8000/pldi.html).. You should see `A2` calculating the shortest path of the graph stored in `A1`.
+

@@ -55,43 +55,47 @@ wsApp pending_conn = do
 dummyJsonData :: CometValue
 dummyJsonData = CometAddr (0, 0)
 
+endpointShow modelTVar cometKey req res = do
+    let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
+    -- counterValue <- atomically $ do
+    --     modifyTVar modelTVar (+1)
+    --     readTVar modelTVar 
+
+    val <- do
+        model <- readTVarIO modelTVar
+        cellValue <- eval model (ECellRef cometAddress)
+
+        -- This is the main point of integration betweenR
+        -- A) Haskell values
+        -- B) Elm values
+        -- C) Transforming unusual values to something suitable to render in Frontend
+
+
+        case cellValue of
+            EGraphFGL g -> do
+                let dot = showDot (fglToDot g)
+                let dotPath = "../build/minicell-cache/file.dot"
+                let pngPath = "../build/minicell-cache/file.png"
+                writeFile dotPath dot
+                system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
+
+                return $ CometImage cometAddress "/minicell-cache/file.png"
+            ESLit s -> return $ CometSLit cometAddress s
+            EILit i -> return $ CometILit cometAddress i
+            _ -> return $ CometSLit cometAddress (show cellValue)
+        
+        -- return $ CometSLit cometAddress (show res)
+
+    -- let val = CometSLit  (mconcat ["Hello ", show cometKey, " from Haskell!"])
+
+    res $ responseLBS status200
+                          [(hContentType, "application/json")]
+                          (encode val)
+
 anyRoute modelTVar req res =
     case pathInfo req of
         [ "minicell", cometKey, "show.json" ] -> do
-            let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
-            -- counterValue <- atomically $ do
-            --     modifyTVar modelTVar (+1)
-            --     readTVar modelTVar 
-
-            val <- do
-                model <- readTVarIO modelTVar
-                res <- eval model (ECellRef cometAddress)
-
-                -- This is the main point of integration betweenR
-                -- A) Haskell values
-                -- B) Elm values
-                -- C) Transforming unusual values to something suitable to render in Frontend
-
-
-                case res of
-                    EGraphFGL g -> do
-                        let dot = showDot (fglToDot g)
-                        let dotPath = "../build/minicell-cache/file.dot"
-                        let pngPath = "../build/minicell-cache/file.png"
-                        writeFile dotPath dot
-                        system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
-
-                        return $ CometImage cometAddress "/minicell-cache/file.png"
-                    -- EIMage g -> -- send the src
-                    _ -> return $ CometSLit cometAddress (show res)
-                
-                -- return $ CometSLit cometAddress (show res)
-
-            -- let val = CometSLit  (mconcat ["Hello ", show cometKey, " from Haskell!"])
-
-            res $ responseLBS status200
-                                  [(hContentType, "application/json")]
-                                  (encode val)
+            endpointShow modelTVar cometKey req res
         [ "minicell", cometKey, "write.json" ] -> do
             let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
 
@@ -115,16 +119,7 @@ anyRoute modelTVar req res =
                     atomically $ do
                         modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress ast)
 
-                    model <- readTVarIO modelTVar
-                    valueOfAst <- eval model ast
-    
-                    let val = case valueOfAst of
-                                ESLit s -> CometSLit (cometKeyToAddr $ T.unpack $ cometKey) s
-                                _ -> CometSLit (cometKeyToAddr $ T.unpack $ cometKey) (show valueOfAst)
-
-                    res $ responseLBS status200
-                                          [(hContentType, "application/json")]
-                                          (encode val)
+                    endpointShow modelTVar cometKey req res
 
 
         url ->

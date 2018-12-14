@@ -369,7 +369,7 @@ update msg model =
 
         Save addr ->
             let (rho, kappa) = addr in
-            ({ model | database = updateCellValue model.database addr (currentBuffer model.database addr |> parseBufferToEExpr model)
+            ({ model | database = updateCellValue model.database addr (addrToExcelStyle addr |> EComet)
                      , mode = IdleMode (rho+1, kappa)
                      }
             , curlXPOST addr (currentBuffer model.database addr))

@@ -172,6 +172,7 @@ eval model expr = case expr of
     loadName <- eval model expr
     case loadName of
       ESLit "cities" -> return (EGraphFGL vor)
+      ESLit "hello" -> return (EGraphFGL helloGraph)
       _ -> return (EGraphFGL vor)
 
   EApp op args -> do

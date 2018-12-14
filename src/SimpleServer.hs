@@ -50,52 +50,59 @@ wsApp pending_conn = do
     sendTextData conn $ (fromString ("Hello, client! " <> show t) :: T.Text)
 
 
--- The data that will be converted to JSON
--- jsonData = ["a","b","c"] :: [Text]
-dummyJsonData :: CometValue
-dummyJsonData = CometAddr (0, 0)
+eexprToComet model cometAddress  = do
+    cellValue <- eval model (ECellRef cometAddress)
+
+    -- This is the main point of integration betweenR
+    -- A) Haskell values
+    -- B) Elm values
+    -- C) Transforming unusual values to something suitable to render in Frontend
+
+
+    case cellValue of
+        EGraphFGL g -> do
+            let dot = showDot (fglToDot g)
+            let dotPath = "../build/minicell-cache/file.dot"
+            let pngPath = "../build/minicell-cache/file.png"
+            writeFile dotPath dot
+            system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
+
+            return $ CometImage cometAddress "/minicell-cache/file.png"
+        ESLit s -> return $ CometSLit cometAddress s
+        EILit i -> return $ CometILit cometAddress i
+        _ -> return $ CometSLit cometAddress (show cellValue)
+
 
 endpointShow modelTVar cometKey req res = do
     let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
-    -- counterValue <- atomically $ do
-    --     modifyTVar modelTVar (+1)
-    --     readTVar modelTVar 
 
-    val <- do
-        model <- readTVarIO modelTVar
-        cellValue <- eval model (ECellRef cometAddress)
-
-        -- This is the main point of integration betweenR
-        -- A) Haskell values
-        -- B) Elm values
-        -- C) Transforming unusual values to something suitable to render in Frontend
-
-
-        case cellValue of
-            EGraphFGL g -> do
-                let dot = showDot (fglToDot g)
-                let dotPath = "../build/minicell-cache/file.dot"
-                let pngPath = "../build/minicell-cache/file.png"
-                writeFile dotPath dot
-                system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
-
-                return $ CometImage cometAddress "/minicell-cache/file.png"
-            ESLit s -> return $ CometSLit cometAddress s
-            EILit i -> return $ CometILit cometAddress i
-            _ -> return $ CometSLit cometAddress (show cellValue)
+    model <- readTVarIO modelTVar
+    val <- eexprToComet model cometAddress
         
-        -- return $ CometSLit cometAddress (show res)
-
-    -- let val = CometSLit  (mconcat ["Hello ", show cometKey, " from Haskell!"])
 
     res $ responseLBS status200
                           [(hContentType, "application/json")]
                           (encode val)
 
+endpointShowAll modelTVar req res = do
+    model <- readTVarIO modelTVar
+
+    let existingKeys = (database model)
+
+    allOfCells <- sequence $ eexprToComet model <$> addr <$> (database model)
+
+    res $ responseLBS status200
+                          [(hContentType, "application/json")]
+                          (encode allOfCells)
+
 anyRoute modelTVar req res =
     case pathInfo req of
+        [ "minicell", "all.json" ] -> do
+            endpointShowAll modelTVar req res
+
         [ "minicell", cometKey, "show.json" ] -> do
             endpointShow modelTVar cometKey req res
+
         [ "minicell", cometKey, "write.json" ] -> do
             let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
 

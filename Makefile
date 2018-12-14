@@ -15,6 +15,13 @@ example1:
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''cities'
 	echo
 	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''=SP(A1,A2,A3)'
+	echo
+	curl -X post  http://localhost:3000/minicell/B3/write.json -d 'formula=''=MF(A1,A2,A3)'
+
+example2: example1
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''hello'
+	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''Hello'
+	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''Interconnected'
 
 modify-target-to-d:
 	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''D'

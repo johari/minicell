@@ -80,6 +80,7 @@ type Msg
     | GotPreviews CellAddress (List String)
 
     | CometUpdate CometKey (Result Http.Error E.Value)
+    | CometUpdateAll (Result Http.Error E.Value)
 
     -- | SelectCell CellAddress -- e.g. Select the first column
     -- | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
@@ -118,6 +119,7 @@ init _ =
                 , cometUpdate "C1"
                 , cometUpdate "C2"
                 , cometUpdate "C3"
+                , cometUpdateAll
                 ]
     )
 
@@ -383,29 +385,29 @@ update msg model =
             case res of
                 Ok payload ->
                     let
-                        valueType = D.decodeValue (D.field "valueType" D.string) payload
-                        val = case valueType of
-                            Ok "EILit" ->
-                                case D.decodeValue (D.field "value" D.int) payload of
-                                    Ok i -> EILit i
-                                    Err err -> EError (Debug.toString err)
-                            Ok "ESLit" -> 
-                                case D.decodeValue (D.field "value" D.string) payload of
-                                    Ok i -> ESLit i
-                                    Err err -> EError (Debug.toString err)
-                            Ok "EImage" ->
-                                case D.decodeValue (D.field "value" D.string) payload of
-                                    Ok i -> EImage i
-                                    Err err -> EError (Debug.toString err)
-
-                            _ -> EError ("COMET value not implemented" ++ (Debug.toString valueType))
+                        val = cometValueTOEExpr payload
                     in
-                        ( { model | cometStorage = Dict.insert cometKey (Debug.log (Debug.toString cometKey) val) model.cometStorage}, Cmd.none )
+                        --( { model | cometStorage = Dict.insert cometKey (Debug.log (Debug.toString cometKey) val) model.cometStorage}, Cmd.none )
+                        ( { model | cometStorage = Dict.insert cometKey val model.cometStorage}, cometUpdateAll )
 
                 Err err ->
                     ( { model | cometStorage = Dict.insert cometKey (Debug.toString err |> EError) model.cometStorage}, Cmd.none )
 
+        CometUpdateAll res ->
+            case res of
+                Ok payload ->
+                    --el = D.decodeValue (D.list (D.field "valueType" D.string)) payload
+                    case D.decodeValue (D.list D.value) payload of
+                        Ok el ->
+                            let
+                                keyValPairs = (List.map decodeCometValue el)
+                            in
+                                ( { model | cometStorage = Dict.fromList ((Dict.toList model.cometStorage) ++ keyValPairs) }, Cmd.none)
+                        Err err ->
+                            (model, Cmd.none)
 
+                Err err ->
+                    ( model, Cmd.none )
         -- All the [keyboard magic] happen here            
         WindowKeyPress payload ->
             let maybeKey = (Result.toMaybe (D.decodeValue D.string payload)) in
@@ -472,6 +474,37 @@ update msg model =
         _ ->
             ( model, Cmd.none )
 
+-- This method tries to parse cometKey
+decodeCometValue payload =
+    let
+        perhapsCometKey = D.decodeValue (D.field "cometKey" D.string) payload
+        cometKey = case perhapsCometKey of
+            Ok str -> str
+            Err _  -> "undefined" -- FIXME
+    in
+        (cometKey, cometValueTOEExpr payload)
+
+
+-- This ignores cometKey
+cometValueTOEExpr payload =
+    let
+        valueType = D.decodeValue (D.field "valueType" D.string) payload
+    in
+        case valueType of
+            Ok "EILit" ->
+                case D.decodeValue (D.field "value" D.int) payload of
+                    Ok i -> EILit i
+                    Err err -> EError (Debug.toString err)
+            Ok "ESLit" -> 
+                case D.decodeValue (D.field "value" D.string) payload of
+                    Ok s -> ESLit s
+                    Err err -> EError (Debug.toString err)
+            Ok "EImage" ->
+                case D.decodeValue (D.field "value" D.string) payload of
+                    Ok i -> EImage i
+                    Err err -> EError (Debug.toString err)
+
+            _ -> EError ("COMET value not implemented" ++ (Debug.toString valueType))
 
 -- This is where we get super-detailed about rendering of our widgets
 
@@ -493,17 +526,20 @@ viewCell model res =
                 EBot ->
                     span [] [ text "()" ]
 
-                ESuperFancyGraph g ->
-                    let
-                        l1 = Graph.nodes g |> List.length
-                        l2 = Graph.edges g |> List.length
-                        textValue2 = "Graph of size " ++ (fromInt l1) ++ ", with " ++ (fromInt l2) ++ " edges"
-                        textValue = toGraphviz g
-                    in
-                        span [ class "vizjs-compile-dot-to-svg" ] [ text textValue ]
+                --ESuperFancyGraph g ->
+                --    let
+                --        l1 = Graph.nodes g |> List.length
+                --        l2 = Graph.edges g |> List.length
+                --        textValue2 = "Graph of size " ++ (fromInt l1) ++ ", with " ++ (fromInt l2) ++ " edges"
+                --        textValue = toGraphviz g
+                --    in
+                --        span [ class "vizjs-compile-dot-to-svg" ] [ text textValue ]
 
-                ECellGraph g ->
-                    span [ class "vizjs-compile-dot-to-svg" ] [ text (g |> mapNodes (\cellNode -> cellNode.value |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]
+                --ECellGraph g ->
+                --    span [ class "vizjs-compile-dot-to-svg" ] [ text (g |> mapNodes (\cellNode -> cellNode.value |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]
+
+                EImage src ->
+                    span [] [ text ("<img src=" ++ src ++">") ]
 
                 EApp f args ->
                     let resultOfEvaluation = (eval model cell.value) in
@@ -883,6 +919,14 @@ cometUpdate cometKey =
     { url = ("http://localhost:3000/minicell/" ++ cometKey ++ "/show.json")
     , expect = Http.expectJson (CometUpdate cometKey) D.value
     }
+
+cometUpdateAll : Cmd Msg
+cometUpdateAll =
+  Http.get
+    { url = ("http://localhost:3000/minicell/all.json")
+    , expect = Http.expectJson (CometUpdateAll) (D.value)
+    }
+
 
 toGraphviz g = 
   (g

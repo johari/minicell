@@ -84,6 +84,25 @@ type Msg
     -- | SelectCell CellAddress -- e.g. Select the first column
     -- | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
 
+addrToExcelStyle addr = 
+    let (rho, kappa) = addr
+        columnString = Char.fromCode (kappa + (Char.toCode 'A')) |> String.fromChar
+    in
+        columnString ++ (String.fromInt (rho+1))
+
+curlXPOST addr formula =
+    Http.post { url = ("http://localhost:3000/minicell/" ++ (addrToExcelStyle addr) ++ "/write.json")
+              , body = (postBodyUpdateFormula formula)
+              , expect = Http.expectJson (CometUpdate (addrToExcelStyle addr)) D.value
+    }
+
+
+
+postBodyUpdateFormula formula =
+  Http.multipartBody
+    [ Http.stringPart "user" formula
+    ]
+
 type alias Model =
     Spreadsheet
 
@@ -353,7 +372,7 @@ update msg model =
             ({ model | database = updateCellValue model.database addr (currentBuffer model.database addr |> parseBufferToEExpr model)
                      , mode = IdleMode (rho+1, kappa)
                      }
-            , Cmd.none)
+            , curlXPOST addr (currentBuffer model.database addr))
 
         ChangeCandidateCell addr ->
             ( { model | mode = IdleMode addr }, Cmd.none)

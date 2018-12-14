@@ -163,7 +163,9 @@ eval model expr = case expr of
 
     case (map toLower op) of
         "mf" -> return (EILit $ maxFlow g' n1 n2)
-        "sp" -> return (EILit $ fromMaybe 0 $ spLength n1 n2  g')
+        "sp" -> do
+          print (n1, n2)
+          return (EILit $ fromMaybe 0 $ spLength n1 n2  g')
         _ -> return (EError $ "error evaluating " ++ op)
 
   EApp "LOAD" [expr] -> do

@@ -27,6 +27,10 @@ import Text.ParserCombinators.Parsec
 
 import Network.Wai.Middleware.Cors
 
+import Data.Graph.Inductive.Dot
+
+import System.Process
+
 main = do
     let port = 3000
     modelTVar <- atomically $ newTVar emptySpreadsheet
@@ -62,9 +66,28 @@ anyRoute modelTVar req res =
             val <- do
                 model <- readTVarIO modelTVar
                 res <- eval model (ECellRef cometAddress)
-                return $ CometString cometAddress (show res)
 
-            -- let val = CometString  (mconcat ["Hello ", show cometKey, " from Haskell!"])
+                -- This is the main point of integration betweenR
+                -- A) Haskell values
+                -- B) Elm values
+                -- C) Transforming unusual values to something suitable to render in Frontend
+
+
+                case res of
+                    EGraphFGL g -> do
+                        let dot = showDot (fglToDot g)
+                        let dotPath = "../build/minicell-cache/file.dot"
+                        let pngPath = "../build/minicell-cache/file.png"
+                        writeFile dotPath dot
+                        system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
+
+                        return $ CometImage cometAddress "/minicell-cache/file.png"
+                    -- EIMage g -> -- send the src
+                    _ -> return $ CometSLit cometAddress (show res)
+                
+                -- return $ CometSLit cometAddress (show res)
+
+            -- let val = CometSLit  (mconcat ["Hello ", show cometKey, " from Haskell!"])
 
             res $ responseLBS status200
                                   [(hContentType, "application/json")]
@@ -80,21 +103,21 @@ anyRoute modelTVar req res =
             
             case parse cellContent "REPL" (BU.toString formula) of 
                 Left err -> do
-                    let val = CometString cometAddress (show err)
+                    let val = CometSLit cometAddress (show err)
                     res $ responseLBS status200
                                           [(hContentType, "application/json")]
                                           (encode val)
 
                 Right ast -> do
                     -- TODO: update the global database
-                    -- TODO: delegate CometString transformation to a separate function
+                    -- TODO: delegate CometSLit transformation to a separate function
 
                     model <- readTVarIO modelTVar
                     valueOfAst <- eval model ast
                     atomically $ do
                         modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress valueOfAst)
 
-                    let val = CometString (cometKeyToAddr $ T.unpack $ cometKey) (show ast)
+                    let val = CometSLit (cometKeyToAddr $ T.unpack $ cometKey) (show ast)
                     res $ responseLBS status200
                                           [(hContentType, "application/json")]
                                           (encode val)

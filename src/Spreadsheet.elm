@@ -374,7 +374,12 @@ update msg model =
                                 case D.decodeValue (D.field "value" D.string) payload of
                                     Ok i -> ESLit i
                                     Err err -> EError (Debug.toString err)
-                            _ -> EError "COMET value not implemented"
+                            Ok "EImage" ->
+                                case D.decodeValue (D.field "value" D.string) payload of
+                                    Ok i -> EImage i
+                                    Err err -> EError (Debug.toString err)
+
+                            _ -> EError ("COMET value not implemented" ++ (Debug.toString valueType))
                     in
                         ( { model | cometStorage = Dict.insert cometKey (Debug.log (Debug.toString cometKey) val) model.cometStorage}, Cmd.none )
 

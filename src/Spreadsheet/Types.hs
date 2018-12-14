@@ -208,7 +208,8 @@ addrToExcelStyle (rho, kappa) =
 
 
 data CometValue = CometAddr CellAddress
-                | CometString CellAddress String
+                | CometSLit CellAddress String
+                | CometImage CellAddress String
 
 instance ToJSON CometValue where 
   toJSON (CometAddr addr) =
@@ -218,9 +219,18 @@ instance ToJSON CometValue where
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
       ]
 
-  toJSON (CometString addr str) = 
+  toJSON (CometSLit addr str) = 
     object
       [ (T.pack "value") .= str
       , (T.pack "valueType") .= (T.pack "ESLit")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
       ]
+
+
+  toJSON (CometImage addr src) = 
+    object
+      [ (T.pack "value") .= src
+      , (T.pack "valueType") .= (T.pack "EImage")
+      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      ]
+

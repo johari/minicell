@@ -12,6 +12,8 @@ import Spreadsheet.Examples.Graphs
 
 -- Graph stuff
 
+import Data.Graph.Inductive.Example (vor)
+
 import Data.Graph.Inductive.Query.MaxFlow
 import Data.Graph.Inductive.Basic
 
@@ -61,7 +63,7 @@ formulaCellRef = do
 formulaWithOperands = do
   operation <- try $ many1 letter
   char '('
-  args <- sepBy1 formula (char ',' >> many spaces)
+  args <- sepBy1 formula (char ',' *> spaces)
   char ')'
   return $ EApp operation args
 
@@ -138,16 +140,24 @@ eval model expr = case expr of
     EGraphFGL g' <- eval model g
     return $ EGraphFGL $ grev g'
 
-  EApp op [ s, t, g ] | elem (map toLower op) ["mf", "sp"] -> do
+  EApp op [ g, s, t ] | elem (map toLower op) ["mf", "sp"] -> do
     -- TODO: Return EError when pattern matching fails
 
+    eval model s >>= print
+    eval model t >>= print
+
     (ESLit s') <- eval model s
+
     (ESLit t') <- eval model t
-    (EGraphFGL g') <- eval model g
+    myError <- eval model g
+    print myError
+    let (EGraphFGL g') = myError
 
     let nn1 = gsel (\(_, _, label, _) -> label == s') g'
     let nn2 = gsel (\(_, _, label, _) -> label == t') g'
 
+    print nn1
+    print nn2
     let ((_, n1, _, _):_) = nn1
     let ((_, n2, _, _):_) = nn2
 
@@ -156,5 +166,13 @@ eval model expr = case expr of
         "sp" -> return (EILit $ fromMaybe 0 $ spLength n1 n2  g')
         _ -> return (EError $ "error evaluating " ++ op)
 
+  EApp "LOAD" [expr] -> do
+    loadName <- eval model expr
+    case loadName of
+      ESLit "cities" -> return (EGraphFGL vor)
+      _ -> return (EGraphFGL vor)
+
+  EApp op args -> do
+    return $ ESLit $ (show op) ++ " " ++ show args ++ " is not implemented"
 
   _ -> return expr

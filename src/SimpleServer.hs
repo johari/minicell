@@ -16,6 +16,7 @@ import Control.Concurrent.STM
 
 import Control.Monad.IO.Class (liftIO)
 
+import Data.Monoid
 import Data.String
 
 import Spreadsheet.Types
@@ -88,9 +89,10 @@ anyRoute modelTVar req res =
                     -- TODO: update the global database
                     -- TODO: delegate CometString transformation to a separate function
 
-                    -- res <- eval model ast
+                    model <- readTVarIO modelTVar
+                    valueOfAst <- eval model ast
                     atomically $ do
-                        modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress ast)
+                        modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress valueOfAst)
 
                     let val = CometString (cometKeyToAddr $ T.unpack $ cometKey) (show ast)
                     res $ responseLBS status200

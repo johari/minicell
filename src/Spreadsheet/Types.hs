@@ -6,6 +6,8 @@ module Spreadsheet.Types where
 
 import Data.Graph.Inductive.Example
 
+import Data.Graph.Inductive.Dot
+
 -- Text and JSON stuff
 
 import Data.Aeson

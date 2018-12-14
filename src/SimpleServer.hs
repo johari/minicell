@@ -112,12 +112,16 @@ anyRoute modelTVar req res =
                     -- TODO: update the global database
                     -- TODO: delegate CometSLit transformation to a separate function
 
+                    atomically $ do
+                        modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress ast)
+
                     model <- readTVarIO modelTVar
                     valueOfAst <- eval model ast
-                    atomically $ do
-                        modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress valueOfAst)
+    
+                    let val = case valueOfAst of
+                                ESLit s -> CometSLit (cometKeyToAddr $ T.unpack $ cometKey) s
+                                _ -> CometSLit (cometKeyToAddr $ T.unpack $ cometKey) (show valueOfAst)
 
-                    let val = CometSLit (cometKeyToAddr $ T.unpack $ cometKey) (show ast)
                     res $ responseLBS status200
                                           [(hContentType, "application/json")]
                                           (encode val)

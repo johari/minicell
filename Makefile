@@ -23,6 +23,11 @@ example2: example1
 	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''Hello'
 	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''Interconnected'
 
+poppet:
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''https://www.youtube.com/watch?v=nLQRtCEX-E0'
+	curl -X post  http://localhost:3000/minicell/A2/write.json -F 'file1=''@/Users/nima/code/2017/poppet-hs/assets/og-image.jpg'
+
+
 modify-target-to-d:
 	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''D'
 

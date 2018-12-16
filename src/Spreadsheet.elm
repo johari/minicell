@@ -4,7 +4,7 @@ import Debug
 import Browser
 import Html exposing (..)
 import Html.Events exposing (onClick, onDoubleClick, onInput, onBlur, onMouseOver, keyCode, on, preventDefaultOn)
-import Html.Attributes exposing (id, class, href, value, autofocus, src)
+import Html.Attributes exposing (id, class, href, value, autofocus, src, property, height, width)
 import List
 import Dict
 import Result
@@ -763,6 +763,8 @@ loadExampleButtons =
         [ text "Example 5: Remote search" ]
     , button [ onClick (SwitchSpreadsheet exampleSpreadsheetJSON) ]
         [ text "Example 6: Organization Chart (JSON)" ]
+    , button [ onClick (SwitchSpreadsheet exampleSpreadsheetPoppet) ]
+        [ text "Example 7: Poppet" ]
     ]
 
 vertexDemoButtons model = div [ id "container-demo-buttons" ] [

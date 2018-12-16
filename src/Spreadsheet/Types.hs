@@ -74,7 +74,8 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | ESLit String --CellString
            | ECellRef CellAddress 
            | EBot -- CellEmpty
-           
+           | EImage String
+
         --    | ECellGraph (Graph Cell ())
         --    | EGraphGunrock Gr
            -- ^^^ A super fancy type

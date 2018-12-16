@@ -11,6 +11,9 @@ import Network.Wai.Parse
 
 import Blaze.ByteString.Builder.ByteString (fromLazyByteString)
 import qualified Data.ByteString.UTF8 as BU
+import qualified Data.ByteString.Char8 as C
+import qualified Data.ByteString.Lazy as B
+
 
 import Control.Concurrent.STM
 
@@ -70,6 +73,7 @@ eexprToComet model cometAddress  = do
             return $ CometImage cometAddress "/minicell-cache/file.png"
         ESLit s -> return $ CometSLit cometAddress s
         EILit i -> return $ CometILit cometAddress i
+        EImage src -> return $ CometImage cometAddress src
         _ -> return $ CometSLit cometAddress (show cellValue)
 
 
@@ -95,6 +99,21 @@ endpointShowAll modelTVar req res = do
                           [(hContentType, "application/json")]
                           (encode allOfCells)
 
+storeFiles :: [File B.ByteString] -> IO [String]
+storeFiles [] = return []
+storeFiles (x:xs) = do
+    let (param, info) = x
+    -- FIXME: param is actually important but we are ignoring it
+
+    let uploadedFileName = C.unpack (fileName info)
+        uploadedContent  = fileContent info
+
+    B.writeFile ("/Users/nima/Dropbox/minicell-uploads/" ++ (uploadedFileName)) uploadedContent
+
+    otherUrls <- storeFiles xs
+
+    return (["http://localhost:8001/" ++ (uploadedFileName)] ++ otherUrls)
+
 anyRoute modelTVar req res =
     case pathInfo req of
         [ "minicell", "all.json" ] -> do
@@ -106,26 +125,39 @@ anyRoute modelTVar req res =
         [ "minicell", cometKey, "write.json" ] -> do
             let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
 
+
             (params, files) <- parseRequestBody lbsBackEnd req
-            print (params, length files)
-            -- TODO: do something with files!
 
-            let ((_,formula):_) = params -- FIXME: lookup the parameter by name
-            
-            case parse cellContent "REPL" (BU.toString formula) of 
-                Left err -> do
-                    let val = CometSLit cometAddress (show err)
-                    res $ responseLBS status200
-                                          [(hContentType, "application/json")]
-                                          (encode val)
+            -- Upload files and get urls
+            fileUrls <- storeFiles files
+            print (params, fileUrls)
 
-                Right ast -> do
-                    -- TODO: update the global database
-                    -- TODO: delegate CometSLit transformation to a separate function
+            case files of
+                [] -> do
+                    let ((_,formula):_) = params -- FIXME: lookup the parameter by name
+
+                    case parse cellContent "REPL" (BU.toString formula) of 
+                        Left err -> do
+                            let val = CometSLit cometAddress (show err)
+                            res $ responseLBS status200
+                                                  [(hContentType, "application/json")]
+                                                  (encode val)
+
+                        Right ast -> do
+                            -- TODO: update the global database
+                            -- TODO: delegate CometSLit transformation to a separate function
+
+                            atomically $ do
+                                modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress ast)
+
+                            endpointShow modelTVar cometKey req res
+
+                _ -> do
+                    -- TODO: what if multiple files were dropped on one cell?
 
                     atomically $ do
-                        modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress ast)
-
+                        modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress (EImage (fileUrls !! 0)))
+            
                     endpointShow modelTVar cometKey req res
 
 

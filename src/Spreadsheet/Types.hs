@@ -74,6 +74,8 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | ESLit String --CellString
            | ECellRef CellAddress 
            | EBot -- CellEmpty
+
+           | EYouTube { yt_id :: Int, yt_start :: Maybe Double, yt_end :: Maybe Double }
            | EImage String
 
         --    | ECellGraph (Graph Cell ())

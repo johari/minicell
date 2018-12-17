@@ -912,6 +912,13 @@ exampleTableRemote =
   --, cometCell (0, 2) "C1", cometCell (1, 2) "C2", cometCell (2, 2) "C3"
   ]
 
+exampleTablePoppet = 
+  [ youTubeCell (0, 0) "jTQLF2p7GAM" Nothing Nothing
+  , youTubeCell (1, 0) "jTQLF2p7GAM" (Just "30") (Just "36")
+  , youTubeCell (2, 0) "jTQLF2p7GAM" (Just "60") (Just "66")
+  , youTubeCell (3, 0) "wZlGuI9l0co" Nothing Nothing
+  ]
+
 exampleSpreadsheet =
     --{ emptySpreadsheet | database = theCities }
     { emptySpreadsheet | database = el }
@@ -936,6 +943,10 @@ exampleSpreadsheetWithGraph =
           { exampleSpreadsheet |
                database = exampleSpreadsheet.database ++ [{ emptyCell | value = formula, addr = (10, 0)}]
           }
+
+exampleSpreadsheetPoppet = 
+  { exampleSpreadsheet | database = exampleTablePoppet
+  }
 
 score x = 1 -- FIXME
 

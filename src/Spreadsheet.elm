@@ -793,6 +793,22 @@ alternativeViewByEExpr model value =
         EILit num -> text ("Found a number! " ++ (Debug.toString num))
         EImage url -> img [ src url ] [ ]
         ESuperFancyGraph g -> pre [ ] [ toGraphviz g |> text ]
+        EYouTube params ->
+            let startAndEnd =
+                    case (params.start, params.end) of
+                        (Nothing, Nothing) -> ""
+                        (Nothing, Just x) -> "?start=0&end=" ++ x
+                        (Just x, Nothing) -> "?start=" ++ x
+                        (Just x, Just y) -> "?start=" ++ x ++ "&end=" ++ y
+            in
+              iframe
+                  [ width 560
+                  , height 315
+                  , src ("https://www.youtube.com/embed/" ++ params.video_id ++ startAndEnd)
+                  , property "frameborder" (E.string "0")
+                  , property "allowfullscreen" (E.string "true")
+                  ]
+                  []
         EComet cometKey ->
             case (Dict.get cometKey model.cometStorage) of
                 Just resolvedVal ->

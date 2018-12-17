@@ -66,6 +66,7 @@ type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
            --             whatever "convert" can do (imageMagik)
 
            | EImage String -- url
+           | EYouTube { video_id : String, start : Maybe String, end : Maybe String }
 
            | EComet CometKey
 
@@ -131,6 +132,11 @@ graphCell   addr g   = { emptyCell | addr = addr, value = EGraph emptyGraph }
 
 formulaCell addr formula args = { emptyCell | addr = addr, value = EApp formula args }
 cometCell   addr endpoint     = { emptyCell | addr = addr, value = EComet endpoint }
+
+youTubeCell addr yt_id yt_start yt_end =
+  { emptyCell | addr = addr
+              , value = EYouTube { video_id = yt_id, start = yt_start, end = yt_end }
+  }
 
 isStringCell cell = case cell.value of
     ESLit _ -> True

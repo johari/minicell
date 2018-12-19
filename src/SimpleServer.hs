@@ -104,12 +104,12 @@ eexprToComet model cometAddress  = do
     case cellValue of
         EGraphFGL g -> do
             let dot = showDot (fglToDot g)
-            let dotPath = "../build/minicell-cache/file.dot"
-            let pngPath = "../build/minicell-cache/file.png"
+            let dotPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".dot"
+            let pngPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png"
             writeFile dotPath dot
             system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
 
-            return $ CometImage cometAddress "/minicell-cache/file.png"
+            return $ CometImage cometAddress ("/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png")
         ESLit s -> return $ CometSLit cometAddress s
         EILit i -> return $ CometILit cometAddress i
         EImage src -> return $ CometImage cometAddress src

@@ -7,6 +7,7 @@ prepare:
 
 ouroboros:
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=LOAD(B1)'
+	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=GREV(A1)'
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''ouroboros'
 
 example1:

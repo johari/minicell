@@ -181,6 +181,10 @@ eval model expr = case expr of
         _ -> return (EError $ "error evaluating " ++ op)
 
 
+  EApp "GREV" [g] -> do
+    (EGraphFGL g') <- eval model g
+    return $ EGraphFGL $ grev g'
+
   EApp "MUSTACHE" args -> do
     let mustacheText = "Hello {{A1}} <a href=\".{{A2}}\">{{A2}}</a>"
     let compiledTemplate = compileMustacheText "foo" mustacheText

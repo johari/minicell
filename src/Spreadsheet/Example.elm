@@ -906,10 +906,9 @@ twitterExample =
      ]
 
 exampleTableRemote = 
-  [ cometCell (0, 0) "A1", cometCell (1, 0) "A2", cometCell (2, 0) "A3"
-  , cometCell (0, 1) "B1", cometCell (1, 1) "B2"
-  , cometCell (2, 1) "B3"
-  --, cometCell (0, 2) "C1", cometCell (1, 2) "C2", cometCell (2, 2) "C3"
+  [ cometCell (0, 0) "A1", cometCell (1, 0) "A2", cometCell (2, 0) "A3", cometCell (3, 0) "A4"
+  , cometCell (0, 1) "B1", cometCell (1, 1) "B2", cometCell (2, 1) "B3", cometCell (3, 1) "B4"
+  , cometCell (0, 2) "C1", cometCell (1, 2) "C2", cometCell (2, 2) "C3", cometCell (3, 2) "C4"
   ]
 
 exampleTablePoppet = 

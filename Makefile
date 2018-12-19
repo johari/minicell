@@ -28,9 +28,23 @@ example2: example1
 	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''Interconnected'
 
 poppet:
-	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''https://www.youtube.com/watch?v=nLQRtCEX-E0'
-	curl -X post  http://localhost:3000/minicell/A2/write.json -F 'file1=''@/Users/nima/code/2017/poppet-hs/assets/og-image.jpg'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''/'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=MUSTACHE(A1)'
 
+	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''/og-image.jpg'
+	curl -X post  http://localhost:3000/minicell/B2/write.json -F 'file1=''@/Users/nima/code/2017/poppet-hs/assets/og-image.jpg'
+
+	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''/favicon.ico'
+	curl -X post  http://localhost:3000/minicell/B3/write.json -F 'file1=''@/Users/nima/code/2017/poppet-hs/assets/favicon.ico'
+
+	curl -X post  http://localhost:3000/minicell/A4/write.json -d 'formula=''/city'
+	curl -X post  http://localhost:3000/minicell/B4/write.json -d 'formula=''=C4'
+
+
+	curl -X post  http://localhost:3000/minicell/C4/write.json -d 'formula=''https://www.youtube.com/watch?v=nLQRtCEX-E0'
+	
+
+	# curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''=HTTP(A1:B10)'
 
 modify-target-to-d:
 	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''D'

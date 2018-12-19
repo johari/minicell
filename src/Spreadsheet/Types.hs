@@ -131,6 +131,12 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
 type Formula = EExpr
 
 
+eexprToHtml cellValue = do
+    case cellValue of
+        ESLit s -> return s
+        _ -> return $ "do not know how to convert " ++ (show cellValue) ++ " to html"
+
+
 type CellAddress = ( Int, Int )
 
 row :: CellAddress -> Int

@@ -28,6 +28,14 @@ import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Char
 
 
+-- Stache stuff
+
+import Data.Aeson
+import Text.Mustache
+import Data.Aeson
+import qualified Data.Text.Lazy as L
+import qualified Data.Text as T
+
 cellContent :: Parser EExpr
 cellContent = do
   s <- choice $ [ formulaWithEqSign, numberLiteral, stringLiteral ]
@@ -43,7 +51,7 @@ formulaWithEqSign = do
   formula
 
 formula = do
-  s <- choice [ formulaCellRef, formulaWithOperands ]
+  s <- choice [ formulaCellRef, formulaWithOperands, numberLiteral, stringLiteral ]
   return s
 
 cometKeyToAddr cometKey =
@@ -67,7 +75,7 @@ formulaCellRef = do
 formulaWithOperands = do
   operation <- try $ many1 letter
   char '('
-  args <- sepBy1 formula (char ',' *> spaces)
+  args <- sepBy formula (char ',' *> spaces)
   char ')'
   return $ EApp operation args
 
@@ -171,6 +179,21 @@ eval model expr = case expr of
           print (n1, n2)
           return (EILit $ fromMaybe 0 $ spLength n1 n2  g')
         _ -> return (EError $ "error evaluating " ++ op)
+
+
+  EApp "MUSTACHE" args -> do
+    let mustacheText = "Hello {{A1}} <a href=\".{{A2}}\">{{A2}}</a>"
+    let compiledTemplate = compileMustacheText "foo" mustacheText
+    
+    a1InHtml <- eval model (ECellRef (0, 0)) >>= eexprToHtml
+    a2InHtml <- eval model (ECellRef (1, 0)) >>= eexprToHtml
+
+    case compiledTemplate of
+      Left _ -> return $ EError "Mustache compile failed"
+      Right template ->
+        return $ ESLit (L.unpack $ renderMustache template $ object [ "A1" .= (T.pack $ a1InHtml)
+                                                                    , "A2" .= (T.pack $ a2InHtml)
+                                                                    ])
 
   EApp "LOAD" [expr] -> do
     loadName <- eval model expr

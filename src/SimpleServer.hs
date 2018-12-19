@@ -1,6 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+
+-- Template stuff
+
+import Text.Mustache
+
+
 import Data.Aeson
 import qualified Data.Text as T
+import Control.Lens 
+import Data.List (find)
+import Data.Monoid
+import Data.String
+
+-- HTTP Client stuff
+import Network.Wreq
+
+-- HTTP Server stuff
 
 import Network.Wai
 import Network.HTTP.Types
@@ -8,6 +24,9 @@ import Network.Wai.Handler.Warp (run)
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
 import Network.Wai.Parse
+import Network.Wai.Middleware.Cors
+
+-- Bytestring stuff
 
 import Blaze.ByteString.Builder.ByteString (fromLazyByteString)
 import qualified Data.ByteString.UTF8 as BU
@@ -50,6 +69,27 @@ wsApp pending_conn = do
     --t <- getCurrentTime
     let t = "hi"
     sendTextData conn $ (fromString ("Hello, client! " <> show t) :: T.Text)
+
+
+eexprToHttpResponse cellValue = do
+    case cellValue of
+        ESLit s -> return $
+            responseLBS status200
+                        [(hContentType, "text/html")]
+                        (fromString $ s)
+
+        EImage src -> do
+            -- Download the image
+            -- Show the image
+            print $ mconcat ["fetching ", src]
+            -- response <- (get "http://poppet.us/favicon.ico")
+            response <- (get src)
+            return $ responseLBS status200 [] (response ^. responseBody)
+
+        _ -> return $ 
+            responseLBS status503
+                        [(hContentType, "text/plain")]
+                        (fromString $ "HTML output not implemented for " ++ (show cellValue))
 
 
 eexprToComet model cometAddress  = do
@@ -120,6 +160,50 @@ anyRoute modelTVar req res =
 
         [ "minicell", cometKey, "show.json" ] -> do
             endpointShow modelTVar cometKey req res
+
+        ("minicell":cometKey:"HTTP":tail) -> do
+            -- TODO: first we must check the content of the cell
+            -- We should serve this endpoint only if
+            -- the content of the cell is a `=HTTP(arg1)` formula
+            -- where `arg1` represents a 2-column region.
+
+            -- We treat this 2-column region as a key-value hash.
+            -- where keys map to `tail`, and
+            -- values map to the content served at that URL
+
+            model <- readTVarIO modelTVar
+
+            case tail of
+                t -> do
+                    let needle = case t of
+                                    x | x == [] || x == [""] -> "/"
+                                    [x] -> "/" ++ (T.unpack x)
+                                    _ -> ""
+
+                    print needle
+
+                    columnA <- sequence $ (\x -> do
+                        s <- eval model (value x)
+                        return $ (x, s)) <$> [ cell | cell <- database model, snd (addr cell) == 0 ]
+
+                    let rowNumberOfslashInColumnA = find (\(_, y) -> y == ESLit needle) columnA
+
+                    print columnA
+                    print rowNumberOfslashInColumnA
+
+                    case rowNumberOfslashInColumnA of
+                        Nothing -> res $ responseLBS status404 [] ("No default index set for /")
+                        Just (indexCell, _) ->  do
+                            let (rho, kappa) = addr indexCell
+                            indexVal <- eval model (ECellRef (rho, kappa+1))
+                            httpResponse <- eexprToHttpResponse indexVal
+                            res $ httpResponse
+                    
+                    -- TODO:if "/" doesn't exist, it's 404, or 403
+                _ -> do
+                    res $ responseLBS status200
+                                          [(hContentType, "application/json")]
+                                          (encode $ mconcat $ ["Hello HTTP server at cell ", cometKey, " !", T.pack $ show tail])
 
         [ "minicell", cometKey, "write.json" ] -> do
             let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)

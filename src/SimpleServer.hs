@@ -19,8 +19,7 @@ import Control.Concurrent.STM
 
 import Control.Monad.IO.Class (liftIO)
 
-import Data.Monoid
-import Data.String
+-- Minicell stuff
 
 import Spreadsheet.Types
 import Spreadsheet as Mini
@@ -28,7 +27,7 @@ import Spreadsheet as Mini
 import Spreadsheet.Evaluator.Parser
 import Text.ParserCombinators.Parsec
 
-import Network.Wai.Middleware.Cors
+-- Graph stuff
 
 import Data.Graph.Inductive.Dot
 

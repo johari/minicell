@@ -5,6 +5,10 @@ prepare:
 	rm -rf build/*
 	cp -r vendor static/* build
 
+ouroboros:
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=LOAD(B1)'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''ouroboros'
+
 example1:
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=LOAD(B1)'
 	echo

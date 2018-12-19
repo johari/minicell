@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Spreadsheet.Evaluator.Parser where
 
 -- Haskell stuff
@@ -18,6 +20,8 @@ import Data.Graph.Inductive.Query.MaxFlow
 import Data.Graph.Inductive.Basic
 
 import Data.Graph.Inductive.Query.SP
+
+import Data.Graph.Inductive.Graph
 
 -- Parsec stuff
 import Text.ParserCombinators.Parsec
@@ -173,6 +177,7 @@ eval model expr = case expr of
     case loadName of
       ESLit "cities" -> return (EGraphFGL vor)
       ESLit "hello" -> return (EGraphFGL helloGraph)
+      ESLit "ouroboros" -> return (EGraphFGLE $ emap show $ nmap (\x -> show (addrToExcelStyle $ addr x, value x)) $ dependencyGraph $ database model)
       _ -> return (EGraphFGL vor)
 
   EApp op args -> do

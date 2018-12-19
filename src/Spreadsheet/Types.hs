@@ -2,12 +2,16 @@
 
 module Spreadsheet.Types where
 
+import Debug.Trace
+
 -- Graph stuff
 
 import Data.Graph.Inductive.Example
 
 import Data.Graph.Inductive.Dot
 
+import Data.Graph.Inductive.NodeMap
+import Data.Graph.Inductive.Graph
 -- Text and JSON stuff
 
 import Data.Aeson
@@ -18,6 +22,7 @@ import Text.Parsec.Char (string)
 -- Haskell stuff
 
 import Data.Tuple
+import Data.Maybe
 import qualified Data.Map
 
 -- import Time (Posix, millisToPosix)
@@ -198,6 +203,20 @@ data Spreadsheet = Spreadsheet
     , demoEdges :: TEdgeDemo
     -- , currentTime :: Posix
     }
+
+refs :: EExpr -> [CellAddress]
+refs eexpr = case eexpr of
+  ECellRef addr -> [addr]
+  EApp _ args -> concat (refs <$> args)
+  _ -> []
+
+dependencyGraph :: Database -> Gr CellAddress ()
+dependencyGraph db = trace (show $ edges) (mkGraph vertices edges)
+  where
+    (vertices, nm) = mkNodes new [ addr c | c <- db ]
+    edges = fromMaybe [] $ mkEdges nm [ (v1, v2, ()) | c <- db, let v1 = addr c, v2 <- refs (value c) ]
+  -- vertices: non-empty cells
+  -- edges: if a cell addresses another cell (ECellRef addr), then the cell points to addr
 
 
 

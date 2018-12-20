@@ -204,7 +204,7 @@ eval model expr = case expr of
     case loadName of
       ESLit "cities" -> return (EGraphFGL vor)
       ESLit "hello" -> return (EGraphFGL helloGraph)
-      ESLit "ouroboros" -> return (EGraphFGLE $ emap show $ nmap (\x -> show (addrToExcelStyle $ addr x, value x)) $ dependencyGraph $ database model)
+      ESLit "ouroboros" -> return (EGraphFGL $ emap (const 0) $ nmap addrToExcelStyle $ dependencyGraph $ database model)
       _ -> return (EGraphFGL vor)
 
   EApp op args -> do

@@ -5,7 +5,7 @@ module Spreadsheet.Evaluator.Parser where
 -- Haskell stuff
 
 import Data.List
-import Data.Char (ord, toLower)
+import Data.Char (ord, toLower, toUpper)
 import Data.Maybe 
 
 -- Minicell stuff
@@ -38,8 +38,12 @@ import qualified Data.Text as T
 
 cellContent :: Parser EExpr
 cellContent = do
-  s <- choice $ [ formulaWithEqSign, numberLiteral, stringLiteral ]
-  return s
+  rest <- getInput 
+  case rest of
+    "" -> return $ EEmpty
+    _ -> do
+        s <- choice $ [ formulaWithEqSign, numberLiteral, stringLiteral ]
+        return s
 
 numberLiteral :: Parser EExpr
 numberLiteral = do
@@ -137,8 +141,13 @@ stringLiteral = do
 -- Sometimes I dream about fetching RSS and JSON as well.
 -- 
 
+normalizeOp expr =
+  case expr of
+    EApp op args -> EApp (map toUpper op) args
+    _ -> expr
+
 eval :: Spreadsheet -> Formula -> IO Formula
-eval model expr = case expr of
+eval model expr = case normalizeOp expr of
   ECellRef lookupAddr -> do
     case find (\x -> addr x == lookupAddr) (database model) of
       Nothing ->
@@ -146,13 +155,7 @@ eval model expr = case expr of
       Just cell -> eval model (value cell)
   
   
-  EApp "reverseEdges" [g] -> do
-    -- TODO: Return EError when pattern matching fails
-
-    EGraphFGL g' <- eval model g
-    return $ EGraphFGL $ grev g'
-
-  EApp op [ g, s, t ] | elem (map toLower op) ["mf", "sp"] -> do
+  EApp op [ g, s, t ] | elem op ["MF", "SP"] -> do
     -- TODO: Return EError when pattern matching fails
 
     eval model s >>= print
@@ -205,7 +208,7 @@ eval model expr = case expr of
       ESLit "cities" -> return (EGraphFGL vor)
       ESLit "hello" -> return (EGraphFGL helloGraph)
       ESLit "ouroboros" -> return (EGraphFGL $ emap (const 0) $ nmap addrToExcelStyle $ dependencyGraph $ database model)
-      _ -> return (EGraphFGL vor)
+      _ -> return (EError $ (mconcat ["graph `", show loadName, "` not found :("] :: String))
 
   EApp op args -> do
     return $ ESLit $ (show op) ++ " " ++ show args ++ " is not implemented"

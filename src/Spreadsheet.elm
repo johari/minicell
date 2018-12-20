@@ -113,12 +113,15 @@ init _ =
     , Cmd.batch [ cometUpdate "A1"
                 , cometUpdate "A2"
                 , cometUpdate "A3"
+                , cometUpdate "A4"
                 , cometUpdate "B1"
                 , cometUpdate "B2"
                 , cometUpdate "B3"
+                , cometUpdate "B4"
                 , cometUpdate "C1"
                 , cometUpdate "C2"
                 , cometUpdate "C3"
+                , cometUpdate "C4"
                 , cometUpdateAll
                 ]
     )
@@ -503,6 +506,8 @@ cometValueTOEExpr payload =
                 case D.decodeValue (D.field "value" D.string) payload of
                     Ok i -> EImage i
                     Err err -> EError (Debug.toString err)
+            Ok "EEmpty" ->
+                EEmpty
 
             _ -> EError ("COMET value not implemented" ++ (Debug.toString valueType))
 
@@ -554,6 +559,8 @@ viewCell model res =
                         Just val -> viewCell model (Just { cell | value = val })
                         _ -> span [] [ text ("comet pending.." ++ cometKey) ]
 
+                EEmpty ->
+                    span [] [ text ". " ]
                 v ->
                     span [] [ text "rendering not implemented" ]
 

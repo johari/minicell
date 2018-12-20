@@ -48,6 +48,8 @@ type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
            | ECellRef CellAddress 
            | EBot -- CellEmpty
            
+           | EEmpty
+
            | ECellGraph (Graph Cell ())
            | ESuperFancyGraph G
            -- ^^^ A super fancy type

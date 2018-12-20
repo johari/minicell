@@ -93,27 +93,31 @@ eexprToHttpResponse cellValue = do
 
 
 eexprToComet model cometAddress  = do
-    cellValue <- eval model (ECellRef cometAddress)
+    case find (\x -> addr x == cometAddress) (database model) of
+        Nothing -> return $ CometEmpty cometAddress
+        _ -> do
+            cellValue <- eval model (ECellRef cometAddress)
 
-    -- This is the main point of integration betweenR
-    -- A) Haskell values
-    -- B) Elm values
-    -- C) Transforming unusual values to something suitable to render in Frontend
+            -- This is the main point of integration betweenR
+            -- A) Haskell values
+            -- B) Elm values
+            -- C) Transforming unusual values to something suitable to render in Frontend
 
 
-    case cellValue of
-        EGraphFGL g -> do
-            let dot = showDot (fglToDot g)
-            let dotPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".dot"
-            let pngPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png"
-            writeFile dotPath dot
-            system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
+            case cellValue of
+                EGraphFGL g -> do
+                    let dot = showDot (fglToDot g)
+                    let dotPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".dot"
+                    let pngPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png"
+                    writeFile dotPath dot
+                    system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
 
-            return $ CometImage cometAddress ("/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png")
-        ESLit s -> return $ CometSLit cometAddress s
-        EILit i -> return $ CometILit cometAddress i
-        EImage src -> return $ CometImage cometAddress src
-        _ -> return $ CometSLit cometAddress (show cellValue)
+                    return $ CometImage cometAddress ("/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png")
+                ESLit s -> return $ CometSLit cometAddress s
+                EILit i -> return $ CometILit cometAddress i
+                EImage src -> return $ CometImage cometAddress src
+                EEmpty -> return $ CometEmpty cometAddress
+                _ -> return $ CometSLit cometAddress (show cellValue)
 
 
 endpointShow modelTVar cometKey req res = do

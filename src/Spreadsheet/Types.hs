@@ -80,6 +80,8 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | ECellRef CellAddress 
            | EBot -- CellEmpty
 
+           | EEmpty
+
            | EYouTube { yt_id :: Int, yt_start :: Maybe Double, yt_end :: Maybe Double }
            | EImage String
 

@@ -3,7 +3,7 @@
 Right now, [`src/SimpleServer.hs`](src/SimpleServer.hs) requires the following nix command to boot up:
 
 ```
-$ nix-shell -p "haskellPackages.ghcWithPackages (pkgs: with pkgs; [fgl generic-random QuickCheck brick fgl-arbitrary hspec diagrams palette z3 mysql-simple logict hslogger wai warp aeson wai-websockets wai-extra wai-cors])"
+nix-shell -p "haskellPackages.ghcWithPackages (pkgs: with pkgs; [fgl generic-random QuickCheck brick fgl-arbitrary hspec diagrams palette z3 mysql-simple logict hslogger wai warp aeson wai-websockets wai-extra wai-cors fgl-visualize graphviz dhall wreq stache])"
 ```
 
 - [x] Works on macOS

@@ -241,8 +241,16 @@ data CometValue = CometAddr CellAddress
                 | CometSLit CellAddress String
                 | CometILit CellAddress Int
                 | CometImage CellAddress String
+                | CometEmpty CellAddress
 
 instance ToJSON CometValue where 
+  toJSON (CometEmpty addr) =
+    object
+      [ (T.pack "valueType") .= (T.pack "EEmpty")
+      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      ]
+
+
   toJSON (CometAddr addr) =
     object
       [ (T.pack "value") .= (show addr :: String)

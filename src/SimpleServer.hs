@@ -32,6 +32,7 @@ import Blaze.ByteString.Builder.ByteString (fromLazyByteString)
 import qualified Data.ByteString.UTF8 as BU
 import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as BS
 
 
 import Control.Concurrent.STM
@@ -93,31 +94,27 @@ eexprToHttpResponse cellValue = do
 
 
 eexprToComet model cometAddress  = do
-    case find (\x -> addr x == cometAddress) (database model) of
-        Nothing -> return $ CometEmpty cometAddress
-        _ -> do
-            cellValue <- eval model (ECellRef cometAddress)
+    cellValue <- eval model (ECellRef cometAddress)
 
-            -- This is the main point of integration betweenR
-            -- A) Haskell values
-            -- B) Elm values
-            -- C) Transforming unusual values to something suitable to render in Frontend
+    -- This is the main point of integration betweenR
+    -- A) Haskell values
+    -- B) Elm values
+    -- C) Transforming unusual values to something suitable to render in Frontend
 
 
-            case cellValue of
-                EGraphFGL g -> do
-                    let dot = showDot (fglToDot g)
-                    let dotPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".dot"
-                    let pngPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png"
-                    writeFile dotPath dot
-                    system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
+    case cellValue of
+        EGraphFGL g -> do
+            let dot = showDot (fglToDot g)
+            let dotPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".dot"
+            let pngPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png"
+            writeFile dotPath dot
+            system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
 
-                    return $ CometImage cometAddress ("/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png")
-                ESLit s -> return $ CometSLit cometAddress s
-                EILit i -> return $ CometILit cometAddress i
-                EImage src -> return $ CometImage cometAddress src
-                EEmpty -> return $ CometEmpty cometAddress
-                _ -> return $ CometSLit cometAddress (show cellValue)
+            return $ CometImage cometAddress ("/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png")
+        ESLit s -> return $ CometSLit cometAddress s
+        EILit i -> return $ CometILit cometAddress i
+        EImage src -> return $ CometImage cometAddress src
+        _ -> return $ CometSLit cometAddress (show cellValue)
 
 
 endpointShow modelTVar cometKey req res = do
@@ -151,11 +148,11 @@ storeFiles (x:xs) = do
     let uploadedFileName = C.unpack (fileName info)
         uploadedContent  = fileContent info
 
-    B.writeFile ("/Users/nima/Dropbox/minicell-uploads/" ++ (uploadedFileName)) uploadedContent
+    B.writeFile ("../build/minicell-cache/" ++ (uploadedFileName)) uploadedContent
 
     otherUrls <- storeFiles xs
 
-    return (["http://localhost:8001/" ++ (uploadedFileName)] ++ otherUrls)
+    return (["http://localhost:8000/minicell-cache/" ++ (uploadedFileName)] ++ otherUrls)
 
 anyRoute modelTVar req res =
     case pathInfo req of
@@ -213,15 +210,20 @@ anyRoute modelTVar req res =
             let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
 
 
+              
             (params, files) <- parseRequestBody lbsBackEnd req
 
+            let fileParams = case files of
+                                [("formula", f)] ->
+                                    [("formula", B.toStrict $ fileContent f)]
+                                _ -> []
             -- Upload files and get urls
             fileUrls <- storeFiles files
-            print (params, fileUrls)
 
-            case files of
-                [] -> do
-                    let ((_,formula):_) = params -- FIXME: lookup the parameter by name
+            case (params ++ fileParams) of  -- FIXME: lookup the parameter by name
+                ((_,formula):_) -> do
+
+                    print formula
 
                     case parse cellContent "REPL" (BU.toString formula) of 
                         Left err -> do

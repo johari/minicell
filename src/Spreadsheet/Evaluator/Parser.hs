@@ -22,6 +22,15 @@ import Data.Graph.Inductive.Basic
 import Data.Graph.Inductive.Query.SP
 
 import Data.Graph.Inductive.Graph
+import Data.Graph.Inductive.PatriciaTree (Gr)
+import Data.GraphViz.Attributes.Complete (Attributes)
+
+-- GraphViz stuff
+
+import Data.GraphViz (dotToGraph)
+import Data.GraphViz.Types (parseDotGraph, mapDotGraph, graphNodes, graphEdges)
+-- import Data.GraphViz.Types.Graph
+import Data.GraphViz.Types.Generalised
 
 -- Parsec stuff
 import Text.ParserCombinators.Parsec
@@ -30,8 +39,9 @@ import Text.ParserCombinators.Parsec.Char
 
 -- Stache stuff
 
+import Data.String
 import Data.Aeson
-import Text.Mustache
+import Text.Mustache hiding (Node)
 import Data.Aeson
 import qualified Data.Text.Lazy as L
 import qualified Data.Text as T
@@ -201,6 +211,15 @@ eval model expr = case normalizeOp expr of
         return $ ESLit (L.unpack $ renderMustache template $ object [ "A1" .= (T.pack $ a1InHtml)
                                                                     , "A2" .= (T.pack $ a2InHtml)
                                                                     ])
+
+  EApp "DOT" [expr] -> do
+    ESLit dot <- eval model expr
+    let dotGraph = parseDotGraph $ fromString dot :: DotGraph String
+    print $ graphNodes dotGraph
+    print $ graphEdges dotGraph
+    let okayGraph = mapDotGraph (const 0) dotGraph :: DotGraph Node
+    print  $ (dotToGraph (okayGraph)  :: Gr Data.GraphViz.Attributes.Complete.Attributes Data.GraphViz.Attributes.Complete.Attributes)
+    return $ ESLit (show dotGraph)
 
   EApp "LOAD" [expr] -> do
     loadName <- eval model expr

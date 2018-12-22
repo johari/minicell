@@ -10,6 +10,11 @@ ouroboros:
 	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=GREV(A1)'
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''ouroboros'
 
+make graphviz:
+	curl -X post  http://localhost:3000/minicell/A2/write.json -F 'formula=''@examples/graphviz/make-a-website-for-a-friend.dot'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=DOT(A2)'
+
+
 example1:
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=LOAD(B1)'
 	echo

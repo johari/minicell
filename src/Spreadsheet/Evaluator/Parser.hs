@@ -14,16 +14,23 @@ import Spreadsheet.Examples.Graphs
 
 -- Graph stuff
 
+import Data.Graph.Inductive.NodeMap
+
+
 import Data.Graph.Inductive.Example (vor)
 
-import Data.Graph.Inductive.Query.MaxFlow
 import Data.Graph.Inductive.Basic
 
-import Data.Graph.Inductive.Query.SP
 
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.PatriciaTree (Gr)
 import Data.GraphViz.Attributes.Complete (Attributes)
+
+-- Graph Algorithms
+
+import Data.Graph.Inductive.Query.BFS
+import Data.Graph.Inductive.Query.MaxFlow
+import Data.Graph.Inductive.Query.SP
 
 -- GraphViz stuff
 
@@ -198,6 +205,16 @@ eval model expr = case normalizeOp expr of
     (EGraphFGL g') <- eval model g
     return $ EGraphFGL $ grev g'
 
+  EApp "N" [g, node] -> do
+    (EGraphFGL g') <- eval model g
+    
+    (ESLit source) <- eval model node
+    -- TODO: lookup node numer
+
+    let (newNodes, _) = mkNodes new [fromMaybe "" (lab g' neighbor) | (neighbor, l) <- level 0 g', l == 1]
+    return $ EGraphFGL $ mkGraph newNodes []
+  
+
   EApp "MUSTACHE" args -> do
     let mustacheText = "Hello {{A1}} <a href=\".{{A2}}\">{{A2}}</a>"
     let compiledTemplate = compileMustacheText "foo" mustacheText
@@ -215,11 +232,17 @@ eval model expr = case normalizeOp expr of
   EApp "DOT" [expr] -> do
     ESLit dot <- eval model expr
     let dotGraph = parseDotGraph $ fromString dot :: DotGraph String
-    print $ graphNodes dotGraph
-    print $ graphEdges dotGraph
-    let okayGraph = mapDotGraph (const 0) dotGraph :: DotGraph Node
-    print  $ (dotToGraph (okayGraph)  :: Gr Data.GraphViz.Attributes.Complete.Attributes Data.GraphViz.Attributes.Complete.Attributes)
-    return $ ESLit (show dotGraph)
+    let verticesFromDot = nodeID <$> graphNodes dotGraph
+    let edgesFromDot = (\x -> (fromNode x, toNode x)) <$> graphEdges dotGraph
+
+    let g = (mkGraph vertices edges)
+              where
+                (vertices, nm) = mkNodes new verticesFromDot
+                edges = fromMaybe [] $ mkEdges nm [ (v1, v2, 1) | (v1, v2) <- edgesFromDot ]
+
+    -- let okayGraph = mapDotGraph (const 0) dotGraph :: DotGraph Node
+    -- print  $ (dotToGraph (okayGraph)  :: Gr Data.GraphViz.Attributes.Complete.Attributes Data.GraphViz.Attributes.Complete.Attributes)
+    return $ EGraphFGL g
 
   EApp "LOAD" [expr] -> do
     loadName <- eval model expr

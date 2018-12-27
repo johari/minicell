@@ -13,6 +13,14 @@ ouroboros: purge
 	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=GREV(A1)'
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''ouroboros'
 
+audiomix: purge
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=Fri Sep 28 12:49:54 PDT 2018.wav'
+	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=Fri Sep 28 12:50:44 PDT 2018.wav'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula==AUDIO(B1)'
+	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula==AUDIO(B2)'
+	curl -X post  http://localhost:3000/minicell/A4/write.json -d 'formula==ACONCAT(A1,A2)'
+	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula==AOLAY(A1,A2)'
+
 cities: purge
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=A'
 	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=B'

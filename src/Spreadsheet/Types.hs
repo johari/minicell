@@ -85,7 +85,10 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
 
            | EEmpty
 
+           | EAudio String
+
            | EYouTube { yt_id :: Int, yt_start :: Maybe Double, yt_end :: Maybe Double }
+
            | EImage String
 
         --    | ECellGraph (Graph Cell ())

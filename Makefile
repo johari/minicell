@@ -53,6 +53,10 @@ cities: purge
 	curl -X post  http://localhost:3000/minicell/G6/write.json -d 'formula=5'
 
 	curl -X post  http://localhost:3000/minicell/A9/write.json -d 'formula=''=X(A1:G7)'
+	curl -X post  http://localhost:3000/minicell/A10/write.json -d 'formula=''A'
+	curl -X post  http://localhost:3000/minicell/A11/write.json -d 'formula=''D'
+
+	curl -X post  http://localhost:3000/minicell/B9/write.json -d 'formula=''=SP(A9, A10, A11)'
 
 graphviz:
 	curl -X post  http://localhost:3000/minicell/A2/write.json -F 'formula=''@examples/graphviz/make-a-website-for-a-friend.dot'

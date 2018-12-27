@@ -110,7 +110,8 @@ eexprToComet model cometAddress  = do
             writeFile dotPath dot
             system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
 
-            return $ CometImage cometAddress ("/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png")
+            t <- getPOSIXTime
+            return $ CometImage cometAddress ("/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png" ++ "?" ++ (show t))
         ESLit s -> return $ CometSLit cometAddress s
         EILit i -> return $ CometILit cometAddress i
         EImage src -> return $ CometImage cometAddress src

@@ -85,12 +85,18 @@ type Msg
     -- | SelectCell CellAddress -- e.g. Select the first column
     -- | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
 
+-- FIXME: The implementation of comeKeyToAddr only support A{1-99}!!
 cometKeyToAddr cometKey =
     case String.toList cometKey of
-        kappaC::[rhoC] -> ( (rhoC |> Char.toUpper |> Char.toCode) - (Char.toCode '1')
+        kappaC::[rhoC] -> ( ((rhoC |> Char.toUpper |> Char.toCode) - (Char.toCode '0')) - 1
                           , (kappaC |> Char.toUpper |> Char.toCode) - (Char.toCode 'A')
                           )
-        _ -> (10, 10)
+        kappaC::rhoC1::[rhoC2] ->
+            ( ((rhoC1 |> Char.toUpper |> Char.toCode) - (Char.toCode '0'))*10+((rhoC2 |> Char.toUpper |> Char.toCode) - (Char.toCode '0')) - 1
+            , (kappaC |> Char.toUpper |> Char.toCode) - (Char.toCode 'A')
+            )
+        
+        _ -> (0, 0)
 
 addrToExcelStyle addr = 
     let (rho, kappa) = addr
@@ -833,14 +839,21 @@ alternativeViewByEExpr model value =
                     text ("Non-resolved comet value with key " ++ cometKey)
         _ -> code [] [ Debug.toString value |> text ]
 
+
+sideviewRender model addr =
+    case find (\x -> x.addr == addr) model.database of
+        Just cell ->
+            alternativeViewByEExpr model cell.value
+        Nothing -> span [ ] [] 
+        --Nothing -> mondrian
+
 alternativeViewInterface model =
     case model.mode of
         IdleMode addr ->
-            case find (\x -> x.addr == addr) model.database of
-                Just cell ->
-                    alternativeViewByEExpr model cell.value
-                Nothing -> mondrian
-        _ -> mondrian
+            -- No need to display if its already pinned
+            sideviewRender model addr
+        _ -> span [] []
+        --_ -> mondrian
     --table [ id "container-alternative-view" ] [
     --    tr [] [
     --        td [] [ text "Hello" ]
@@ -859,12 +872,19 @@ containerHeader model = div [ id "container-header", class "container-row" ]
     , div [ ] [ graphExtractionButtons model ]
     ]
 
+pinnedViewInterface model = [ tr [] [ td [] [ sideviewRender model (8,0) ] ]
+                            , tr [] [ td [] [ sideviewRender model (8,1) ] ]
+                            ]
+
+paneB model = table [] ([ tr [] [ td [] [ text "Pin", hr [] [], alternativeViewInterface model ] ] ] ++ pinnedViewInterface model)
+                       
+
 containerPanes model =
     div [ id "container-panes" ] [
         table [ id "container-panes" ] [
             tr [] [
                     td [ id "pane-a" ] [ spreadsheetInterface model ]
-                ,   td [ id "pane-b" ] [ alternativeViewInterface model ]
+                ,   td [ id "pane-b" ] [ paneB model ]
                 ]
         ]
     ]

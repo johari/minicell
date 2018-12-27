@@ -85,6 +85,13 @@ type Msg
     -- | SelectCell CellAddress -- e.g. Select the first column
     -- | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
 
+cometKeyToAddr cometKey =
+    case String.toList cometKey of
+        kappaC::[rhoC] -> ( (rhoC |> Char.toUpper |> Char.toCode) - (Char.toCode '1')
+                          , (kappaC |> Char.toUpper |> Char.toCode) - (Char.toCode 'A')
+                          )
+        _ -> (10, 10)
+
 addrToExcelStyle addr = 
     let (rho, kappa) = addr
         columnString = Char.fromCode (kappa + (Char.toCode 'A')) |> String.fromChar
@@ -107,22 +114,11 @@ postBodyUpdateFormula formula =
 type alias Model =
     Spreadsheet
 
+
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( exampleSpreadsheetRemote
-    , Cmd.batch [ cometUpdate "A1"
-                , cometUpdate "A2"
-                , cometUpdate "A3"
-                , cometUpdate "A4"
-                , cometUpdate "B1"
-                , cometUpdate "B2"
-                , cometUpdate "B3"
-                , cometUpdate "B4"
-                , cometUpdate "C1"
-                , cometUpdate "C2"
-                , cometUpdate "C3"
-                , cometUpdate "C4"
-                , cometUpdateAll
+    ( emptySpreadsheet
+    , Cmd.batch [ cometUpdateAll
                 ]
     )
 
@@ -397,6 +393,14 @@ update msg model =
                     ( { model | cometStorage = Dict.insert cometKey (Debug.toString err |> EError) model.cometStorage}, Cmd.none )
 
         CometUpdateAll res ->
+            {-
+                exampleTableRemote = 
+                [ cometCell (0, 0) "A1", cometCell (1, 0) "A2", cometCell (2, 0) "A3", cometCell (3, 0) "A4", cometCell (4, 0) "A5", cometCell (5, 0) "A6", cometCell (6, 0) "A7", cometCell (7, 0) "A8", cometCell (8, 0) "A9", cometCell (9, 0) "A10"
+                , cometCell (0, 1) "B1", cometCell (1, 1) "B2", cometCell (2, 1) "B3", cometCell (3, 1) "B4"
+                , cometCell (0, 2) "C1", cometCell (1, 2) "C2", cometCell (2, 2) "C3", cometCell (3, 2) "C4"
+                ]
+            -}
+
             case res of
                 Ok payload ->
                     --el = D.decodeValue (D.list (D.field "valueType" D.string)) payload
@@ -404,10 +408,13 @@ update msg model =
                         Ok el ->
                             let
                                 keyValPairs = (List.map decodeCometValue el)
+                                newDict = Dict.fromList ((Dict.toList model.cometStorage) ++ keyValPairs)
+                                newDatabase = List.map (\(cometKey, val) -> { emptyCell | addr = cometKeyToAddr cometKey, value = val})
+                                                       keyValPairs
                             in
-                                ( { model | cometStorage = Dict.fromList ((Dict.toList model.cometStorage) ++ keyValPairs) }, Cmd.none)
+                                ( { model | cometStorage = newDict, database = newDatabase }, Debug.log (Debug.toString newDict) Cmd.none)
                         Err err ->
-                            (model, Cmd.none)
+                            (Debug.log (Debug.toString err) model, Cmd.none)
 
                 Err err ->
                     ( model, Cmd.none )

@@ -905,12 +905,6 @@ twitterExample =
      , stringCell (2, 0) "id2", stringCell (2, 1) "tweet2", stringCell (2, 2) "id1"
      ]
 
-exampleTableRemote = 
-  [ cometCell (0, 0) "A1", cometCell (1, 0) "A2", cometCell (2, 0) "A3", cometCell (3, 0) "A4", cometCell (4, 0) "A5", cometCell (5, 0) "A6", cometCell (6, 0) "A7", cometCell (7, 0) "A8", cometCell (8, 0) "A9", cometCell (9, 0) "A10"
-  , cometCell (0, 1) "B1", cometCell (1, 1) "B2", cometCell (2, 1) "B3", cometCell (3, 1) "B4"
-  , cometCell (0, 2) "C1", cometCell (1, 2) "C2", cometCell (2, 2) "C3", cometCell (3, 2) "C4"
-  ]
-
 exampleTablePoppet = 
   [ youTubeCell (0, 0) "jTQLF2p7GAM" Nothing Nothing
   , youTubeCell (1, 0) "jTQLF2p7GAM" (Just "30") (Just "36")
@@ -922,8 +916,8 @@ exampleSpreadsheet =
     --{ emptySpreadsheet | database = theCities }
     { emptySpreadsheet | database = el }
 
-exampleSpreadsheetRemote =
-    { emptySpreadsheet | database = exampleTableRemote }
+-- exampleSpreadsheetRemote =
+--     { emptySpreadsheet | database = exampleTableRemote }
 
 exampleSpreadsheetTheCities = 
     { emptySpreadsheet | database = theCities }

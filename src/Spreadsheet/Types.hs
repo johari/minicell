@@ -77,7 +77,10 @@ type EFunctor = String
 data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | EILit Int -- CellInt 
            | ESLit String --CellString
+           
            | ECellRef CellAddress 
+           | ECellRange CellAddress CellAddress
+
            | EBot -- CellEmpty
 
            | EEmpty

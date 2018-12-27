@@ -206,6 +206,10 @@ anyRoute modelTVar req res =
                                           [(hContentType, "application/json")]
                                           (encode $ mconcat $ ["Hello HTTP server at cell ", cometKey, " !", T.pack $ show tail])
 
+        [ "minicell", "purge.json" ] -> do
+            atomically $ modifyTVar modelTVar (const emptySpreadsheet)
+            res $ responseLBS status200 [(hContentType, "application/json")] (encode $ T.pack "success")
+
         [ "minicell", cometKey, "write.json" ] -> do
             let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
 

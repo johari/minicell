@@ -72,7 +72,8 @@ formulaWithEqSign = do
   formula
 
 formula = do
-  s <- choice [ formulaCellRef, formulaWithOperands, numberLiteral, stringLiteral ]
+  s <- choice [ formulaCellRef
+              , formulaWithOperands, numberLiteral, stringLiteral ]
   return s
 
 cometKeyToAddr cometKey =
@@ -87,12 +88,21 @@ excelStyleAddr =
     row <- many1 digit
     return $ (((read row) - 1), ((ord $ toLower $ column) - (ord 'a'))) -- This is ultra buggy (works only for A-F)
 
+-- =A1 or =A1:G7
 formulaCellRef = do 
   -- column <- try $ many1 letter
   -- row <- try $ many1 digit
-  parsedAddress <- try $ excelStyleAddr
-  return $ ECellRef parsedAddress
+  parsedAddress1 <- try $ excelStyleAddr
+  rangeRefPortion <- optionMaybe $ do
+    try $ string ":"
+    parsedAddress2 <- try $ excelStyleAddr
+    return $ parsedAddress2
 
+  case rangeRefPortion of
+    Just parsedAddress2 -> return $ ECellRange parsedAddress1 parsedAddress2
+    Nothing -> return $ ECellRef parsedAddress1
+
+-- =X(A1:G7)
 formulaWithOperands = do
   operation <- try $ many1 letter
   char '('
@@ -199,6 +209,35 @@ eval model expr = case normalizeOp expr of
           print (n1, n2)
           return (EILit $ fromMaybe 0 $ spLength n1 n2  g')
         _ -> return (EError $ "error evaluating " ++ op)
+
+  EApp "X" [ECellRange (rhoL, kappaL) (rhoR, kappaR)] -> do
+    let headerRow = [ (rhoL, kappa) | kappa <- [ (kappaL + 1) .. kappaR] ]
+        headerColumn = [ (rho, kappaL) | rho <- [ (rhoL+1) .. rhoR ] ]
+        matrix = [ (rho, kappa) | rho <- [rhoL+1 .. rhoR], kappa <- [kappaL+1 .. kappaR] ]
+
+    verticesWithAddr <- sequence [ do val <- eval model (ECellRef addr); return (addr, val) | addr <- (headerRow ++ headerColumn) ]
+    edgesWithAddr <- sequence [ do val <- eval model (ECellRef addr); return (addr, val) | addr <- matrix ]
+    
+    let newVertices = (catMaybes $ (maybeVertex <$> verticesWithAddr))
+    let newEdges = catMaybes $
+          [
+            do
+              ((rho, kappa), i) <- maybeEdge s
+              v1 <- lookup (rho, kappaL) newVertices
+              v2 <- lookup (rhoL, kappa) newVertices
+              return $ (v1, v2, i)
+          | s <- edgesWithAddr
+          ]
+
+    let (newNodes, nm) = mkNodes new (snd <$> newVertices)
+    return $ EGraphFGL $ mkGraph newNodes (fromMaybe [] $ mkEdges nm newEdges)
+
+    where
+      maybeVertex (addr, (ESLit s)) = Just (addr, s)
+      maybeVertex _ = Nothing
+      maybeEdge (addr, (EILit i)) = Just (addr, i)
+      maybeEdge _ = Nothing
+
 
 
   EApp "GREV" [g] -> do

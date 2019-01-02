@@ -65,7 +65,7 @@ cities: purge
 graphviz:
 	curl -X post  http://localhost:3000/minicell/A2/write.json -F 'formula=''@examples/graphviz/make-a-website-for-a-friend.dot'
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=DOT(A2)'
-	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''davis'
+	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''nima'
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=N(A1, B2)'
 
 

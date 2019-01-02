@@ -265,14 +265,24 @@ eval model expr = case normalizeOp expr of
     (EGraphFGL g') <- eval model g
     return $ EGraphFGL $ grev g'
 
-  EApp "N" [g, node] -> do
+  EApp "CTX" [g, node] -> do
     (EGraphFGL g') <- eval model g
     
     (ESLit source) <- eval model node
     -- TODO: lookup node numer
 
-    let (newNodes, _) = mkNodes new [fromMaybe "" (lab g' neighbor) | (neighbor, l) <- level 0 g', l == 1]
-    return $ EGraphFGL $ mkGraph newNodes []
+    let nn1 = gsel (\(_, _, label, _) -> label == source) g'
+    -- print g'
+    -- print nn1
+    let ((_, n1, _, _):_) = nn1
+
+    -- let (newNodes, _) = mkNodes new [fromMaybe "" (lab g' n2) | n2 <- (suc g' n1) <> (pre g' n1)]
+    -- return $ EGraphFGL $ mkGraph newNodes []
+
+    -- return $ EGraphFGL $ efilter (\(x1, x2, _) -> n1 == x1 || n1 == x2) g'
+
+    return $ EGraphFGL $ subgraph ([n1] <> neighbors g' n1) g'
+
   
 
   EApp "MYSQL" args -> do

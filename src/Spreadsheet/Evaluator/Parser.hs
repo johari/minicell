@@ -70,6 +70,10 @@ import Data.Aeson
 import qualified Data.Text.Lazy as L
 import qualified Data.Text as T
 
+-- MySQL stuff
+
+import Database.MySQL.Simple
+
 cellContent :: Parser EExpr
 cellContent = do
   rest <- getInput 
@@ -270,6 +274,29 @@ eval model expr = case normalizeOp expr of
     let (newNodes, _) = mkNodes new [fromMaybe "" (lab g' neighbor) | (neighbor, l) <- level 0 g', l == 1]
     return $ EGraphFGL $ mkGraph newNodes []
   
+
+  EApp "MYSQL" args -> do
+    print args
+    conn <- connect (defaultConnectInfo { connectHost = "127.0.0.1"
+                                        , connectPort = 3307
+                                        , connectPassword = "SECRET"
+                                        , connectUser = "root"
+                                        , connectDatabase = "wiki-thesis"
+                                        })
+    
+    
+    -- from: the current page title that corresponds to `pl_from`
+    -- to: pl_title
+    -- value on edge: none at this point.
+    -- xs <- query_ conn "SELECT cast(page_title as CHAR), cast(pl_title as CHAR) FROM `thesis_pagelinks` INNER JOIN thesis_page ON thesis_page.page_id = pl_from WHERE 1"
+
+    xs <- query_ conn "SELECT cast(page_title as CHAR), cast(pl_title as CHAR) FROM `nima_pagelinks` INNER JOIN nima_page ON nima_page.page_id = pl_from WHERE 1"
+
+    newEdges <- forM xs $ \(linkFrom, linkTo) ->
+      return $ ((linkFrom, linkTo, 0) :: (String, String, Int))
+
+    let (newNodes, nm) = mkNodes new (concat $ (\(x, y, _) -> [x, y]) <$> newEdges)
+    return $ EGraphFGL $ mkGraph newNodes (fromMaybe [] $ mkEdges nm newEdges)
 
   EApp "MUSTACHE" args -> do
     let mustacheText = "Hello {{A1}} <a href=\".{{A2}}\">{{A2}}</a>"

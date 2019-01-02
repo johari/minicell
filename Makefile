@@ -8,6 +8,10 @@ prepare:
 purge:
 	curl -X post  http://localhost:3000/minicell/purge.json
 
+mysql purge:
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=MYSQL(B1)'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=MYSQL(42)'
+
 ouroboros: purge
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=LOAD(B1)'
 	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=GREV(A1)'

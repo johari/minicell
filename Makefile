@@ -8,7 +8,7 @@ prepare:
 purge:
 	curl -X post  http://localhost:3000/minicell/purge.json
 
-mysql purge:
+mysql: purge
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=MYSQL(B1)'
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=MYSQL(42)'
 

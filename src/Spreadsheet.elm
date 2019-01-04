@@ -876,7 +876,7 @@ alternativeViewInterface model =
 containerHeader model = div [ id "container-header", class "container-row" ] 
     [ div [ ] [ loadExampleButtons ]
     , div [ id "container-minicell-logo" ]
-        [ img [ src "https://nima.wiki//resources/assets/wiki.png" ] []
+        [ img [ src "http://shiraz.local/~nima/wiki/nima/resources/assets/wiki.png" ] []
         , text "Minicell" 
         , span [ class "minicell-version" ] [ text "(Version 0.0.2)" ]
         ]

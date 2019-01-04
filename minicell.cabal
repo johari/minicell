@@ -81,7 +81,10 @@ library
                        hslogger,aeson,
                        fgl-visualize,
                        parsec,
-                       scotty
+                       scotty,
+                       graphviz,
+                       dhall,
+                       stache
   -- Directories containing source files.
   hs-source-dirs:      src
 

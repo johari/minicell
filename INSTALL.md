@@ -1,3 +1,20 @@
+# tmuxinator
+
+```
+windows:
+  - shell:
+    - jcal
+    - cowsay hi
+  - backend:
+    - cd src
+    - 'nix-shell -p "haskellPackages.ghcWithPackages (pkgs: with pkgs; [fgl generic-random QuickCheck brick fgl-arbitrary hspec diagrams palette z3 mysql-simple logict hslogger wai warp aeson wai-websockets wai-extra wai-cors fgl-visualize graphviz dhall wreq stache temporary pureMD5])"'
+    - runhaskell SimpleServer.hs
+  - frontend:
+    - make
+    - cd build
+    - python -m SimpleHTTPServer
+```
+
 # Haskell backend
 
 Right now, [`src/SimpleServer.hs`](src/SimpleServer.hs) requires the following nix command to boot up:

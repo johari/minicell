@@ -1,9 +1,14 @@
+/*.elm-selected-cell, .elm-selected-column, .elm-selected-row {
+  transition: background-color 1500ms linear;
+}*/
+
+
 .elm-active-drop-zone {
   border-color: cyan;
   background-color: green;
 }
-.elm-selected-column {
-  background-color: darkgrey;
+.elm-selected-column, .elm-selected-row {
+  background-color: lime;
 }
 
 .elm-cell-part-of-primary-demonstration {

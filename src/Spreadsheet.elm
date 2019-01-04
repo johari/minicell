@@ -637,30 +637,35 @@ viewCellInEditMode addr res  =
 -- (This is only useful when we can successfuly extract graphs from the spreadsheet)
 
 computeCellSelectionClass model addr =
-    case model.mode of
-        IdleMode addrUnderView ->
-            if addrUnderView == addr then
-                "elm-selected-cell"
-            else
-                -- Please see [note], then uncomment the following incomplete implementation.
-                --
-                --let maybeCellUnderViewIsGraph =
-                --    find (\v -> v.addr == addrUnderView
-                --             && (evaluatesToAGraphWithCellVertices model addrUnderView)
-                --             && cellBelongsToAGraph addr
-                --in 
-                --    case maybeCellUnderViewIsGraph of
-                --        Just _ -> "elm-cell-belongs-to-a-graph"
-                --        Nothing -> ""
-                ""
-        VertexDemoMode ->
-            -- If the passed address is in our demo, we want to distinguish it.
-            if addrInVertexDemo addr model.demoVertices then "elm-cell-part-of-primary-demonstration" else ""
-        EdgeDemoMode1 -> 
-            if addrInVertexDemo addr model.demoVertices then "elm-cell-part-of-secondary-demonstration" else ""
-        EdgeDemoMode2 cellVertex -> 
-            if addrInVertexDemo addr model.demoVertices || addrInVertexDemo addr [ cellVertex ] then "elm-cell-part-of-secondary-demonstration" else ""
-        _ -> ""
+    let (rho, kappa) = addr
+        modelClasses = 
+            case model.mode of
+                IdleMode addrUnderView ->
+                    if addrUnderView == addr then
+                        "elm-selected-cell"
+                    else
+                        -- Please see [note], then uncomment the following incomplete implementation.
+                        --
+                        --let maybeCellUnderViewIsGraph =
+                        --    find (\v -> v.addr == addrUnderView
+                        --             && (evaluatesToAGraphWithCellVertices model addrUnderView)
+                        --             && cellBelongsToAGraph addr
+                        --in 
+                        --    case maybeCellUnderViewIsGraph of
+                        --        Just _ -> "elm-cell-belongs-to-a-graph"
+                        --        Nothing -> ""
+                        ""
+                VertexDemoMode ->
+                    -- If the passed address is in our demo, we want to distinguish it.
+                    if addrInVertexDemo addr model.demoVertices then "elm-cell-part-of-primary-demonstration" else ""
+                EdgeDemoMode1 -> 
+                    if addrInVertexDemo addr model.demoVertices then "elm-cell-part-of-secondary-demonstration" else ""
+                EdgeDemoMode2 cellVertex -> 
+                    if addrInVertexDemo addr model.demoVertices || addrInVertexDemo addr [ cellVertex ] then "elm-cell-part-of-secondary-demonstration" else ""
+                _ -> ""
+        addressClasses = "row-" ++ (Debug.toString rho) ++ " " ++ "column-" ++ (Debug.toString kappa)
+    in
+        modelClasses ++ " " ++ addressClasses
 
 fileBeingDroppedOn : Mode -> CellAddress -> Bool
 fileBeingDroppedOn mode addr = case mode of
@@ -706,18 +711,25 @@ oneCell addr model =
                        [ viewCell model (find (\x -> x.addr == addr) model.database) ]
 
 viewRow : Int -> Model -> List (Html Msg)
-viewRow rho model = [ tr []
-                        [ td [] [ text  (rho+1 |> String.fromInt) ]
-                        , oneCell (rho, 0) model
-                        , oneCell (rho, 1) model
-                        , oneCell (rho, 2) model
-                        , oneCell (rho, 3) model
-                        , oneCell (rho, 4) model
-                        , oneCell (rho, 5) model
-                        , oneCell (rho, 6) model
-                        , oneCell (rho, 7) model
-                        ]
-                    ]
+viewRow rho model =
+        let 
+            classForHeaderColumn =
+                case model.mode of
+                    (IdleMode (idleRho, _)) -> if idleRho == rho then [ class "elm-selected-row" ] else [ class "header-column" ]
+                    _ -> []
+        in
+            [ tr []
+                [ td (classForHeaderColumn) [ text  (rho+1 |> String.fromInt) ]
+                , oneCell (rho, 0) model
+                , oneCell (rho, 1) model
+                , oneCell (rho, 2) model
+                , oneCell (rho, 3) model
+                , oneCell (rho, 4) model
+                , oneCell (rho, 5) model
+                , oneCell (rho, 6) model
+                , oneCell (rho, 7) model
+                ]
+            ]
 
 viewRows : Model -> List (Html Msg)
 viewRows model = List.range 0 100 |> List.map (\i -> (viewRow i model)) |> List.concat
@@ -876,7 +888,7 @@ pinnedViewInterface model = [ tr [] [ td [] [ sideviewRender model (8,0) ] ]
                             , tr [] [ td [] [ sideviewRender model (8,1) ] ]
                             ]
 
-paneB model = table [] ([ tr [] [ td [] [ text "Pin", hr [] [], alternativeViewInterface model ] ] ] ++ pinnedViewInterface model)
+paneB model = table []  ([ tr [ ] [ td [] [ alternativeViewInterface model ] ] ] ++ pinnedViewInterface model)
                        
 
 containerPanes model =

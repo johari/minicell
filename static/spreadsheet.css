@@ -2,10 +2,6 @@ table.spreadsheet {
   width: 100%;
 }
 
-table.spreadsheet tr td:first-child {
-  width: 10px;
-  background-color: lightgray;
-}
 
 table.spreadsheet td {
   white-space: nowrap;
@@ -19,6 +15,11 @@ table.spreadsheet td {
 .top-row {
   background-color: lightgray;
 }
+
+.header-column {
+ background-color: lightgray; 
+}
+
 
 table.spreadsheet * {
   font-family: arial;

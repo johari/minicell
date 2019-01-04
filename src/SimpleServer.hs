@@ -1,6 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+
+-- Diagrams stuff
+
+import Diagrams.Prelude hiding (value, (.=))
+-- import Diagrams.Backend.Rasterific.Text
+-- import Diagrams.Backend.Rasterific
+import Diagrams.Backend.SVG
+import Graphics.Svg.Core
+
 -- Template stuff
 
 import Text.Mustache
@@ -8,10 +20,16 @@ import Text.Mustache
 
 import Data.Aeson
 import qualified Data.Text as T
-import Control.Lens 
+import Control.Lens hiding ((.=), none)
 import Data.List (find)
 import Data.Monoid
 import Data.String
+
+import Data.Maybe
+
+-- Time stuff
+
+import Data.Time.Clock.POSIX
 
 -- HTTP Client stuff
 import Network.Wreq
@@ -101,17 +119,31 @@ eexprToComet model cometAddress  = do
     -- B) Elm values
     -- C) Transforming unusual values to something suitable to render in Frontend
 
+    let dotPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".dot"
+    let pngPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png"
+    let svgPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".svg"
+
+    t <- getPOSIXTime
+    let targetSrc ext = ("/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ "." ++ ext ++ "?" ++ (show t))
 
     case cellValue of
+        EDiag (XDiagram myDiagram) -> do
+            -- renderDia Rasterific (RasterificOptions (mkWidth 250)) myDiagram
+            -- let myDiagram = (fc red . lw none $ circle 1) ||| (fc green . lw none $ circle 1) :: Diagram B
+            let elem = renderDia SVG (SVGOptions (mkWidth 250) Nothing "" [] True) myDiagram
+            renderToFile svgPath elem 
+            -- renderRasterific pngPath (mkWidth 250) 
+
+            return $ CometImage cometAddress (targetSrc "svg")
+
         EGraphFGL g -> do
             let dot = showDot (fglToDot g)
-            let dotPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".dot"
-            let pngPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png"
+            
             writeFile dotPath dot
             system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
+            
+            return $ CometImage cometAddress (targetSrc "png")
 
-            t <- getPOSIXTime
-            return $ CometImage cometAddress ("/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png" ++ "?" ++ (show t))
         ESLit s -> return $ CometSLit cometAddress s
         EILit i -> return $ CometILit cometAddress i
         EImage src -> return $ CometImage cometAddress src

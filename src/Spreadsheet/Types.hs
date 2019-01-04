@@ -1,8 +1,16 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Spreadsheet.Types where
 
 import Debug.Trace
+
+-- Diagrams stuff
+
+import Diagrams.Prelude (Diagram)
+import Diagrams.Backend.SVG
 
 -- Graph stuff
 
@@ -74,6 +82,14 @@ type TEdgeDemo   = List SuperEdge
 type EFunctor = String
 -- These were ported from Elm
 
+data XDiagram = XDiagram (Diagram B)
+
+instance Eq XDiagram where
+  (==) _ _ = True
+
+instance Show XDiagram where
+  show _ = ""
+
 data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | EILit Int -- CellInt 
            | ESLit String --CellString
@@ -102,6 +118,7 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
 
 
         | EGraphFGL (Gr String Int)
+        | EDiag XDiagram
 
         | EError String
            | EHref String -- CellHref

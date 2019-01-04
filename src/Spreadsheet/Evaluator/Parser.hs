@@ -1,6 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+
 module Spreadsheet.Evaluator.Parser where
+
+-- Diagrams stuff
+
+import Diagrams.Prelude hiding (value, (.=), connect)
+-- import Diagrams.Backend.Rasterific.Text
+-- import Diagrams.Backend.Rasterific
+import Diagrams.Backend.SVG
+import Graphics.Svg.Core
 
 -- Bytestring stuff
 
@@ -283,7 +295,37 @@ eval model expr = case normalizeOp expr of
 
     return $ EGraphFGL $ subgraph ([n1] <> neighbors g' n1) g'
 
-  
+  EApp "SHAPE" [ s ] -> do
+    ESLit shape <- eval model s
+
+    case shape of
+      "circle" -> return $ EDiag (XDiagram $ circle 1)
+      _ -> do
+        return $ EDiag (XDiagram $ square 1)
+
+  EApp "SHIFTX" [ d, x ] -> do
+    EDiag (XDiagram diag) <- eval model d 
+    EILit x <- eval model x
+    
+    return $ EDiag (XDiagram $ (diag # translate (r2 (fromIntegral x, 0)) # showOrigin))
+
+  EApp "HCONCAT" [ d1, d2 ] -> do
+    EDiag (XDiagram diag1) <- eval model d1
+    EDiag (XDiagram diag2) <- eval model d2
+    
+    return $ EDiag $ XDiagram (diag1 ||| diag2)
+
+  -- Adding colorful shapes to spreadsheets with =PAINT, =SHAPE and =HCONCAT
+  EApp "PAINT" [ d, c ] -> do
+    EDiag (XDiagram diag) <- eval model d 
+    ESLit colorString <- eval model c
+
+    let myColor = case colorString of
+                      "green" -> green
+                      "cyan" -> cyan
+                      _ -> red
+
+    return $ EDiag $ XDiagram (fc myColor $ diag)
 
   EApp "MYSQL" args -> do
     print args

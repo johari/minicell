@@ -556,8 +556,9 @@ viewCell model res =
                 --ECellGraph g ->
                 --    span [ class "vizjs-compile-dot-to-svg" ] [ text (g |> mapNodes (\cellNode -> cellNode.value |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]
 
-                EImage src ->
-                    span [] [ text ("<img src=" ++ src ++">") ]
+                EImage imgSrc ->
+                    --span [] [ text ("<img src=" ++ src ++">") ]
+                    span [] [ img [ src imgSrc ] [ ] ]
 
                 EApp f args ->
                     let resultOfEvaluation = (eval model cell.value) in
@@ -884,9 +885,13 @@ containerHeader model = div [ id "container-header", class "container-row" ]
     , div [ ] [ graphExtractionButtons model ]
     ]
 
-pinnedViewInterface model = [ tr [] [ td [] [ sideviewRender model (8,0) ] ]
-                            , tr [] [ td [] [ sideviewRender model (8,1) ] ]
-                            ]
+pinnedViewInterface model = []
+                            --[ tr [] [ td [] [ sideviewRender model (0,0) ] ]
+                            --, tr [] [ td [] [ sideviewRender model (1,0) ] ]
+                            --, tr [] [ td [] [ sideviewRender model (2,0) ] ]
+                            --, tr [] [ td [] [ sideviewRender model (3,0) ] ]
+                            --, tr [] [ td [] [ sideviewRender model (4,0) ] ]
+                            --]
 
 paneB model = table []  ([ tr [ ] [ td [] [ alternativeViewInterface model ] ] ] ++ pinnedViewInterface model)
                        

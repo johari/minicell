@@ -1,3 +1,7 @@
+.spreadsheet img {
+  max-width: 100%;
+}
+
 .spreadsheet td:not(:first-of-type) {
   min-width: 100px;
 }

@@ -300,8 +300,9 @@ eval model expr = case normalizeOp expr of
 
     case shape of
       "circle" -> return $ EDiag (XDiagram $ circle 1)
+      "square" -> return $ EDiag (XDiagram $ square 1)
       _ -> do
-        return $ EDiag (XDiagram $ square 1)
+        return $ EDiag (XDiagram $ triangle 1)
 
   EApp "SHIFTX" [ d, x ] -> do
     EDiag (XDiagram diag) <- eval model d 
@@ -323,6 +324,8 @@ eval model expr = case normalizeOp expr of
     let myColor = case colorString of
                       "green" -> green
                       "cyan" -> cyan
+                      "yellow" -> yellow
+                      "pink" -> pink
                       _ -> red
 
     return $ EDiag $ XDiagram (fc myColor $ diag)

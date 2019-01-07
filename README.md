@@ -27,3 +27,4 @@ for graph modeling inside spreadsheets.
 * [Meet the inventor of the electronic spreadsheet (2017)](https://www.youtube.com/watch?v=YDvbDiJZpy0)
 * [PARALLEL PAGES, VISIBLY CONNECTED](https://youtu.be/VOmm8ic4Eos?t=239)
     * Simply, [Visibly connected documents](https://youtu.be/VOmm8ic4Eos?t=716)
+* ["What about graph practice, eh?"](https://twitter.com/tikhonjelvis/status/1070190089345462274)

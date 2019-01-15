@@ -6,6 +6,10 @@
 
 module Spreadsheet.Evaluator.Parser where
 
+-- Time stuff
+
+import Data.Time.Clock.POSIX
+
 -- Diagrams stuff
 
 import Diagrams.Prelude hiding (value, (.=), connect)
@@ -316,6 +320,19 @@ eval model expr = case normalizeOp expr of
     
     return $ EDiag $ XDiagram (diag1 ||| diag2)
 
+  EApp "VCONCAT" [ d1, d2 ] -> do
+    EDiag (XDiagram diag1) <- eval model d1
+    EDiag (XDiagram diag2) <- eval model d2
+    
+    return $ EDiag $ XDiagram (diag1 === diag2)
+
+  EApp "TURN" [ d, n1, n2 ] -> do
+    EDiag (XDiagram diag1) <- eval model d
+    EILit nn1 <- eval model n1
+    EILit nn2 <- eval model n2
+    
+    return $ EDiag $ XDiagram (diag1 # rotateBy ((fromIntegral nn1)/ fromIntegral nn2))
+
   -- Adding colorful shapes to spreadsheets with =PAINT, =SHAPE and =HCONCAT
   EApp "PAINT" [ d, c ] -> do
     EDiag (XDiagram diag) <- eval model d 
@@ -425,6 +442,16 @@ eval model expr = case normalizeOp expr of
                     return targetPath
 
     return (EAudio $ targetPath)
+
+  EApp "UNIXEPOCH" _ -> do
+    t <- getPOSIXTime
+    return $ EILit (round t)
+
+  EApp "MOD" [ a1, a2 ] -> do
+    EILit arg1 <- eval model a1
+    EILit arg2 <- eval model a2
+
+    return $ EILit (arg1 `mod` arg2)
 
   EApp "ACONCAT" [ expr1, expr2 ] -> do
     EAudio src1 <- eval model expr1

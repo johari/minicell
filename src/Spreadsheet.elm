@@ -301,7 +301,9 @@ update msg model =
         SwitchSpreadsheet db ->
             ( db, Cmd.none )
         Tick t ->
-            ( { model | currentTime = t }, Cmd.none)
+            case model.mode of
+                EditMode _ -> (model, Cmd.none)
+                _ -> ( { model | currentTime = t }, cometUpdateAll)
 
         CollectVertexDemo addr ->
             if addrInVertexDemo addr model.demoVertices then
@@ -699,7 +701,7 @@ oneCell addr model =
                         case model.mode of
                             RegisterFlushMode expr ->
                                 [ onClick (FlushRegister addr expr) ]
-                            _ -> [ onDoubleClick (EditIntent addr Nothing) ]
+                            _ -> [ onDoubleClick (EditIntent addr Nothing), onClick (SwitchToMode (IdleMode addr))]
                     dragDropAttributes =
                         [ hijackOn "dragenter" (D.succeed (DragEnter addr))
                         , hijackOn "dragover" (D.succeed (DragEnter addr))
@@ -717,7 +719,7 @@ viewRow rho model =
             classForHeaderColumn =
                 case model.mode of
                     (IdleMode (idleRho, _)) -> if idleRho == rho then [ class "elm-selected-row" ] else [ class "header-column" ]
-                    _ -> []
+                    _ -> [ class "header-column" ]
         in
             [ tr []
                 [ td (classForHeaderColumn) [ text  (rho+1 |> String.fromInt) ]
@@ -949,7 +951,7 @@ main =
 
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.batch [ keyPress WindowKeyPress
-                                , Time.every 1000 Tick
+                                , Time.every 500 Tick
                                 ]
 
 

@@ -7,7 +7,7 @@
 
 -- Diagrams stuff
 
-import Diagrams.Prelude hiding (value, (.=))
+import Diagrams.Prelude hiding (value, (.=), (<>))
 -- import Diagrams.Backend.Rasterific.Text
 -- import Diagrams.Backend.Rasterific
 import Diagrams.Backend.SVG

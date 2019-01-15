@@ -12,24 +12,27 @@ mysql: purge
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=MYSQL(B1)'
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=MYSQL(42)'
 
+animation: diagrams
+	curl -X post  http://localhost:3000/minicell/C4/write.json -d 'formula=''=UNIXEPOCH(A1)'
+	curl -X post  http://localhost:3000/minicell/D4/write.json -d 'formula=''=MOD(C4,5)'
+	curl -X post  http://localhost:3000/minicell/E2/write.json -d 'formula=''=TURN(A2,D4,5)'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''square'
+
 diagrams: purge
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''circle'
 	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''green'
-	curl -X post  http://localhost:3000/minicell/B3/write.json -d 'formula=''cyan'
+	curl -X post  http://localhost:3000/minicell/B3/write.json -d 'formula=''red'
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=SHAPE(B1)'
 	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=PAINT(A1,B2)'
 	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''=PAINT(A1,B3)'
 	
+
+	# curl -X post  http://localhost:3000/minicell/D7/write.json -d 'formula=''=5'
+	# curl -X post  http://localhost:3000/minicell/C7/write.json -d 'formula=''=UNIXEPOCH(D8)'
+	# curl -X post  http://localhost:3000/minicell/B7/write.json -d 'formula=''=MOD(C7, D7)'
+	# curl -X post  http://localhost:3000/minicell/A7/write.json -d 'formula=''=TURN(A3, B7, D7)'
+
 	curl -X post  http://localhost:3000/minicell/A4/write.json -d 'formula=''=HCONCAT(A2, A3)'
-	
-	curl -X post  http://localhost:3000/minicell/B5/write.json -d 'formula=''=2'
-	curl -X post  http://localhost:3000/minicell/A5/write.json -d 'formula=''=SHIFTX(A4, B5)'
-
-	curl -X post  http://localhost:3000/minicell/B6/write.json -d 'formula=''=3'
-	curl -X post  http://localhost:3000/minicell/A6/write.json -d 'formula=''=SHIFTX(A4, B6)'
-
-	curl -X post  http://localhost:3000/minicell/B7/write.json -d 'formula=''=4'
-	curl -X post  http://localhost:3000/minicell/A7/write.json -d 'formula=''=SHIFTX(A4, B7)'
 
 ouroboros: purge
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=LOAD(B1)'

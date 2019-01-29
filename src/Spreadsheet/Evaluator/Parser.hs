@@ -271,11 +271,37 @@ eval model expr = case normalizeOp expr of
 
     where
       maybeVertex (addr, (ESLit s)) = Just (addr, s)
+      maybeVertex (addr, (EILit i)) = Just (addr, show i)
       maybeVertex _ = Nothing
       maybeEdge (addr, (EILit i)) = Just (addr, i)
       maybeEdge _ = Nothing
 
 
+
+  EApp "GUNION" [ g1e, g2e ] -> do
+    EGraphFGL g1 <- eval model g1e
+    EGraphFGL g2 <- eval model g2e
+    print $ labNodes g1
+    print $ labNodes g2
+    -- return $ EGraphFGL $ (labEdges g2) `insEdges` insNodes (labNodes g2) g1
+    return $ EGraphFGL (union g1 g2)
+    where
+      union g1 g2 = mkGraph newNodes (fromMaybe [] $ mkEdges nm newEdges)
+        where
+          ln       = nub $ snd <$> ((labNodes g1) ++ (labNodes g2))
+          (newNodes, nm) = mkNodes new (ln)
+          newEdges = (betterListOfEdges g1) ++ (betterListOfEdges g2)
+
+          betterListOfEdges g = catMaybes $
+            [ do
+                lab1 <- nodeLab g u
+                lab2 <- nodeLab g v
+                return $ (lab1, lab2, edgeLab)
+              | (u, v, edgeLab) <- labEdges g 
+            ]
+            where
+              revLabNodes g = Data.Map.fromList (labNodes g)
+              nodeLab g nodeId = Data.Map.lookup nodeId (revLabNodes g)
 
   EApp "GREV" [g] -> do
     (EGraphFGL g') <- eval model g

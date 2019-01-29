@@ -8,6 +8,27 @@ prepare:
 purge:
 	curl -X post  http://localhost:3000/minicell/purge.json
 
+github: purge
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''minicell'
+	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''=GH(B1)'
+	curl -X post  http://localhost:3000/minicell/E1/write.json -F 'formula=''@examples/graphviz/issues-open.dot'
+	curl -X post  http://localhost:3000/minicell/F1/write.json -F 'formula=''@examples/graphviz/issues.dot'
+	curl -X post  http://localhost:3000/minicell/D1/write.json -d 'formula=''=DOT(F1)'
+	curl -X post  http://localhost:3000/minicell/D2/write.json -d 'formula=''=DOT(E1)'
+	curl -X post  http://localhost:3000/minicell/D3/write.json -d 'formula=''=GUNION(D1,D2)'
+
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=GUNION(C1,D1)'
+
+
+	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''42'
+	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''40'
+	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''55'
+	curl -X post  http://localhost:3000/minicell/B3/write.json -d 'formula=''41'
+	curl -X post  http://localhost:3000/minicell/A4/write.json -d 'formula=''31'
+	curl -X post  http://localhost:3000/minicell/B4/write.json -d 'formula=''40'
+
+
+
 mysql: purge
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=MYSQL(B1)'
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=MYSQL(42)'

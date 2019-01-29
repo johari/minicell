@@ -6,6 +6,10 @@
 
 module Spreadsheet.Evaluator.Parser where
 
+-- Interop
+
+import Minicell.Interop.GitHub
+
 -- Time stuff
 
 import Data.Time.Clock.POSIX
@@ -424,6 +428,11 @@ eval model expr = case normalizeOp expr of
     -- let okayGraph = mapDotGraph (const 0) dotGraph :: DotGraph Node
     -- print  $ (dotToGraph (okayGraph)  :: Gr Data.GraphViz.Attributes.Complete.Attributes Data.GraphViz.Attributes.Complete.Attributes)
     return $ EGraphFGL g
+
+  EApp "GH" [ repoE ] -> do
+    ESLit repo <- eval model repoE
+    g <- octoGraph repo
+    return (EGraphFGL $ g)
 
   EApp "LOAD" [expr] -> do
     loadName <- eval model expr

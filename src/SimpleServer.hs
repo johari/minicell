@@ -68,6 +68,7 @@ import Text.ParserCombinators.Parsec
 -- Graph stuff
 
 import Data.Graph.Inductive.Dot
+import Data.Graph.Inductive.Graph
 
 import System.Process
 

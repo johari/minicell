@@ -8,6 +8,37 @@ prepare:
 purge:
 	curl -X post  http://localhost:3000/minicell/purge.json
 
+pdf-crop: purge
+	# curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''https://csiflabs.cs.ucdavis.edu/~johari/refs/rt-frp.pdf'
+	# curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''http://web.cs.ucdavis.edu/~su/publications/emi.pdf'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''http://localhost/augment/manuscripts/graph-extract/latex/output.pdf'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=PDF(A1,1)'
+	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''=CROP(B1,0,300,0,0)'
+	curl -X post  http://localhost:3000/minicell/D1/write.json -d 'formula=''=CROP(B1,400,290,0,300)'
+
+	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''https://csiflabs.cs.ucdavis.edu/~johari/refs/rt-frp.pdf'
+	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''=PDF(A2,0)'
+	curl -X post  http://localhost:3000/minicell/C2/write.json -d 'formula=''=CROP(B2,0,300,0,0)'
+	curl -X post  http://localhost:3000/minicell/D2/write.json -d 'formula=''=CROP(B2,400,410,5,300)'
+
+	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''http://web.cs.ucdavis.edu/~su/publications/emi.pdf'
+	curl -X post  http://localhost:3000/minicell/B3/write.json -d 'formula=''=PDF(A3,0)'
+	curl -X post  http://localhost:3000/minicell/C3/write.json -d 'formula=''=CROP(B3,0,250,0,0)'
+
+	curl -X post  http://localhost:3000/minicell/A4/write.json -d 'formula=''https://csiflabs.cs.ucdavis.edu/~johari/bb-king.pdf'
+	curl -X post  http://localhost:3000/minicell/B4/write.json -d 'formula=''=PDF(A4,0)'
+	curl -X post  http://localhost:3000/minicell/C4/write.json -d 'formula=''=CROP(B4,400,400,0,0)'
+
+	# curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''0' # startX
+	# curl -X post  http://localhost:3000/minicell/C2/write.json -d 'formula=''200' # startY
+	
+	# curl -X post  http://localhost:3000/minicell/D2/write.json -d 'formula=''100' # lengthX
+	# curl -X post  http://localhost:3000/minicell/E2/write.json -d 'formula=''400' # lengthY
+
+	# curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=CROP(A1,B2,C2,D2,E2)' # :)
+
+	# curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''=PDF(C1,2)'
+
 github: purge
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''minicell'
 	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''=GH(B1)'

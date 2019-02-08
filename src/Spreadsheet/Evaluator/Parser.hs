@@ -458,12 +458,16 @@ eval model expr = case normalizeOp expr of
     imagePath <- PDF.crop sourceImagePath (w, h, x0, y0)
     return (EImage $ imagePath)
 
+  EApp "DEP" _ -> do
+    putStrLn $ show model
+    return $ dep
+
   EApp "LOAD" [expr] -> do
     loadName <- eval model expr
     case loadName of
       ESLit "cities" -> return (EGraphFGL vor)
       ESLit "hello" -> return (EGraphFGL helloGraph)
-      ESLit "ouroboros" -> return (EGraphFGL $ emap (const 0) $ nmap addrToExcelStyle $ dependencyGraph $ database model)
+      ESLit "ouroboros" -> return $ dep
       _ -> return (EError $ (mconcat ["graph `", show loadName, "` not found :("] :: String))
 
   EApp "AUDIO" [ expr ] -> do
@@ -547,3 +551,6 @@ eval model expr = case normalizeOp expr of
     return $ ESLit $ (show op) ++ " " ++ show args ++ " is not implemented"
 
   _ -> return expr
+
+  where
+    dep = (EGraphFGL $ emap (const 0) $ nmap addrToExcelStyle $ dependencyGraph $ database model)

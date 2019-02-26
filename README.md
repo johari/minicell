@@ -24,6 +24,7 @@ for graph modeling inside spreadsheets.
 * [FlashExtract](https://www.youtube.com/watch?v=apTsnpsPEds)
 * [FlashRelate](https://www.youtube.com/watch?v=g2Dhf4Tmp8c)
 * [ExceLint](https://github.com/ExceLint/ExceLint)
+* [VCF East 10 - History of VisiCalc - Bob Frankston](https://www.youtube.com/watch?v=6L2jRc6prEw)
 * [Meet the inventor of the electronic spreadsheet (2017)](https://www.youtube.com/watch?v=YDvbDiJZpy0)
 * [PARALLEL PAGES, VISIBLY CONNECTED](https://youtu.be/VOmm8ic4Eos?t=239)
     * Simply, [Visibly connected documents](https://youtu.be/VOmm8ic4Eos?t=716)

@@ -20,6 +20,7 @@ for graph modeling inside spreadsheets.
 
 # Hacking
 
+* [Install guide](https://github.com/johari/minicell/blob/master/INSTALL.md) and [Changelog](https://github.com/johari/minicell/blob/master/CHANGELOG.md)
 * [Evaluator](https://github.com/johari/minicell/blob/master/src/Spreadsheet/Evaluator/Parser.hs), where most of the IO in backend happens (I must rename `Parser.hs` to `Interpreter.hs`)
 * [SimpleServer.hs](https://github.com/johari/minicell/blob/master/src/SimpleServer.hs)
 * [Basic types in Backend](https://github.com/johari/minicell/blob/master/src/Spreadsheet/Types.hs)

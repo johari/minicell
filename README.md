@@ -18,6 +18,15 @@ and we believe we can make non-programmers more effective in
 important (often critical) tasks by providing a natural and effective support
 for graph modeling inside spreadsheets.
 
+# Hacking
+
+* [Evaluator](https://github.com/johari/minicell/blob/master/src/Spreadsheet/Evaluator/Parser.hs), where most of the IO in backend happens (I must rename `Parser.hs` to `Interpreter.hs`)
+* [SimpleServer.hs](https://github.com/johari/minicell/blob/master/src/SimpleServer.hs)
+* [Basic types in Backend](https://github.com/johari/minicell/blob/master/src/Spreadsheet/Types.hs)
+* [Basic types in Frontend](https://github.com/johari/minicell/blob/master/src/Spreadsheet/Types.elm)
+* [Spreadsheet interface](https://github.com/johari/minicell/blob/master/src/Spreadsheet.elm)
+* [Makefile](https://github.com/johari/minicell/blob/master/Makefile)
+
 # See also
 
 * [Calc Intelligence](https://www.microsoft.com/en-us/research/project/calc-intelligence/) from MSR Cambridge

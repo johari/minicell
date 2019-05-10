@@ -1,10 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-# LANGUAGE TupleSections #-}
+
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Spreadsheet.Evaluator.Parser where
+
+-- Logger
+
+import System.Log.Logger
 
 -- Interop
 

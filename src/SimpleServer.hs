@@ -5,6 +5,18 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
+-- Logger stuff
+
+import System.Log.Logger (Priority (DEBUG), debugM, infoM, setLevel,
+                          updateGlobalLogger, warningM, noticeM,
+                          rootLoggerName,
+                          setHandlers
+                          )
+import System.Log.Handler.Color
+import System.Log.Handler.Simple
+import System.Log.Handler (setFormatter)
+import System.Log.Formatter
+
 -- Diagrams stuff
 
 import Diagrams.Prelude hiding (value, (.=), (<>))
@@ -72,11 +84,23 @@ import Data.Graph.Inductive.Graph
 
 import System.Process
 
+import System.IO (stderr)
+
 main = do
     let port = 3000
     modelTVar <- atomically $ newTVar emptySpreadsheet
 
-    putStrLn $ "Listening on port " ++ show port
+    -- updateGlobalLogger rootLoggerName (setFormatter $ simpleLogFormatter "[$loggername] $msg")
+    h <- streamHandler stderr DEBUG >>= \lh -> return $
+                    setFormatter lh (simpleLogFormatter "[$time : $loggername : $prio] $msg")
+
+    updateGlobalLogger rootLoggerName (setHandlers [h])
+
+    -- updateGlobalLogger "wiki.sheets.http" (setLevel DEBUG)
+    updateGlobalLogger "wiki.sheets.eval.eapp" (setLevel DEBUG)
+
+    infoM "wiki.sheets.http" ("Listening on port " ++ show port)
+
     run port (app modelTVar)
 
 app :: TVar Spreadsheet -> Application

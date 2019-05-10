@@ -6,14 +6,33 @@
 .spreadsheet td:not(:first-of-type) {
   min-width: 100px;
 }
-input {
+
+#formula-bar {
+  height: 50px;
+  vertical-align: middle;
+}
+
+input.widget-edit-mode-cell-input {
   width: 100%;  
   box-sizing:border-box;
   border: none;
-  box-shadow: none;
+  /*box-shadow: none;*/
   font-family: monospace !important;
   border-width: 0; 
   outline: none;
+}
+input#widget-formula-bar {
+  width: 70%;
+  /*box-sizing:border-box;*/
+  /*border: none;*/
+  box-shadow: none;
+  font-family: monospace !important;
+  /*border-width: 0; */
+  /*outline: none;*/
+  /*height: 50px;*/
+
+  padding-left: 10px;
+  border-left: 1px solid cyan;
 }
 html, body {
   height: 100%;
@@ -116,7 +135,7 @@ body #container-box {
   overflow-y: scroll;
 }
 
-#container-panes #pane-b img {
+#container-panes #pane-b img, #container-panes #pane-b video {
   max-width: 100%;
   /*max-height: 400px;*/
 }

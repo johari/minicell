@@ -770,9 +770,9 @@ clippy model =
         IdleMode _ ->
             span [ ] [ text "👁 Try navigating to a new cell by using arrow keys. Press enter or start typing to edit a cell"]
         EditMode _ ->
-            span [] [ text "Try typing in a formula like (=1+1)"]
+            span [] [ text "👁 Try typing in a formula like (=1+1)"]
         VertexDemoMode ->
-            span [] [ text "Show me an example of a few nodes, then click on \"Demonstrate Edges\" once you are done. :)"]
+            span [] [ text "👁 Show me an example of a few nodes, then click on \"Demonstrate Edges\" once you are done. :)"]
         EdgeDemoMode1 ->
             let message = case List.length model.demoEdges of
                             0 -> "Start providing a demonstration of an edge by clicking on a source vertex"
@@ -901,15 +901,35 @@ alternativeViewInterface model =
     --]
 
 containerHeader model = div [ id "container-header", class "container-row" ] 
-    [ div [ ] [ loadExampleButtons ]
+    [ div [] []
+    --, div [ ] [ loadExampleButtons ]
     , div [ id "container-minicell-logo" ]
-        [ img [ src "http://shiraz.local/~nima/wiki/nima/resources/assets/wiki.png" ] []
+        [ img [ src "" ] [] -- img [ src "http://shiraz.local/~nima/wiki/nima/resources/assets/wiki.png" ] []
         , text "Minicell" 
         , span [ class "minicell-version" ] [ text "(Version 0.0.2)" ]
         ]
-    , div [ ] [ vertexDemoButtons model ]
-    , div [ ] [ graphExtractionButtons model ]
+    --, div [ ] [ vertexDemoButtons model ]
+    --, div [ ] [ graphExtractionButtons model ]
+    --, div [ ] [ formulaBar model ]
     ]
+
+formulaBarValue model = 
+    case model.mode of
+        IdleMode addr -> 
+            case find (\x -> x.addr == addr) model.database of
+                Just cell ->
+                    (Debug.toString cell.value)
+                Nothing -> "EMPTY CELL"
+        EditMode addr ->
+            case find (\x -> x.addr == addr) model.database of
+                Just cell ->
+                    (Debug.toString cell.buffer)
+                Nothing -> "EMPTY CELL IN EDIT MODE"
+
+        _ -> "What mode are you in, my friend?"
+
+formulaBar model = div [ id "formula-bar" ] [ img [ id "icon-formula-bar", src "/icons/formula-f.svg" ] []
+                                            , span [] [ input [ id "widget-formula-bar", value (formulaBarValue model) ] [] ] ]
 
 pinnedViewInterface model = []
                             --[ tr [] [ td [] [ sideviewRender model (0,0) ] ]

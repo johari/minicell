@@ -172,6 +172,7 @@ eexprToComet model cometAddress  = do
         ESLit s -> return $ CometSLit cometAddress s
         EILit i -> return $ CometILit cometAddress i
         EImage src -> return $ CometImage cometAddress ("/minicell-cache/" <> src)
+        EVideo src -> return $ CometVideo cometAddress src
         _ -> return $ CometSLit cometAddress (show cellValue)
 
 

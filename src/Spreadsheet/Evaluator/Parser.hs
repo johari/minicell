@@ -16,6 +16,7 @@ import System.Log.Logger
 
 import Minicell.Interop.GitHub
 import Minicell.Interop.PDF as PDF
+import Minicell.Interop.YouTube as YT
 
 -- Time stuff
 
@@ -440,6 +441,9 @@ eval model expr = case normalizeOp expr of
     ESLit repo <- eval model repoE
     g <- octoGraph repo
     return (EGraphFGL $ g)
+
+  EApp "YT" _ -> do
+    return $ EVideo "https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"
 
   EApp "PDF" [ urlE, pageE ] -> do
     ESLit url <- eval model urlE

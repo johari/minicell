@@ -4,7 +4,7 @@ import Debug
 import Browser
 import Html exposing (..)
 import Html.Events exposing (onClick, onDoubleClick, onInput, onBlur, onMouseOver, keyCode, on, preventDefaultOn)
-import Html.Attributes exposing (id, class, href, value, autofocus, src, property, height, width)
+import Html.Attributes exposing (id, class, href, value, autofocus, src, property, height, width, style, controls)
 import List
 import Dict
 import Result
@@ -521,6 +521,10 @@ cometValueTOEExpr payload =
                 case D.decodeValue (D.field "value" D.string) payload of
                     Ok i -> EImage i
                     Err err -> EError (Debug.toString err)
+            Ok "EVideo" ->
+                case D.decodeValue (D.field "value" D.string) payload of
+                    Ok v -> EVideo v
+                    Err err -> EError (Debug.toString err)
             Ok "EEmpty" ->
                 EEmpty
 
@@ -626,6 +630,7 @@ viewCellInEditMode addr res  =
                               , onBlur (Save addr)
                               , autofocus True
                               , id (cssKeyForEditCellInput)
+                              , class "widget-edit-mode-cell-input"
                               ] []
         _ -> viewCellInEditMode addr (Just emptyCell)
         
@@ -823,10 +828,29 @@ spreadsheetInterface model =
 
 mondrian = img [ src mondrianSrc ] []
 
+videoElemForUrl model url =
+    div [] [ video
+                [ src "https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"
+                --, on "timeupdate" (Json.map CurrentTime targetCurrentTime)
+                --, on "seek" (Json.map CurrentTime targetCurrentTime)
+                --, on "seek" (Json.succeed Seeking)
+                --, on "seeking" (Json.succeed Seeking)
+                --, on "seekend" (Json.succeed Paused)
+                --, on "playing" (Json.succeed Playing)
+                --, on "play" (Json.succeed Playing)
+                --, on "pause" (Json.succeed Playing)
+                --, on "ended" (Json.succeed Paused)
+                --, on "loadedmetadata" (Json.succeed Paused)
+                , controls True] []
+           --, div [] [text (toString model.currentTime)]
+           --, div [] [text (toString model.videoState)]
+           ]
+
 alternativeViewByEExpr model value = 
     case value of
         EILit num -> text ("Found a number! " ++ (Debug.toString num))
         EImage url -> img [ src url ] [ ]
+        EVideo url -> videoElemForUrl model url
         ESuperFancyGraph g -> pre [ ] [ toGraphviz g |> text ]
         EYouTube params ->
             let startAndEnd =

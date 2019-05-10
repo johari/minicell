@@ -5,6 +5,8 @@
 
 module Spreadsheet.Types where
 
+import Text.Read
+
 import Debug.Trace
 
 -- Diagrams stuff
@@ -82,6 +84,8 @@ type TEdgeDemo   = List SuperEdge
 type EFunctor = String
 -- These were ported from Elm
 
+-- <hack>
+
 data XDiagram = XDiagram (Diagram B)
 
 instance Eq XDiagram where
@@ -106,6 +110,7 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | EYouTube { yt_id :: Int, yt_start :: Maybe Double, yt_end :: Maybe Double }
 
            | EImage String
+           | EVideo String
 
         --    | ECellGraph (Graph Cell ())
         --    | EGraphGunrock Gr
@@ -151,7 +156,7 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            --             read from DAT
            --             read from Phone video library
            --       [ ] basic operations
-           deriving (Show, Eq)
+           deriving (Show, Eq, Read)
 
 type Formula = EExpr
 
@@ -184,7 +189,7 @@ data Cell = Cell
     --
     -- the logic for the evaluator can be traced in the code that renders the cells to HTML
     , meta  :: Maybe CellMeta
-    } deriving (Show, Eq)
+    } deriving (Show, Eq, Read)
 
 -- emptyGraph = Graph.fromNodesAndEdges [] []
 emptyGraph = ([], [])
@@ -264,6 +269,7 @@ data CometValue = CometAddr CellAddress
                 | CometSLit CellAddress String
                 | CometILit CellAddress Int
                 | CometImage CellAddress String
+                | CometVideo CellAddress String
                 | CometEmpty CellAddress
 
 instance ToJSON CometValue where 
@@ -303,3 +309,9 @@ instance ToJSON CometValue where
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
       ]
 
+  toJSON (CometVideo addr src) = 
+    object
+      [ (T.pack "value") .= src
+      , (T.pack "valueType") .= (T.pack "EVideo")
+      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      ]

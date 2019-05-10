@@ -68,6 +68,8 @@ type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
            --             whatever "convert" can do (imageMagik)
 
            | EImage String -- url
+           | EVideo String
+
            | EYouTube { video_id : String, start : Maybe String, end : Maybe String }
 
            | EComet CometKey

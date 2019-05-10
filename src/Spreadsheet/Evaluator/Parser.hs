@@ -236,11 +236,15 @@ eval model expr = case normalizeOp expr of
       Just cell -> eval model (value cell)
   
   
-  EApp op [ g, s, t ] | elem op ["MF", "SP"] -> do
+  EApp op [ g, s, t ] | op `elem` ["MF", "SP"] -> do
     -- TODO: Return EError when pattern matching fails
 
-    eval model s >>= print
-    eval model t >>= print
+    infoM "wiki.sheets.eval.eapp" "applying MF or SP"
+
+    s1 <- eval model s
+    infoM "wiki.sheets.eval.eapp" (show s1)
+    s2 <- eval model t
+    infoM "wiki.sheets.eval.eapp" (show s2)
 
     (ESLit s') <- eval model s
 

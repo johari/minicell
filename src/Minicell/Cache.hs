@@ -24,9 +24,9 @@ doesObjectExist cacheKey = fullPathForKey cacheKey >>= doesFileExist
 
 pathForKey key = mconcat [(fst key), "/", (snd key)]
 
-fullPathForKey key = do
-    root <- fullCacheRoot
-    return $ mconcat $ [root, "/", (pathForKey key)]
+fullPathForKey (ns, key) = do
+    cachePath <- cachePathFor ns
+    return $ mconcat $ [cachePath, "/", key]
 
 fullCacheRoot = do
     h <- getHomeDirectory
@@ -42,6 +42,7 @@ storeObject cacheKey@(ns, objectId) content = do
 cachePathFor namespace = do
     root <- fullCacheRoot
     let dirName = mconcat [root, "/", namespace]
+    print (dirName, length dirName)
     huh <- doesDirectoryExist dirName
     case huh of
         True -> return ()

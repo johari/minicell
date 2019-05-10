@@ -91,13 +91,15 @@ magicPdf url page = do
                 -- I mean...
                 -- ¯\_(ツ)_/¯
                 -- 
-                -- </rant>
 
                 perhapsSinglePagePdf <- doesFileExist $ mconcat [tmp, "foo.png"]
                 let finalFilename =
                         case perhapsSinglePagePdf of
                             True -> "foo.png"
                             False -> mconcat ["foo-", (show page), ".png"]
+
+                -- </rant>
+
                 -- Pick the appropriate PNG
                 -- Save it in Minicell's cache
                 content <- B.readFile (mconcat [tmp, finalFilename])

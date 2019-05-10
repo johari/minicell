@@ -108,8 +108,13 @@ cellContent = do
   case rest of
     "" -> return $ EEmpty
     _ -> do
-        s <- choice $ [ formulaWithEqSign, numberLiteral, stringLiteral ]
+        s <- choice $ [ bangBang, formulaWithEqSign, numberLiteral, stringLiteral ]
         return s
+
+bangBang :: Parser EExpr
+bangBang = do
+  string "!!"
+  return (EApp "PDF" [ESLit "http://bangbangcon.com/west/images/logo.png", EILit 0])
 
 numberLiteral :: Parser EExpr
 numberLiteral = do

@@ -225,7 +225,7 @@ data Mode
     | EditMode CellAddress
     | VertexDemoMode
     | EdgeDemoMode1
-    | EdgeDemoMode2 VertexAndPerhapsCells
+    | EdgeDemoMode2 VertexAndPerhapsCells deriving (Show, Read, Eq)
 
 
 -- is this necessary?
@@ -247,7 +247,7 @@ data Spreadsheet = Spreadsheet
     , demoVertices :: TVertexDemo
     , demoEdges :: TEdgeDemo
     -- , currentTime :: Posix
-    }
+    } deriving (Show, Read, Eq)
 
 refs :: EExpr -> [CellAddress]
 refs eexpr = case eexpr of
@@ -259,7 +259,7 @@ dependencyGraph :: Database -> Gr CellAddress ()
 dependencyGraph db = trace (show $ edges) (mkGraph vertices edges)
   where
     (vertices, nm) = mkNodes new [ addr c | c <- db ]
-    edges = fromMaybe [] $ mkEdges nm [ (v1, v2, ()) | c <- db, let v1 = addr c, v2 <- refs (value c) ]
+    edges = fromMaybe [] $ mkEdges nm [ (v2, v1, ()) | c <- db, let v1 = addr c, v2 <- refs (value c) ]
   -- vertices: non-empty cells
   -- edges: if a cell addresses another cell (ECellRef addr), then the cell points to addr
 
@@ -269,9 +269,12 @@ dependencyGraph db = trace (show $ edges) (mkGraph vertices edges)
 -- instance FromJSON CellAddress
 
 
+addrRhoToExcelStyle rho = show (rho + 1)
+addrKappaToExcelStyle kappa = [['A'..] !! kappa]
+
 addrToExcelStyle (rho, kappa) = 
-    let columnString = [['A'..] !! kappa] in
-    mconcat [columnString, show (rho+1)]
+    let columnString = addrKappaToExcelStyle kappa in
+    mconcat [columnString, addrRhoToExcelStyle rho]
 
 
 data CometValue = CometAddr CellAddress

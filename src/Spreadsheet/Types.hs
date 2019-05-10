@@ -94,9 +94,18 @@ instance Eq XDiagram where
 instance Show XDiagram where
   show _ = ""
 
+instance Read XDiagram where
+  readsPrec _ = const []
+
+-- </hack>
+
 data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | EILit Int -- CellInt 
            | ESLit String --CellString
+
+           | EList [EExpr] -- Should we allow [ESLit, EIlit]? Perhaps not :(
+           | ETuple2 (EExpr, EExpr)
+           | ETuple3 (EExpr, EExpr, EExpr)
            
            | ECellRef CellAddress 
            | ECellRange CellAddress CellAddress

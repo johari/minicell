@@ -12,7 +12,6 @@ import System.Log.Logger (Priority (DEBUG), debugM, infoM, setLevel,
                           rootLoggerName,
                           setHandlers
                           )
-import System.Log.Handler.Color
 import System.Log.Handler.Simple
 import System.Log.Handler (setFormatter)
 import System.Log.Formatter

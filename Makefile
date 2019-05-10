@@ -8,6 +8,20 @@ prepare:
 purge:
 	curl -X post  http://localhost:3000/minicell/purge.json
 
+thesis: purge
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''poly'
+	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''abstract'
+	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''1'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=THESIS(A1,A2,A3)'
+	curl -X post  http://localhost:3000/minicell/A7/write.json -d 'formula=''=LATEX(A1:B5)'
+
+latex:
+	curl -X post  http://localhost:3000/minicell/A24/write.json -d 'formula=''=LATEX(A1:D5)'
+
+youtube: purge
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''nLQRtCEX-E0'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=YT(B1)'
+
 pdf-crop: purge
 	# curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''https://csiflabs.cs.ucdavis.edu/~johari/refs/rt-frp.pdf'
 	# curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''http://web.cs.ucdavis.edu/~su/publications/emi.pdf'
@@ -28,6 +42,14 @@ pdf-crop: purge
 	curl -X post  http://localhost:3000/minicell/A4/write.json -d 'formula=''https://csiflabs.cs.ucdavis.edu/~johari/bb-king.pdf'
 	curl -X post  http://localhost:3000/minicell/B4/write.json -d 'formula=''=PDF(A4,0)'
 	curl -X post  http://localhost:3000/minicell/C4/write.json -d 'formula=''=CROP(B4,400,400,0,0)'
+
+	curl -X post  http://localhost:3000/minicell/A5/write.json -d 'formula=''https://lenary.co.uk/publications/swizzle_inventor.pdf'
+	curl -X post  http://localhost:3000/minicell/B5/write.json -d 'formula=''=PDF(A5,0)'
+	curl -X post  http://localhost:3000/minicell/C5/write.json -d 'formula=''=PDF(A5,1)'
+	curl -X post  http://localhost:3000/minicell/D5/write.json -d 'formula=''=PDF(A5,2)'
+	curl -X post  http://localhost:3000/minicell/E5/write.json -d 'formula=''=PDF(A5,3)'
+	curl -X post  http://localhost:3000/minicell/F5/write.json -d 'formula=''=PDF(A5,4)'
+
 
 	# curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''0' # startX
 	# curl -X post  http://localhost:3000/minicell/C2/write.json -d 'formula=''200' # startY
@@ -70,6 +92,8 @@ animation: diagrams
 	curl -X post  http://localhost:3000/minicell/E2/write.json -d 'formula=''=TURN(A2,D4,5)'
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''square'
 
+	curl -X post  http://localhost:3000/minicell/D5/write.json -d 'formula=''=DEP(D5)'
+
 diagrams: purge
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''circle'
 	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''green'
@@ -100,41 +124,29 @@ audiomix: purge
 	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula==AOLAY(A1,A2)'
 
 cities: purge
-	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=A'
-	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=B'
-	curl -X post  http://localhost:3000/minicell/D1/write.json -d 'formula=C'
-	curl -X post  http://localhost:3000/minicell/E1/write.json -d 'formula=D'
-	curl -X post  http://localhost:3000/minicell/F1/write.json -d 'formula=E'
-	curl -X post  http://localhost:3000/minicell/G1/write.json -d 'formula=F'
+	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=sacramento'
+	curl -X post  http://localhost:3000/minicell/C2/write.json -d 'formula=berkeley'
+	curl -X post  http://localhost:3000/minicell/D2/write.json -d 'formula=portland'
+	curl -X post  http://localhost:3000/minicell/E2/write.json -d 'formula=oakland'
+	curl -X post  http://localhost:3000/minicell/F2/write.json -d 'formula=davis'
+	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=davis'
+	curl -X post  http://localhost:3000/minicell/B3/write.json -d 'formula=20'
+	curl -X post  http://localhost:3000/minicell/C3/write.json -d 'formula=90'
+	curl -X post  http://localhost:3000/minicell/A4/write.json -d 'formula=berkeley'
+	curl -X post  http://localhost:3000/minicell/E4/write.json -d 'formula=20'
+	curl -X post  http://localhost:3000/minicell/A5/write.json -d 'formula=portland'
+	curl -X post  http://localhost:3000/minicell/F5/write.json -d 'formula=360'
+	curl -X post  http://localhost:3000/minicell/A6/write.json -d 'formula=sacramento'
+	curl -X post  http://localhost:3000/minicell/E6/write.json -d 'formula=10'
 
-	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=A'
-	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=B'
-	curl -X post  http://localhost:3000/minicell/A4/write.json -d 'formula=C'
-	curl -X post  http://localhost:3000/minicell/A5/write.json -d 'formula=D'
-	curl -X post  http://localhost:3000/minicell/A6/write.json -d 'formula=E'
-	curl -X post  http://localhost:3000/minicell/A7/write.json -d 'formula=F'
 
-	curl -X post  http://localhost:3000/minicell/C2/write.json -d 'formula=1'
-	curl -X post  http://localhost:3000/minicell/B3/write.json -d 'formula==C2'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula==X(A2:F6)'
+	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=portland'
+	curl -X post  http://localhost:3000/minicell/D1/write.json -d 'formula=oakland'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula==SP(A1,C1,D1)'
 
-	curl -X post  http://localhost:3000/minicell/F2/write.json -d 'formula=7'
-	curl -X post  http://localhost:3000/minicell/G2/write.json -d 'formula=6'
-
-	curl -X post  http://localhost:3000/minicell/D3/write.json -d 'formula=2'
-	curl -X post  http://localhost:3000/minicell/E3/write.json -d 'formula=9'
-	curl -X post  http://localhost:3000/minicell/F3/write.json -d 'formula=8'
-	
-	curl -X post  http://localhost:3000/minicell/E4/write.json -d 'formula=3'
-
-	curl -X post  http://localhost:3000/minicell/F5/write.json -d 'formula=4'
-
-	curl -X post  http://localhost:3000/minicell/G6/write.json -d 'formula=5'
-
-	curl -X post  http://localhost:3000/minicell/A9/write.json -d 'formula=''=X(A1:G7)'
-	curl -X post  http://localhost:3000/minicell/A10/write.json -d 'formula=''A'
-	curl -X post  http://localhost:3000/minicell/A11/write.json -d 'formula=''D'
-
-	curl -X post  http://localhost:3000/minicell/B9/write.json -d 'formula=''=SP(A9, A10, A11)'
+	curl -X post  http://localhost:3000/minicell/A15/write.json -d 'formula==MAKE(A1:F6)'
+	curl -X post  http://localhost:3000/minicell/B15/write.json -d 'formula==LATEX(A1:F6)'
 
 graphviz:
 	curl -X post  http://localhost:3000/minicell/A2/write.json -F 'formula=''@examples/graphviz/make-a-website-for-a-friend.dot'

@@ -525,6 +525,78 @@ eval model expr = case normalizeOp expr of
 
     return (EAudio $ targetPath)
 
+  EApp "THESIS" [arg1, arg2, arg3] -> do
+    aarg1 <- eval model arg1 
+    aarg2 <- eval model arg2
+    aarg3 <- eval model arg3
+
+    let out = 
+          case aarg1 of
+            ESLit "poly" -> 
+              case aarg2 of 
+                ESLit "abstract" ->
+                  case aarg3 of
+                    EILit 1 -> "First sentence of abstract" 
+                    _ -> (show aarg3) <> " not found in abstract"
+                _ -> (show aarg2) <> " not found in poly"
+            _ -> (show aarg1) <> "is not in thesis"
+      in return $ ESLit out
+
+  EApp "MAKE" args -> do
+    case args of
+      [ECellRange (rhoL, kappaL) (rhoR, kappaR)] -> do
+        let matrix = [ (rho, kappa) | rho <- [rhoL .. rhoR], kappa <- [kappaL .. kappaR] ]
+        vals <- sequence [ do val <- eval model (ECellRef addr); return (addr, val) | addr <- matrix ]
+
+        return $ ESLit $ intercalate "\n" (curl <$> (filter (\(_,v) -> (eexprToASCII v) /= "") vals))
+
+      _ -> return $ EError "Invalid arguments to MAKE"
+
+    where
+      curl (addr, val) = mconcat ["curl -X post  http://localhost:3000/minicell/"
+                                 , (addrToExcelStyle addr)
+                                 , "/write.json -d 'formula="
+                                 , eexprToASCII val
+                                 , "'" ]
+      eexprToASCII val =
+        case val of
+          ESLit s -> s
+          EILit i -> show i
+          EError _ -> ""
+          _ -> ""
+
+  EApp "LATEX" ddd@[ECellRange (rhoL, kappaL) (rhoR, kappaR)] -> do
+    let matrix = [ (rho, kappa) | rho <- [rhoL .. rhoR], kappa <- [kappaL .. kappaR] ]
+
+    vals <- sequence [ do val <- eval model (ECellRef addr); return (addr, val) | addr <- matrix ]
+    
+    let ccc = "|" <> (intercalate "|" $ map (const "c") [kappaL .. (kappaR + 1)]) <> "|"
+
+    let hBegin = "\\begin{tabular}{ " <> ccc <> " } \\hline % \\hline"
+    let hC = (" & " <> (intercalate " & " (addrKappaToExcelStyle <$> [kappaL .. kappaR])))
+    -- "cell1 & cell2 & cell3 \\\\"
+    -- "cell4 & cell5 & cell6 \\\\"
+    -- "cell7 & cell8 & cell9 \\\\"
+    let hEnd = "\\end{tabular}"
+
+
+    -- return $ ESLit $ intercalate "\n" ([h0, h1, hC] ++ [(rows vals)] ++ [h2, h3])
+    return $ ESLit $ intercalate " \\\\ \\hline \n" [hBegin, hC, (rows vals), hEnd]
+
+    where
+      rows vals = intercalate "\\\\\n" $ map (printRow vals) [rhoL .. rhoR]
+      printRow vals rho = intercalate " & " $ [show (rho+1)] <> (eexprToLaTeX <$> ((flip lookup) vals) <$> ((rho,) <$> [kappaL .. kappaR]))
+      eexprToLaTeX val =
+        case val of
+          Just v ->
+            case v of
+              ESLit s -> s
+              EILit i -> show i
+              EError _ -> ""
+              EGraphFGL _ -> "$\\mathbf{G}$"
+              _ -> show v
+          _ -> ""
+
   EApp "UNIXEPOCH" _ -> do
     t <- getPOSIXTime
     return $ EILit (round t)

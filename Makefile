@@ -4,9 +4,16 @@ pldi: prepare
 prepare:
 	rm -rf build/*
 	cp -r vendor static/* build
+	ln -s /minibox build/minicell-cache/minibox
 
 purge:
 	curl -X post  http://localhost:3000/minicell/purge.json
+
+DIR:
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''hi'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=DIR(B1)'
+	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=LEN(A1)'
+	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''=LAST(A1)'
 
 thesis: purge
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''poly'

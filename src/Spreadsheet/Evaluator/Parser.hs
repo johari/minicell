@@ -481,6 +481,33 @@ eval model expr = case normalizeOp expr of
     putStrLn $ show model
     return $ dep
 
+  EApp "DIR" _ -> do
+    -- path <- eval model pathE
+    -- print path
+    listOfFiles <- getDirectoryContents "/minibox/"
+    print listOfFiles
+    return $ EList (EImage <$> listOfFiles)
+
+  EApp "LEN" [ elE ] -> do
+      el <- eval model elE
+      case el of
+        EList elList -> return $ EILit (length $ elList)
+        _ -> return $ EError "Given argument is not a list."
+
+  EApp "CAR" [ elE ] -> do
+      el <- eval model elE
+      case el of
+        EList [] -> return $ EError "The list is empty"
+        EList (x:xs) -> return $ x
+        _ -> return $ EError "Given argument is not a list."
+
+  EApp "LAST" [ elE ] -> do
+      el <- eval model elE
+      case el of
+        EList [] -> return $ EError "The list is empty"
+        EList el -> return $ last el
+        _ -> return $ EError "Given argument is not a list."
+
   EApp "LOAD" [expr] -> do
     loadName <- eval model expr
     case loadName of

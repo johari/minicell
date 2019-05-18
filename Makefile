@@ -1,6 +1,10 @@
 pldi: prepare
 	elm make src/Spreadsheet.elm --output build/spreadsheet.js
 
+first-time-setup:
+	sudo mkdir /minibox
+	sudo chown -R $(USER) /minibox
+
 prepare:
 	rm -rf build/*
 	cp -r vendor static/* build

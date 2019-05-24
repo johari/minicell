@@ -29,6 +29,8 @@ import Graphics.Svg.Core
 import Text.Mustache
 
 
+import Data.List (intercalate)
+
 import Data.Aeson
 import qualified Data.Text as T
 import Control.Lens hiding ((.=), none)
@@ -54,6 +56,7 @@ import Network.Wai.Handler.WebSockets
 import Network.WebSockets
 import Network.Wai.Parse
 import Network.Wai.Middleware.Cors
+import Network.Mime
 
 -- Bytestring stuff
 
@@ -129,7 +132,7 @@ eexprToHttpResponse cellValue = do
             response <- (get src)
             return $ responseLBS status200 [] (response ^. responseBody)
 
-        _ -> return $ 
+        _ -> return $
             responseLBS status503
                         [(hContentType, "text/plain")]
                         (fromString $ "HTML output not implemented for " ++ (show cellValue))
@@ -312,6 +315,36 @@ anyRoute modelTVar req res =
                     endpointShow modelTVar cometKey req res
 
 
-        url ->
-            res $ responseLBS status404 [(hContentType, "application/json")] (encode $ "Invalid URL " ++ show url)
+        --
+        --
+        -- Assets
+        ["assets", "spreadsheet.js"] -> do
+
+            res $ responseFile status200 [(hContentType, "text/javascript")] ("../build/spreadsheet.js") Nothing
+
+        ("assets":pathToAsset) -> do
+            let fullPath = intercalate "/" (T.unpack <$> pathToAsset)
+            let myMime = (defaultMimeLookup $ fromString fullPath)
+            print myMime
+            res $ responseFile status200 [(hContentType, myMime)] ("../static/" <> fullPath) Nothing
+
+        ("minicell-cache":pathToAsset) -> do
+            let fullPath = intercalate "/" (T.unpack <$> pathToAsset)
+            let myMime = (defaultMimeLookup $ fromString fullPath)
+            print myMime
+            res $ responseFile status200 [(hContentType, myMime)] ("../build/minicell-cache/" <> fullPath) Nothing
+
+        [] -> do
+            let (Just hostName) = requestHeaderHost req
+            let messageToUser = mconcat ["Welcome to ", show hostName]
+
+            res $ responseFile status200 [(hContentType, "text/html")] "../static/main.html" Nothing
+
+        url -> do
+            let messageToUser = mconcat [
+                                    "Invalid URL " ++ show url, "\n",
+                                    "Host:" ++ (show $ requestHeaderHost req), "\n",
+                                    show $ Network.Wai.requestHeaders req
+                                ]
+            res $ responseLBS status404 [(hContentType, "application/json")] (encode $ messageToUser)
 

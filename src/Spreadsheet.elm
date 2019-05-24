@@ -95,17 +95,19 @@ cometKeyToAddr cometKey =
             ( ((rhoC1 |> Char.toUpper |> Char.toCode) - (Char.toCode '0'))*10+((rhoC2 |> Char.toUpper |> Char.toCode) - (Char.toCode '0')) - 1
             , (kappaC |> Char.toUpper |> Char.toCode) - (Char.toCode 'A')
             )
-        
+
         _ -> (0, 0)
 
-addrToExcelStyle addr = 
+minicellEndpoint = ""
+
+addrToExcelStyle addr =
     let (rho, kappa) = addr
         columnString = Char.fromCode (kappa + (Char.toCode 'A')) |> String.fromChar
     in
         columnString ++ (String.fromInt (rho+1))
 
 curlXPOST addr formula =
-    Http.post { url = ("http://localhost:3000/minicell/" ++ (addrToExcelStyle addr) ++ "/write.json")
+    Http.post { url = (minicellEndpoint ++ "/minicell/" ++ (addrToExcelStyle addr) ++ "/write.json")
               , body = (postBodyUpdateFormula formula)
               , expect = Http.expectJson (CometUpdate (addrToExcelStyle addr)) D.value
     }
@@ -133,7 +135,7 @@ init _ =
 -- seems to be a little tricky to implement..
 -- You can tell by the weirdness in choosing namings for functions
 -- that serve simple purposes.
--- 
+--
 -- Maybe it's the most mundane part of the implementation,
 -- one that is requiring me, as a programmer, to write boilterplate functions
 -- for operations that could be conveniently expressed in a flexible DSL.
@@ -152,7 +154,7 @@ elmIsWeirdWithMaybe2 newValue e = { e | value = newValue }
 
 -- This is a very useful function now that we replaced Dict with List
 updateCellValue : Database -> CellAddress -> EExpr -> Database
-updateCellValue database addr newValue = 
+updateCellValue database addr newValue =
     case find (\x -> x.addr == addr) database of
         Just cell -> updateIf (\x -> x.addr == addr) (elmIsWeirdWithMaybe2 newValue) database
         Nothing -> database ++ [{ emptyCell | value = newValue, addr = addr }]
@@ -1031,14 +1033,14 @@ hijack msg =
 cometUpdate : CometKey -> Cmd Msg
 cometUpdate cometKey =
   Http.get
-    { url = ("http://localhost:3000/minicell/" ++ cometKey ++ "/show.json")
+    { url = (minicellEndpoint ++ "/minicell/" ++ cometKey ++ "/show.json")
     , expect = Http.expectJson (CometUpdate cometKey) D.value
     }
 
 cometUpdateAll : Cmd Msg
 cometUpdateAll =
   Http.get
-    { url = ("http://localhost:3000/minicell/all.json")
+    { url = (minicellEndpoint ++ "/minicell/all.json")
     , expect = Http.expectJson (CometUpdateAll) (D.value)
     }
 

@@ -1,40 +1,52 @@
   <!doctype html>
 
   <head>
-  <link rel="stylesheet" href="style.css" />
-  <script src="elm.js"></script>
-  <script src="vendor/viz/viz.js"></script>
-  <script src="vendor/viz/full.render.js"></script>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/assets/elm.css" />
+  <link rel="stylesheet" href="/assets/spreadsheet.css" />
+  <script src="/assets/spreadsheet.js"></script>
 
-  <script src="https://d3js.org/d3.v4.min.js"></script>
-  <link rel="stylesheet" href="vendor/d3/styles.css" />
-  <script src="vendor/d3/minicell.js"></script>
+  <script src="/assets/vendor/viz/viz.js"></script>
+  <script src="/assets/vendor/viz/full.render.js"></script>
+  <script src="/assets/vendor/jquery/jquery-3.3.1.min.js"></script>
 
   </head>
 
   <body>
-    <div id="elm"></div>
+    <div id="example-graphsheet"></div>
+
+
+    <!-- <svg id="svg-container"></svg> -->
+
+    <script>
+      var app = Elm.Spreadsheet.init({ node: document.getElementById("example-graphsheet") })
+      document.addEventListener('keydown', (event) => {
+        app.ports.keyPress.send(event.key);
+        if(event.keyCode == 40 || event.keyCode == 38) { //Up and Down
+          event.preventDefault();
+        }
+      }, false)
+
+      app.ports.fixAutoFocusBug.subscribe(function(elem_id) {
+        setTimeout(function() {
+          document.getElementById(elem_id).focus()
+        }, 10)
+      })
+    </script>
 
 
     <script>
       var viz = new Viz();
-      var vizPaperOutline = new Viz();
-    </script>
-
-    <script>
-      var app = Elm.Main.init({ node: document.getElementById("elm") })
       var svgContainer = document.getElementById("svg-container");
-      var paperSvgContainer = document.getElementById("paper-svg-container");
 
-
-      app.ports.repaintGraph.subscribe(function (dotOutput, stringOutput) {
+      app.ports.graphViz.subscribe(function(dotOutput) {
         viz.renderSVGElement(dotOutput)
         .then(function(element) {
           svgContainer.innerHTML = "";
           svgContainer.appendChild(element);
 
           repaintD3Graph();
-          console.log(stringOutput)
         })
         .catch(error => {
           // Create a new Viz instance (@see Caveats page for more info)
@@ -45,23 +57,30 @@
 
         });
       })
-
-
-      app.ports.renderPaperOutline.subscribe(function (dotOutput) {
-        vizPaperOutline.renderSVGElement(dotOutput)
-        .then(function(element) {
-          paperSvgContainer.innerHTML = "";
-          paperSvgContainer.appendChild(element);
-        })
-        .catch(error => {
-          // Create a new Viz instance (@see Caveats page for more info)
-          vizPaperOutline = new Viz();
-
-          // Possibly display the error
-          console.error(error);
-        });
-      })
     </script>
 
+<!--
+    <script>
+      var cache = {}
+      var compileAllGraphviz = function() {
+        var html = $(".vizjs-compile-dot-to-svg")
+        html.each(function(index, elem) {
+          var dotOutput = elem.innerHTML.replace(/\&gt;/g, ">");
+          if(!cache[dotOutput]) {
+            viz.renderSVGElement(dotOutput).then(function(svgElement) {
+              elem.innerHTML = ""
+              cache[dotOutput] = svgElement
+              elem.appendChild(svgElement);
+        })
+          } else {
+            elem.appendChild(cache[dotOutput]);
+          }
+          elem.classList.remove("vizjs-compile-dot-to-svg")
 
+      })
+      }
+      setInterval(compileAllGraphviz, 1000)
+    </script>
+
+ -->
   </body>

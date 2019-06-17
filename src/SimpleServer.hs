@@ -73,6 +73,7 @@ import Control.Monad.IO.Class (liftIO)
 
 -- Minicell stuff
 
+import Minicell.Cache (fullCacheRoot)
 import Spreadsheet.Types
 import Spreadsheet as Mini
 
@@ -146,9 +147,12 @@ eexprToComet model cometAddress  = do
     -- B) Elm values
     -- C) Transforming unusual values to something suitable to render in Frontend
 
-    let dotPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".dot"
-    let pngPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".png"
-    let svgPath = "../build/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ ".svg"
+
+    cachePath <- fullCacheRoot
+    let basePath = [cachePath, "/", (addrToExcelStyle cometAddress)] -- don't forget the trailing slash!
+    let dotPath = mconcat $ basePath <> [".dot"]
+    let pngPath = mconcat $ basePath <> [".png"]
+    let svgPath = mconcat $ basePath <> [".svg"]
 
     t <- getPOSIXTime
     let targetSrc ext = ("/minicell-cache/" ++ (addrToExcelStyle cometAddress) ++ "." ++ ext ++ "?" ++ (show t))
@@ -158,22 +162,22 @@ eexprToComet model cometAddress  = do
             -- renderDia Rasterific (RasterificOptions (mkWidth 250)) myDiagram
             -- let myDiagram = (fc red . lw none $ circle 1) ||| (fc green . lw none $ circle 1) :: Diagram B
             let elem = renderDia SVG (SVGOptions (mkWidth 250) Nothing "" [] True) myDiagram
-            renderToFile svgPath elem 
-            -- renderRasterific pngPath (mkWidth 250) 
+            renderToFile svgPath elem
+            -- renderRasterific pngPath (mkWidth 250)
 
             return $ CometImage cometAddress (targetSrc "svg")
 
         EGraphFGL g -> do
             let dot = showDot (fglToDot g)
-            
+
             writeFile dotPath dot
             system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
-            
+
             return $ CometImage cometAddress (targetSrc "png")
 
         ESLit s -> return $ CometSLit cometAddress s
         EILit i -> return $ CometILit cometAddress i
-        EImage src -> return $ CometImage cometAddress ("/minicell-cache/minibox/" <> src)
+        EImage src -> return $ CometImage cometAddress ("/minicell-cache/" <> src)
         EVideo src -> return $ CometVideo cometAddress src
         _ -> return $ CometSLit cometAddress (show cellValue)
 
@@ -183,7 +187,7 @@ endpointShow modelTVar cometKey req res = do
 
     model <- readTVarIO modelTVar
     val <- eexprToComet model cometAddress
-        
+
 
     res $ responseLBS status200
                           [(hContentType, "application/json")]
@@ -260,7 +264,7 @@ anyRoute modelTVar req res =
                             indexVal <- eval model (ECellRef (rho, kappa+1))
                             httpResponse <- eexprToHttpResponse indexVal
                             res $ httpResponse
-                    
+
                     -- TODO:if "/" doesn't exist, it's 404, or 403
                 _ -> do
                     res $ responseLBS status200
@@ -275,7 +279,7 @@ anyRoute modelTVar req res =
             let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
 
 
-              
+
             (params, files) <- parseRequestBody lbsBackEnd req
 
             let fileParams = case files of
@@ -331,8 +335,11 @@ anyRoute modelTVar req res =
         ("minicell-cache":pathToAsset) -> do
             let fullPath = intercalate "/" (T.unpack <$> pathToAsset)
             let myMime = (defaultMimeLookup $ fromString fullPath)
-            print myMime
-            res $ responseFile status200 [(hContentType, myMime)] ("../build/minicell-cache/" <> fullPath) Nothing
+            cachePath <- fullCacheRoot
+
+            let pathToFile = mconcat [cachePath, "/", fullPath]
+
+            res $ responseFile status200 [(hContentType, myMime)] (pathToFile) Nothing
 
         [] -> do
             let (Just hostName) = requestHeaderHost req

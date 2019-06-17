@@ -33,6 +33,29 @@ youtube: purge
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''nLQRtCEX-E0'
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=YT(B1)'
 
+pdf: pdf-2
+
+pdf-0: purge
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''http://localhost:8111/graphsheet.pdf'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''0'
+	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''1'
+
+pdf-1: pdf-0
+	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''=PDF(A1,B1)'
+	curl -X post  http://localhost:3000/minicell/C2/write.json -d 'formula=''=PDF(A1,C1)'
+
+pdf-2: pdf-1
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''0'
+	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''1'
+	curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''=PDF(A1,B1)'
+	curl -X post  http://localhost:3000/minicell/C2/write.json -d 'formula=''=PDF(A1,C1)'
+
+pdf-3: pdf-2
+	curl -X post  http://localhost:3000/minicell/D1/write.json -d 'formula=''2'
+	curl -X post  http://localhost:3000/minicell/E1/write.json -d 'formula=''3'
+	curl -X post  http://localhost:3000/minicell/D2/write.json -d 'formula=''=PDF(A1,D1)'
+	curl -X post  http://localhost:3000/minicell/E2/write.json -d 'formula=''=PDF(A1,E1)'
+
 pdf-crop: purge
 	# curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''https://csiflabs.cs.ucdavis.edu/~johari/refs/rt-frp.pdf'
 	# curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''http://web.cs.ucdavis.edu/~su/publications/emi.pdf'

@@ -64,7 +64,7 @@ type Msg
 
     | SwitchToMode Mode
     | CollectVertexDemo CellAddress
-    
+
     | CollectEdgeDemo1 CellAddress
     | CollectEdgeDemo2 VertexAndPerhapsCells CellAddress
 

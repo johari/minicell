@@ -1,5 +1,13 @@
 module Minicell.Cache where
 
+--
+-- Log
+
+
+import System.Log.Logger (infoM, setLevel)
+
+--
+
 
 import System.IO.Temp
 import System.Directory
@@ -8,7 +16,7 @@ import System.Process
 
 import Data.Digest.Pure.MD5
 
-import Data.String 
+import Data.String
 
 import Network.Wreq
 import Control.Lens
@@ -30,17 +38,23 @@ fullPathForKey (ns, key) = do
 
 fullCacheRoot = do
     h <- getHomeDirectory
-    return $ h ++ "/johari/minicell/build/minicell-cache"
+    return $ h ++ "/.cache/minicell"
 
 -- e.g. storeObject (mconcat [tmp, "foo-", (show page), ".png"])
 storeObject :: CacheKey -> B.ByteString -> IO FilePath -- FIXME: return success/failure
-storeObject cacheKey@(ns, objectId) content = do 
+storeObject cacheKey@(ns, objectId) content = do
     finalDestination <- fullPathForKey cacheKey
+
+    infoM "wiki.sheets.cache" ("writing to " ++ show finalDestination)
+
     B.writeFile finalDestination content
     return finalDestination
 
 cachePathFor namespace = do
     root <- fullCacheRoot
+
+    infoM "wiki.sheets.cache" ("full cache root is " ++ show root)
+
     let dirName = mconcat [root, "/", namespace]
     print (dirName, length dirName)
     huh <- doesDirectoryExist dirName
@@ -65,17 +79,17 @@ retrieveAndStoreUrlToFile url = do
     let md5Digest = show $ md5 (BL.pack url)
 
     let cacheKey = ("http", md5Digest)
-    
+
     targetPath <- fullPathForKey cacheKey
 
     fileExist <- doesObjectExist cacheKey
-    
+
     case fileExist of
         True -> return $ (md5Digest, targetPath)
         False -> do
             r <- get url
             let resBody = r ^. responseBody
-            
+
             BL.writeFile targetPath resBody
 
             return $ (md5Digest, targetPath)

@@ -1,6 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+
+
 module Minicell.Interop.PDF where
+
+
+import System.Log.Logger (infoM)
 
 import Minicell.Cache
 
@@ -42,8 +47,12 @@ crop imagePath (w, h, x0, y0) = do
 
 
     case fileExist of
-        True -> return ()
-        _-> withSystemTempDirectory "minicell-crop" $ \tmp -> do
+        True -> do
+            infoM "wiki.sheets.cache.hit" (show cacheKey)
+            return ()
+        _-> do
+            infoM "wiki.sheets.cache.miss" (show cacheKey)
+            withSystemTempDirectory "minicell-crop" $ \tmp -> do
 
                 -- Convert PDF to a collection of PNGs
 
@@ -61,7 +70,7 @@ crop imagePath (w, h, x0, y0) = do
                 return ()
     return (pathForKey cacheKey)
 
-magicPdf url page = do 
+magicPdf url page = do
     -- Retrieve the PDF from url
     (pdfHash, pdfPath) <- retrieveAndStoreUrlToFile url
 
@@ -71,7 +80,7 @@ magicPdf url page = do
     fileExist <- doesObjectExist cacheKey
 
     -- Return the address so that cells can render it
-    case fileExist of 
+    case fileExist of
         True -> return ()
         _ -> withSystemTempDirectory "minicell-magic-pdf" $ \tmp -> do
 
@@ -87,10 +96,10 @@ magicPdf url page = do
                 -- <rant timestamp="2:08AM">
                 -- `convert` is not consistent with the way it converts
                 -- 1-page pdfs to png, and many-page pdfs to png
-                -- 
+                --
                 -- I mean...
                 -- ¯\_(ツ)_/¯
-                -- 
+                --
 
                 perhapsSinglePagePdf <- doesFileExist $ mconcat [tmp, "foo.png"]
                 let finalFilename =

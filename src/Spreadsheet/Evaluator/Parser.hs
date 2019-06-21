@@ -394,33 +394,45 @@ eval model expr = case normalizeOp expr of
 
     return $ EDiag $ XDiagram (fc myColor $ diag)
 
-  EApp "MYSQL" args -> do
-    print args
+  EApp "MYSQL" [ _databaseE, _queryE ] -> do
+    ESLit databaseE <- eval model _databaseE
+    ESLit queryE    <- eval model _queryE
+
     conn <- connect (defaultConnectInfo { connectHost = "127.0.0.1"
-                                        , connectPort = 3307
-                                        , connectPassword = "SECRET"
+                                        , connectPort = 3306
+                                        , connectPassword = "pietpietpiet"
                                         , connectUser = "root"
-                                        , connectDatabase = "wiki-thesis"
+                                        , connectDatabase = databaseE
                                         })
-    
-    
+
+
     -- from: the current page title that corresponds to `pl_from`
     -- to: pl_title
     -- value on edge: none at this point.
     -- xs <- query_ conn "SELECT cast(page_title as CHAR), cast(pl_title as CHAR) FROM `thesis_pagelinks` INNER JOIN thesis_page ON thesis_page.page_id = pl_from WHERE 1"
 
-    xs <- query_ conn "SELECT cast(page_title as CHAR), cast(pl_title as CHAR) FROM `nima_pagelinks` INNER JOIN nima_page ON nima_page.page_id = pl_from WHERE 1"
+    xs <- query_ conn (fromString queryE)
 
+    close conn
+
+    {-
     newEdges <- forM xs $ \(linkFrom, linkTo) ->
       return $ ((linkFrom, linkTo, 0) :: (String, String, Int))
 
     let (newNodes, nm) = mkNodes new (concat $ (\(x, y, _) -> [x, y]) <$> newEdges)
     return $ EGraphFGL $ mkGraph newNodes (fromMaybe [] $ mkEdges nm newEdges)
+    -}
+
+    let cleanUpMysql x = case x of
+                          (Only s) -> s
+                          _ -> ""
+
+    return $ EList $ (ESLit <$> cleanUpMysql <$> (xs))
 
   EApp "MUSTACHE" args -> do
     let mustacheText = "Hello {{A1}} <a href=\".{{A2}}\">{{A2}}</a>"
     let compiledTemplate = compileMustacheText "foo" mustacheText
-    
+
     a1InHtml <- eval model (ECellRef (0, 0)) >>= eexprToHtml
     a2InHtml <- eval model (ECellRef (1, 0)) >>= eexprToHtml
 

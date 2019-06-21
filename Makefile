@@ -117,8 +117,11 @@ github: purge
 
 
 mysql: purge
-	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=MYSQL(B1)'
-	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=MYSQL(42)'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''example1'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''SELECT city FROM STATION WHERE LAT_N > 39.7;'
+	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''=MYSQL(A1, B1)'
+	curl -X post  http://localhost:3000/minicell/D1/write.json -d 'formula=''=LEN(C1)'
+
 
 animation: diagrams
 	curl -X post  http://localhost:3000/minicell/C4/write.json -d 'formula=''=UNIXEPOCH(A1)'

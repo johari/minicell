@@ -19,6 +19,10 @@ DIR:
 	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=LEN(A1)'
 	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''=LAST(A1)'
 
+qr: purge
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''Hello World'
+	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=QR(A1)'
+
 thesis: purge
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''poly'
 	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''abstract'

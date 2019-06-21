@@ -6,7 +6,18 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
+
+{-# LANGUAGE ScopedTypeVariables #-}
+
+
 module Spreadsheet.Evaluator.Parser where
+
+-- QR
+
+import Codec.QRCode
+import Codec.QRCode.JuicyPixels
+import qualified System.IO.Streams as IOS
+import System.IO
 
 -- Logger
 
@@ -14,7 +25,7 @@ import System.Log.Logger
 
 -- Interop
 
-import Minicell.Interop.GitHub
+-- import Minicell.Interop.GitHub
 import Minicell.Interop.PDF as PDF
 import Minicell.Interop.YouTube as YT
 
@@ -428,6 +439,15 @@ eval model expr = case normalizeOp expr of
                           _ -> ""
 
     return $ EList $ (ESLit <$> cleanUpMysql <$> (xs))
+
+  EApp "QR" [ _payloadE ] -> do
+    payloadE <- eval model _payloadE
+    case payloadE of
+      ESLit payloadS -> do
+        let Just mat = Codec.QRCode.encode (defaultQRCodeOptions M) Iso8859_1 payloadS
+        let imageURI = toPngDataUrlS 30 30 mat
+
+        return $ EImage imageURI
 
   EApp "MUSTACHE" args -> do
     let mustacheText = "Hello {{A1}} <a href=\".{{A2}}\">{{A2}}</a>"

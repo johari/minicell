@@ -5,6 +5,10 @@
 
 module Spreadsheet.Types where
 
+
+----
+
+
 import Text.Read
 
 import Debug.Trace
@@ -213,7 +217,7 @@ isStringCell cell = case value cell of
     _ -> False
 
 -- emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (millisToPosix 0)
-emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] []
+emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (Data.Map.fromList [])
 
 
 
@@ -247,6 +251,7 @@ data Spreadsheet = Spreadsheet
     , demoVertices :: TVertexDemo
     , demoEdges :: TEdgeDemo
     -- , currentTime :: Posix
+    , cache :: Data.Map.Map String EExpr
     } deriving (Show, Read, Eq)
 
 refs :: EExpr -> [CellAddress]

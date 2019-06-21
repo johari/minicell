@@ -139,14 +139,11 @@ eexprToHttpResponse cellValue = do
                         (fromString $ "HTML output not implemented for " ++ (show cellValue))
 
 
-eexprToComet model cometAddress  = do
-    cellValue <- eval model (ECellRef cometAddress)
-
+eexprToComet cellValue cometAddress  = do
     -- This is the main point of integration betweenR
     -- A) Haskell values
     -- B) Elm values
     -- C) Transforming unusual values to something suitable to render in Frontend
-
 
     cachePath <- fullCacheRoot
     let basePath = [cachePath, "/", (addrToExcelStyle cometAddress)] -- don't forget the trailing slash!
@@ -182,12 +179,25 @@ eexprToComet model cometAddress  = do
         _ -> return $ CometSLit cometAddress (show cellValue)
 
 
-endpointShow modelTVar cometKey req res = do
-    let cometAddress = (cometKeyToAddr $ T.unpack $ cometKey)
+endpointPrepare modelTVar cometKey = do
+    let cometAddress = (cometKeyToAddr $ cometKey)
 
     model <- readTVarIO modelTVar
-    val <- eexprToComet model cometAddress
 
+
+    -- FIXME
+    -- This is a very wrong place to implement the cache
+    -- There should be one layer between `eval` and `eexprToComet` that handles the cache
+
+    cellValue <- eval model (ECellRef cometAddress)
+
+
+
+    val <- eexprToComet cellValue cometAddress
+    return val
+
+endpointShow modelTVar cometKey req res = do
+    val <- endpointPrepare modelTVar (T.unpack cometKey)
 
     res $ responseLBS status200
                           [(hContentType, "application/json")]
@@ -196,9 +206,9 @@ endpointShow modelTVar cometKey req res = do
 endpointShowAll modelTVar req res = do
     model <- readTVarIO modelTVar
 
-    let existingKeys = (database model)
+    let existingKeys = addrToExcelStyle <$> addr <$> (database model)
 
-    allOfCells <- sequence $ eexprToComet model <$> addr <$> (database model)
+    allOfCells <- sequence $ ((endpointPrepare modelTVar) <$> existingKeys)
 
     res $ responseLBS status200
                           [(hContentType, "application/json")]

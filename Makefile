@@ -13,6 +13,10 @@ prepare:
 purge:
 	curl -X post  http://localhost:3000/minicell/purge.json
 
+CAL:
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''trip'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=CAL(B1)'
+
 DIR:
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''hi'
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=DIR(B1)'
@@ -91,7 +95,7 @@ pdf-crop: purge
 
 	# curl -X post  http://localhost:3000/minicell/B2/write.json -d 'formula=''0' # startX
 	# curl -X post  http://localhost:3000/minicell/C2/write.json -d 'formula=''200' # startY
-	
+
 	# curl -X post  http://localhost:3000/minicell/D2/write.json -d 'formula=''100' # lengthX
 	# curl -X post  http://localhost:3000/minicell/E2/write.json -d 'formula=''400' # lengthY
 
@@ -142,7 +146,7 @@ diagrams: purge
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=SHAPE(B1)'
 	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=PAINT(A1,B2)'
 	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''=PAINT(A1,B3)'
-	
+
 
 	# curl -X post  http://localhost:3000/minicell/D7/write.json -d 'formula=''=5'
 	# curl -X post  http://localhost:3000/minicell/C7/write.json -d 'formula=''=UNIXEPOCH(D8)'
@@ -186,8 +190,8 @@ cities: purge
 	curl -X post  http://localhost:3000/minicell/D1/write.json -d 'formula=oakland'
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula==SP(A1,C1,D1)'
 
-	curl -X post  http://localhost:3000/minicell/A15/write.json -d 'formula==MAKE(A1:F6)'
-	curl -X post  http://localhost:3000/minicell/B15/write.json -d 'formula==LATEX(A1:F6)'
+	echo curl -X post  http://localhost:3000/minicell/A15/write.json -d 'formula==MAKE(A1:F6)'
+	echo curl -X post  http://localhost:3000/minicell/B15/write.json -d 'formula==LATEX(A1:F6)'
 
 graphviz:
 	curl -X post  http://localhost:3000/minicell/A2/write.json -F 'formula=''@examples/graphviz/make-a-website-for-a-friend.dot'
@@ -229,7 +233,7 @@ poppet:
 
 
 	curl -X post  http://localhost:3000/minicell/C4/write.json -d 'formula=''https://www.youtube.com/watch?v=nLQRtCEX-E0'
-	
+
 
 	# curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''=HTTP(A1:B10)'
 

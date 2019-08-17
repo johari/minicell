@@ -125,13 +125,13 @@ body #container-box {
 }
 
 #container-panes #pane-a {
-  width: 70%;
+  width: 50%;
   overflow-y: scroll;
   /*height: 100%;*/
 }
 
 #container-panes #pane-b {
-  width: 30%;
+  width: 50%;
   overflow-y: scroll;
 }
 

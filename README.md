@@ -9,7 +9,7 @@ Minicell provides first-class support for
 * simple shapes and diagrams along with some geometrical transformations
 in a spreadsheet environment.
 
-It makes it easy for non-programmers to perform sophisticated graph modeling tasks,
+It makes it easy for [end-user programmers](https://en.wikipedia.org/wiki/End-user_development) to perform sophisticated graph modeling tasks,
 including solving optimization problems such as shortest path problem or maximum flow.
 
 We believe graphs (i.e. networks) are an important mathematical tool,

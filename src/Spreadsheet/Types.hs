@@ -24,7 +24,7 @@ import Debug.Trace
 
 -- Diagrams stuff
 
-import Diagrams.Prelude (Diagram)
+import Diagrams.Prelude (Diagram, circle)
 import Diagrams.Backend.SVG
 
 -- Graph stuff

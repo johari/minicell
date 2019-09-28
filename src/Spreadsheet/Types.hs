@@ -137,6 +137,7 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
 
         | EGraphFGL (Gr String Int)
         | EDiag XDiagram
+        | ENotImplemented
 
         | EError String
            | EHref String -- CellHref

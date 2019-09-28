@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -5,6 +6,14 @@
 
 module Spreadsheet.Types where
 
+import Data.Char (ord, toLower, toUpper)
+
+--
+
+import GHC.Generics
+import Codec.Serialise
+import Codec.Serialise.Encoding
+import Codec.CBOR
 
 ----
 
@@ -211,13 +220,15 @@ data Cell = Cell
     { value :: Formula
     , buffer :: String
     , addr :: CellAddress
-    -- Each time you edit a cell, you are modifying the "buffer". 
+    -- Each time you edit a cell, you are modifying the "buffer".
     -- Once you press enter the buffer will be parsed, and we replace the "value" attribute with
     -- the result of the parser
     --
     -- the logic for the evaluator can be traced in the code that renders the cells to HTML
     , meta  :: Maybe CellMeta
-    } deriving (Show, Eq, Read)
+    } deriving (Show, Eq, Read, Generic)
+
+instance Serialise Cell
 
 -- emptyGraph = Graph.fromNodesAndEdges [] []
 emptyGraph = ([], [])
@@ -244,8 +255,9 @@ data Mode
     | EditMode CellAddress
     | VertexDemoMode
     | EdgeDemoMode1
-    | EdgeDemoMode2 VertexAndPerhapsCells deriving (Show, Read, Eq)
+    | EdgeDemoMode2 VertexAndPerhapsCells deriving (Show, Read, Eq, Generic)
 
+instance Serialise Mode
 
 -- is this necessary?
 toString a = case a of
@@ -267,7 +279,9 @@ data Spreadsheet = Spreadsheet
     , demoEdges :: TEdgeDemo
     -- , currentTime :: Posix
     , cache :: Data.Map.Map String EExpr
-    } deriving (Show, Read, Eq)
+    } deriving (Show, Read, Eq, Generic)
+
+instance Serialise Spreadsheet
 
 refs :: EExpr -> [CellAddress]
 refs eexpr = case eexpr of

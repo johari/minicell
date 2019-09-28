@@ -163,17 +163,31 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            --       [ ] basic values:
            --             read from file (or URL)
            --       [ ] basic operations
-           --             things Duke mentioned in his system (w.r.t. combining gif images)  
+           --             things Duke mentioned in his system (w.r.t. combining gif images)
            -- [ ] and videos
            --       [ ] basic values
            --             read from YouTube
            --             read from DAT
            --             read from Phone video library
            --       [ ] basic operations
-           deriving (Show, Eq, Read)
+           deriving (Show, Eq, Read, Generic)
+
+
+normalizeOp expr =
+  case expr of
+    EApp op args -> EApp (map toUpper op) args
+    _ -> expr
 
 type Formula = EExpr
 
+instance Serialise XDiagram where
+  encode _ = encodeInt 1
+  decode = do
+   return $ XDiagram $ circle 1
+
+instance Serialise (Gr String Int)
+
+instance Serialise EExpr
 
 eexprToHtml cellValue = do
     case cellValue of

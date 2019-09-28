@@ -3,7 +3,11 @@
 
 ![Minicell screenshot (2018)](https://github.com/johari/minicell/blob/master/static/screenshot.png)
 
-Minicell provides first-class support for networks and graphs inside the spreadsheet environment.
+Minicell provides first-class support for
+* networks and graphs, along with some formulas
+* values that flow in time
+* simple shapes and diagrams along with some geometrical transformations
+in a spreadsheet environment.
 
 It makes it easy for non-programmers to perform sophisticated graph modeling tasks,
 including solving optimization problems such as shortest path problem or maximum flow.

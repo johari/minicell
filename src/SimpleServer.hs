@@ -173,6 +173,7 @@ eexprToComet cellValue cometAddress  = do
             return $ CometImage cometAddress (targetSrc "png")
 
         ESLit s -> return $ CometSLit cometAddress s
+        EHTML s -> return $ CometHTML cometAddress s
         EILit i -> return $ CometILit cometAddress i
         EImage src -> return $ CometImage cometAddress src
         EVideo src -> return $ CometVideo cometAddress src

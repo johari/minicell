@@ -43,11 +43,12 @@ type alias TEdgeDemo   = List SuperEdge
 type alias EFunctor = String
 
 type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
-           | EILit Int -- CellInt 
+           | EILit Int -- CellInt
            | ESLit String --CellString
-           | ECellRef CellAddress 
+           | EHTML String
+           | ECellRef CellAddress
            | EBot -- CellEmpty
-           
+
            | EEmpty
 
            | ECellGraph (Graph Cell ())

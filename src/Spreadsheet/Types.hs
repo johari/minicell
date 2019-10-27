@@ -78,7 +78,7 @@ type TVertexDemo = List VertexAndPerhapsCells
 
 
 getCellVertex :: CellAddress -> TVertexDemo -> List VertexAndPerhapsCells
-getCellVertex givenAddr demoOfVertices = 
+getCellVertex givenAddr demoOfVertices =
      demoOfVertices
   |> filter (\(_, cells) -> map (\x -> addr x == givenAddr) cells |> any id)
 
@@ -86,7 +86,7 @@ addrInVertexDemo addr demoOfVertices =
   (getCellVertex addr demoOfVertices |> length) > 0
 
 removeAddrFromDemoVertices :: CellAddress -> TVertexDemo -> TVertexDemo
-removeAddrFromDemoVertices givenAddr demoOfVertices = 
+removeAddrFromDemoVertices givenAddr demoOfVertices =
      demoOfVertices
   |> filter
       (\(_, cells) ->
@@ -113,15 +113,18 @@ instance Read XDiagram where
 -- </hack>
 
 data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
-           | EILit Int -- CellInt 
+           | EILit Int -- CellInt
            | ESLit String --CellString
+           | EHTML String --CellString
 
            | EList [EExpr] -- Should we allow [ESLit, EIlit]? Perhaps not :(
            | ETuple2 (EExpr, EExpr)
            | ETuple3 (EExpr, EExpr, EExpr)
-           
-           | ECellRef CellAddress 
+
+           | ECellRef CellAddress
            | ECellRange CellAddress CellAddress
+
+           | EVar String
 
            | EBot -- CellEmpty
 
@@ -210,7 +213,7 @@ row :: CellAddress -> Int
 row = fst
 
 column :: CellAddress -> Int
-column = snd 
+column = snd
 
 type CellMeta =
     String
@@ -306,19 +309,20 @@ dependencyGraph db = trace (show $ edges) (mkGraph vertices edges)
 addrRhoToExcelStyle rho = show (rho + 1)
 addrKappaToExcelStyle kappa = [['A'..] !! kappa]
 
-addrToExcelStyle (rho, kappa) = 
+addrToExcelStyle (rho, kappa) =
     let columnString = addrKappaToExcelStyle kappa in
     mconcat [columnString, addrRhoToExcelStyle rho]
 
 
 data CometValue = CometAddr CellAddress
                 | CometSLit CellAddress String
+                | CometHTML CellAddress String
                 | CometILit CellAddress Int
                 | CometImage CellAddress String
                 | CometVideo CellAddress String
                 | CometEmpty CellAddress
 
-instance ToJSON CometValue where 
+instance ToJSON CometValue where
   toJSON (CometEmpty addr) =
     object
       [ (T.pack "valueType") .= (T.pack "EEmpty")
@@ -333,14 +337,21 @@ instance ToJSON CometValue where
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
       ]
 
-  toJSON (CometSLit addr str) = 
+  toJSON (CometHTML addr str) =
+    object
+      [ (T.pack "value") .= str
+      , (T.pack "valueType") .= (T.pack "EHTML")
+      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      ]
+
+  toJSON (CometSLit addr str) =
     object
       [ (T.pack "value") .= str
       , (T.pack "valueType") .= (T.pack "ESLit")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
       ]
 
-  toJSON (CometILit addr i) = 
+  toJSON (CometILit addr i) =
     object
       [ (T.pack "value") .= i
       , (T.pack "valueType") .= (T.pack "EILit")
@@ -348,14 +359,14 @@ instance ToJSON CometValue where
       ]
 
 
-  toJSON (CometImage addr src) = 
+  toJSON (CometImage addr src) =
     object
       [ (T.pack "value") .= src
       , (T.pack "valueType") .= (T.pack "EImage")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
       ]
 
-  toJSON (CometVideo addr src) = 
+  toJSON (CometVideo addr src) =
     object
       [ (T.pack "value") .= src
       , (T.pack "valueType") .= (T.pack "EVideo")

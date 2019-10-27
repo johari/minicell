@@ -18,13 +18,15 @@
             "elm/url": "1.0.0",
             "elm-community/graph": "6.0.0",
             "elm-community/list-extra": "8.1.0",
-            "elm-community/maybe-extra": "5.0.0"
+            "elm-community/maybe-extra": "5.0.0",
+            "hecrj/html-parser": "2.3.4"
         },
         "indirect": {
             "avh4/elm-fifo": "1.0.4",
             "elm/bytes": "1.0.7",
             "elm/virtual-dom": "1.0.2",
-            "elm-community/intdict": "3.0.0"
+            "elm-community/intdict": "3.0.0",
+            "rtfeldman/elm-hex": "1.0.0"
         }
     },
     "test-dependencies": {

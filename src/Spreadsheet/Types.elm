@@ -24,7 +24,7 @@ type alias TVertexDemo = List VertexAndPerhapsCells
 
 
 getCellVertex : CellAddress -> TVertexDemo -> List VertexAndPerhapsCells
-getCellVertex addr demoOfVertices = 
+getCellVertex addr demoOfVertices =
      demoOfVertices
   |> List.filter (\(_, cells) -> List.map (\x -> x.addr == addr) cells |> any identity)
 
@@ -32,7 +32,7 @@ addrInVertexDemo addr demoOfVertices =
   (getCellVertex addr demoOfVertices |> List.length) > 0
 
 removeAddrFromDemoVertices : CellAddress -> TVertexDemo -> TVertexDemo
-removeAddrFromDemoVertices addr demoOfVertices = 
+removeAddrFromDemoVertices addr demoOfVertices =
      demoOfVertices
   |> List.filter
       (\(_, cells) ->
@@ -79,7 +79,7 @@ type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
            --       [ ] basic values:
            --             read from file (or URL)
            --       [ ] basic operations
-           --             things Duke mentioned in his system (w.r.t. combining gif images)  
+           --             things Duke mentioned in his system (w.r.t. combining gif images)
 
            -- Later on, types for
            -- [ ] sound clips,
@@ -109,7 +109,7 @@ row : CellAddress -> Int
 row = Tuple.first
 
 column : CellAddress -> Int
-column = Tuple.second 
+column = Tuple.second
 
 type alias CellMeta =
     String
@@ -120,7 +120,7 @@ type alias Cell =
     { value : Formula
     , buffer : String
     , addr : CellAddress
-    -- Each time you edit a cell, you are modifying the "buffer". 
+    -- Each time you edit a cell, you are modifying the "buffer".
     -- Once you press enter the buffer will be parsed, and we replace the "value" attribute with
     -- the result of the parser
     --
@@ -181,5 +181,6 @@ type alias Spreadsheet =
     , currentTime : Posix
     , previews : List String
     , cometStorage : Dict.Dict CometKey EExpr
+    -- , mouseInfo : { sideView : (Int, Int), window : (Int, Int) }
     }
 

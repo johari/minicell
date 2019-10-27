@@ -1,5 +1,8 @@
 port module Spreadsheet exposing (..)
 
+import Html.Parser
+import Html.Parser.Util
+
 import Debug
 import Browser
 import Html exposing (..)
@@ -165,18 +168,18 @@ updateCellValue database addr newValue =
 -- 💀🔥💀🔥💀🔥💀🔥💀🔥💀🔥💀🔥💀🔥💀🔥💀🔥💀🔥💀🔥💀🔥
 --
 -- I have goofed at implementing `updateCellBuffer` once.
--- It used to be the case that the 
+-- It used to be the case that the
 -- type alias Database = Dict.Dict CellAddress Cell
 --
 -- But then I decided to have
 -- type alias Database = List Cell
 -- and instead, add an { .. `addr` : CellAddress .. } to the Cell datatype.
--- 
+--
 -- The re-factoring sounded straightforward
 -- (change `Dict.update`s that took an address,
 -- into `updateIf`s that predicate over cell's addr field)
 -- but this made it such that no "truly empty cells" could ever fertile.
--- 
+--
 -- :(
 --
 -- The "logic" behind this (once we had a Dict-y Database) was implemented in `elmIsWeirdWithMaybe3`
@@ -220,10 +223,10 @@ elmIsWeirdWithMaybe3 newBuffer e = { e | buffer = newBuffer }
 
 updateCellBuffer : Database -> CellAddress -> String -> Database
 updateCellBuffer database addr newBuffer =
-    case find (\x -> x.addr == addr) database of 
+    case find (\x -> x.addr == addr) database of
         Just cell -> updateIf (\x -> x.addr == addr) (elmIsWeirdWithMaybe3 newBuffer cell |> always) database
         Nothing -> database ++ [{ emptyCell | buffer = newBuffer, addr = addr }]
-        
+
 
 goto direction addr = let (rho, kappa) = addr in (rho+1, kappa)
 nudgeRight (rho, kappa) = (rho, kappa+1)
@@ -248,7 +251,7 @@ handleArrowInIdleMode model key =
     in
         update (addr |> nudgeFunction |> ChangeCandidateCell) model
 
-                                        
+
 
 parseBufferToEExpr model buffer = buffer |> stringToEExpr
 
@@ -269,7 +272,7 @@ update msg model =
             case model.mode of
                 FileDropMode prevMode _ ->
                     ( { model | mode = FileDropMode prevMode addr } , Cmd.none )
-                _ -> 
+                _ ->
                     ( { model | mode = FileDropMode model.mode addr } , Cmd.none )
 
         DragLeave ->
@@ -313,7 +316,7 @@ update msg model =
                 ( { model | demoVertices = removeAddrFromDemoVertices addr model.demoVertices}, Cmd.none )
             else
                 case find (\x -> x.addr == addr) model.database of
-                    Just cell -> 
+                    Just cell ->
                         ( { model | demoVertices = model.demoVertices ++ [(cell.value, [cell])] }, Cmd.none)
                     Nothing ->
                         -- An empty cell cannot be a demonstration!
@@ -326,7 +329,7 @@ update msg model =
                 --(keeping the one that was just shown in its pocket)
                 (cellVertex::_) ->
                     ( { model | mode = EdgeDemoMode2 cellVertex }, Cmd.none)
-                
+
 
         CollectEdgeDemo2 cellVertex1 addr2 ->
             case getCellVertex addr2 model.demoVertices of
@@ -337,7 +340,7 @@ update msg model =
                                      } )
                     in
                         -- add edge demonstration (addr1, addr2) into the list of demonstrations
-                        
+
                         -- goto the step that collects (1/2 vertex)
                         (newModel, Cmd.none)
                 [] ->
@@ -387,7 +390,7 @@ update msg model =
 
         ChangeCandidateCell addr ->
             ( { model | mode = IdleMode addr }, Cmd.none)
-        
+
 
 
         CometUpdate cometKey res ->
@@ -404,7 +407,7 @@ update msg model =
 
         CometUpdateAll res ->
             {-
-                exampleTableRemote = 
+                exampleTableRemote =
                 [ cometCell (0, 0) "A1", cometCell (1, 0) "A2", cometCell (2, 0) "A3", cometCell (3, 0) "A4", cometCell (4, 0) "A5", cometCell (5, 0) "A6", cometCell (6, 0) "A7", cometCell (7, 0) "A8", cometCell (8, 0) "A9", cometCell (9, 0) "A10"
                 , cometCell (0, 1) "B1", cometCell (1, 1) "B2", cometCell (2, 1) "B3", cometCell (3, 1) "B4"
                 , cometCell (0, 2) "C1", cometCell (1, 2) "C2", cometCell (2, 2) "C3", cometCell (3, 2) "C4"
@@ -422,21 +425,22 @@ update msg model =
                                 newDatabase = List.map (\(cometKey, val) -> { emptyCell | addr = cometKeyToAddr cometKey, value = val})
                                                        keyValPairs
                             in
-                                ( { model | cometStorage = newDict, database = newDatabase }, Debug.log (Debug.toString newDict) Cmd.none)
+                                --( { model | cometStorage = newDict, database = newDatabase }, Debug.log (Debug.toString newDict) Cmd.none)
+                                ( { model | cometStorage = newDict, database = newDatabase }, Cmd.none)
                         Err err ->
                             (Debug.log (Debug.toString err) model, Cmd.none)
 
                 Err err ->
                     ( model, Cmd.none )
-        -- All the [keyboard magic] happen here            
+        -- All the [keyboard magic] happen here
         WindowKeyPress payload ->
             let maybeKey = (Result.toMaybe (D.decodeValue D.string payload)) in
-                case maybeKey of 
+                case maybeKey of
                     Nothing -> (model, Cmd.none)
                     Just key ->
                         case key of
                             "Enter" -> -- [Keypress Enter]
-                                case model.mode of 
+                                case model.mode of
                                     IdleMode addr -> update (EditIntent addr Nothing) model
                                     EditMode addr -> update (Save addr) model
                                     _ -> (model, Cmd.none)
@@ -455,7 +459,7 @@ update msg model =
                             "ArrowUp" -> case model.mode of
                                 IdleMode _ -> handleArrowInIdleMode model key
                                 _ -> (model, Cmd.none)
-                            _ -> case model.mode of 
+                            _ -> case model.mode of
                                 IdleMode addr ->
                                     if preferences.vimMode then
                                         -- VIM shortcuts
@@ -470,9 +474,9 @@ update msg model =
                                         else if key == "h" then
                                             handleArrowInIdleMode model "ArrowLeft"
                                         else if String.length key == 1 then
-                                            update (EditIntent addr (Just key)) model 
+                                            update (EditIntent addr (Just key)) model
                                         else
-                                            (model, Cmd.none) 
+                                            (model, Cmd.none)
                                     else
                                         if String.length key == 1 then
                                             update (EditIntent addr (Just key)) model
@@ -515,7 +519,11 @@ cometValueTOEExpr payload =
                 case D.decodeValue (D.field "value" D.int) payload of
                     Ok i -> EILit i
                     Err err -> EError (Debug.toString err)
-            Ok "ESLit" -> 
+            Ok "EHTML" ->
+                case D.decodeValue (D.field "value" D.string) payload of
+                    Ok s -> EHTML s
+                    Err err -> EError (Debug.toString err)
+            Ok "ESLit" ->
                 case D.decodeValue (D.field "value" D.string) payload of
                     Ok s -> ESLit s
                     Err err -> EError (Debug.toString err)
@@ -635,9 +643,9 @@ viewCellInEditMode addr res  =
                               , class "widget-edit-mode-cell-input"
                               ] []
         _ -> viewCellInEditMode addr (Just emptyCell)
-        
 
---cellBelongsToAGraph addr expr = case expr of case List.find (\v -> v.addr == addr) nodes.graph of 
+
+--cellBelongsToAGraph addr expr = case expr of case List.find (\v -> v.addr == addr) nodes.graph of
 --    Just v -> True
 --    Nothing -> False
 
@@ -648,7 +656,7 @@ viewCellInEditMode addr res  =
 
 computeCellSelectionClass model addr =
     let (rho, kappa) = addr
-        modelClasses = 
+        modelClasses =
             case model.mode of
                 IdleMode addrUnderView ->
                     if addrUnderView == addr then
@@ -660,7 +668,7 @@ computeCellSelectionClass model addr =
                         --    find (\v -> v.addr == addrUnderView
                         --             && (evaluatesToAGraphWithCellVertices model addrUnderView)
                         --             && cellBelongsToAGraph addr
-                        --in 
+                        --in
                         --    case maybeCellUnderViewIsGraph of
                         --        Just _ -> "elm-cell-belongs-to-a-graph"
                         --        Nothing -> ""
@@ -668,9 +676,9 @@ computeCellSelectionClass model addr =
                 VertexDemoMode ->
                     -- If the passed address is in our demo, we want to distinguish it.
                     if addrInVertexDemo addr model.demoVertices then "elm-cell-part-of-primary-demonstration" else ""
-                EdgeDemoMode1 -> 
+                EdgeDemoMode1 ->
                     if addrInVertexDemo addr model.demoVertices then "elm-cell-part-of-secondary-demonstration" else ""
-                EdgeDemoMode2 cellVertex -> 
+                EdgeDemoMode2 cellVertex ->
                     if addrInVertexDemo addr model.demoVertices || addrInVertexDemo addr [ cellVertex ] then "elm-cell-part-of-secondary-demonstration" else ""
                 _ -> ""
         addressClasses = "row-" ++ (Debug.toString rho) ++ " " ++ "column-" ++ (Debug.toString kappa)
@@ -715,14 +723,14 @@ oneCell addr model =
                         , hijackOn "dragleave" (D.succeed DragLeave)
                         , hijackOn "drop" (dropDecoder addr)
                         ]
-                    fileDropCSS = if fileBeingDroppedOn model.mode addr then [ class "elm-active-drop-zone" ] else [ ] 
+                    fileDropCSS = if fileBeingDroppedOn model.mode addr then [ class "elm-active-drop-zone" ] else [ ]
                 in
                     td ([ class (computeCellSelectionClass model addr) ] ++ clickActions ++ dragDropAttributes ++ fileDropCSS)
                        [ viewCell model (find (\x -> x.addr == addr) model.database) ]
 
 viewRow : Int -> Model -> List (Html Msg)
 viewRow rho model =
-        let 
+        let
             classForHeaderColumn =
                 case model.mode of
                     (IdleMode (idleRho, _)) -> if idleRho == rho then [ class "elm-selected-row" ] else [ class "header-column" ]
@@ -744,7 +752,7 @@ viewRow rho model =
 viewRows : Model -> List (Html Msg)
 viewRows model = List.range 0 100 |> List.map (\i -> (viewRow i model)) |> List.concat
 
-calculateClassForRow rowLabel model = 
+calculateClassForRow rowLabel model =
     case model.mode of
         IdleMode (rho, kappa) ->
             if elemIndex rowLabel ["A", "B", "C", "D", "E", "F", "G", "H", "I"] == Just kappa then
@@ -767,7 +775,7 @@ topRow model =
         ]
 
 clippy : Model -> Html Msg
-clippy model = 
+clippy model =
     case model.mode of
         IdleMode _ ->
             span [ ] [ text "👁 Try navigating to a new cell by using arrow keys. Press enter or start typing to edit a cell"]
@@ -789,6 +797,31 @@ clippy model =
         FileDropMode _ addr ->
             span [] [ "Drop the file on " ++ (Debug.toString addr) |> text ]
         -- _ -> span [ ] [ text "I'm not trained to assist you in this mode :(" ]
+
+notImplementedButtons =
+    div [ id "piet-not-implemented", class "piet-button-row" ]
+    [
+    -- , hr [] []
+    -- , button [  ]  [ text "dot notation for nested records" ]
+      button [  ]  [ text "gridlet repo" ]
+    , button [  ]  [ text "spill and shift" ]
+    , button [  ]  [ text "formula adjustment algorithm" ]
+
+    , hr [] []
+    , button [  ]  [ text "create a patch for an external git repository 🐙" ]
+
+    , hr [] []
+    , button [  ]  [ text "create a new website" ]
+    , button [  ]  [ text "preview on web" ]
+    , button [  ]  [ text "publish to web" ]
+
+    -- , hr [] []
+    -- , button [  ]  [ text "pause ⏸" ]
+
+    , hr [] []
+    , button [  ]  [ text "[shift + enter] multiline editing a cell (for HTML)" ]
+    , button [  ]  [ text "[load via formulas] side-by-side n-way hypertext documents" ]
+    ]
 
 loadExampleButtons =
     div [ id "container-examples" ]
@@ -823,7 +856,7 @@ graphExtractionButtons model = div [ id "container-demo-buttons" ]
     , button [ ] [ text "extract graph from adjacency list" ]
     ]
 
-spreadsheetInterface model = 
+spreadsheetInterface model =
     div [ id "container-spreadsheet" ] [
         table [ class "spreadsheet" ] ([ topRow model ] ++ viewRows model)
     ]
@@ -848,7 +881,7 @@ videoElemForUrl model url =
            --, div [] [text (toString model.videoState)]
            ]
 
-alternativeViewByEExpr model value = 
+alternativeViewByEExpr model value =
     case value of
         EILit num -> text ("Found a number! " ++ (Debug.toString num))
         EImage url -> img [ src url ] [ ]
@@ -878,23 +911,36 @@ alternativeViewByEExpr model value =
                             , alternativeViewByEExpr model resolvedVal ]
                 Nothing ->
                     text ("Non-resolved comet value with key " ++ cometKey)
+        ESLit str -> text str
+        EHTML myHTML -> div [ ] (textHtml myHTML)
         _ -> code [] [ Debug.toString value |> text ]
 
+textHtml : String -> List (Html.Html msg)
+textHtml t =
+    case Html.Parser.run t of
+        Ok nodes ->
+            Html.Parser.Util.toVirtualDom nodes
+
+        Err _ ->
+            []
 
 sideviewRender model addr =
     case find (\x -> x.addr == addr) model.database of
         Just cell ->
             alternativeViewByEExpr model cell.value
-        Nothing -> span [ ] [] 
+        Nothing -> span [ ] []
         --Nothing -> mondrian
 
 alternativeViewInterface model =
     case model.mode of
         IdleMode addr ->
             -- No need to display if its already pinned
-            sideviewRender model addr
-        _ -> span [] []
-        --_ -> mondrian
+            -- sideviewRender model addr
+            sideviewRender model (-1,0)
+        EditMode addr ->
+            sideviewRender model (-1,0)
+        -- _ -> span [] []
+        _ -> mondrian
     --table [ id "container-alternative-view" ] [
     --    tr [] [
     --        td [] [ text "Hello" ]
@@ -902,22 +948,39 @@ alternativeViewInterface model =
     --    ]
     --]
 
-containerHeader model = div [ id "container-header", class "container-row" ] 
-    [ div [] []
-    --, div [ ] [ loadExampleButtons ]
-    , div [ id "container-minicell-logo" ]
-        [ img [ src "" ] [] -- img [ src "http://shiraz.local/~nima/wiki/nima/resources/assets/wiki.png" ] []
-        , text "Minicell" 
-        , span [ class "minicell-version" ] [ text "(Version 0.0.2)" ]
-        ]
-    --, div [ ] [ vertexDemoButtons model ]
-    --, div [ ] [ graphExtractionButtons model ]
-    --, div [ ] [ formulaBar model ]
+onlineOrOffline = div [ class "container-row" ] [
+      text "😴 [offline mode]"
+    , button [  ]  [ text "your client id is #42" ]
+ ]
+
+highlightingBar = div [ class "piet-button-row" ]
+    [ div [] [ button [] [ text "Highlight A2:G10"]
+             , button [  ]  [ text "👀" ]
+             ]
     ]
 
-formulaBarValue model = 
+containerHeader model = div [ id "container-header", class "container-row" ]
+    [ div [] []
+    --, div [ ] [ loadExampleButtons ]
+
+    , div [ id "container-minicell-logo" ]
+        [ img [ src "" ] [] -- img [ src "http://shiraz.local/~nima/wiki/nima/resources/assets/wiki.png" ] []
+        , text "Minicell"
+        , span [ class "minicell-version" ] [ text "(Version 0.0.5)" ]
+        ]
+    -- , div [ ] [ onlineOrOffline ]
+    -- , div [ ] [ highlightingBar ]
+
+    -- , div [ ] [ notImplementedButtons ]
+
+    --, div [ ] [ vertexDemoButtons model ]
+    --, div [ ] [ graphExtractionButtons model ]
+    , div [ ] [ formulaBar model ]
+    ]
+
+formulaBarValue model =
     case model.mode of
-        IdleMode addr -> 
+        IdleMode addr ->
             case find (\x -> x.addr == addr) model.database of
                 Just cell ->
                     (Debug.toString cell.value)
@@ -930,7 +993,8 @@ formulaBarValue model =
 
         _ -> "What mode are you in, my friend?"
 
-formulaBar model = div [ id "formula-bar" ] [ img [ id "icon-formula-bar", src "/icons/formula-f.svg" ] []
+formulaBar model = div [ id "formula-bar" ] [ span [] [ text "formula:" ]
+                                        --  , img [ id "icon-formula-bar", src "/icons/formula-f.svg" ] []
                                             , span [] [ input [ id "widget-formula-bar", value (formulaBarValue model) ] [] ] ]
 
 pinnedViewInterface model = []
@@ -942,9 +1006,15 @@ pinnedViewInterface model = []
                             --]
 
 paneB model = table []  ([ tr [ ] [ td [] [ alternativeViewInterface model ] ] ] ++ pinnedViewInterface model)
-                       
 
 containerPanes model =
+    div [ id "container-panes" ]
+        [ div [ id "pane-a" ] [ spreadsheetInterface model ]
+        , div [ id "pane-b" ] [ paneB model ]
+        ]
+
+
+containerPanes2 model =
     div [ id "container-panes" ] [
         table [ id "container-panes" ] [
             tr [] [
@@ -963,19 +1033,24 @@ footerContent model =
         table []
             [ tr [] [ td [ id "clippy" ] [ clippy model ] -- Summon Clippy
                   , td [ ] [ text (Debug.toString model.mode)
+                  -- , td [ ] [ text (Debug.toString model.mouseInfo)]
                   ]
             --, tr [] [ td [] [ text (Debug.toString model.cometStorage) ] ]
             ]
         ]
     ]
 
+a0 model = table [ class "spreadsheet" ] ([ topRow model ] ++ (viewRow -1 model)) -- viewRow 0 model -- div [ id "A0" ] [text "A0"]
+
 view : Model -> Html Msg
 view model =
     div [ id "container-box" ]
             ([ containerHeader model
              , mainInterface model
+             , a0 model
              ] ++
-             [ footer [] [ footerContent model ] ]
+             [ footer [] [ footerContent model
+                         ] ]
              --++ (debugView model)
              )
 
@@ -997,7 +1072,7 @@ main =
 
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.batch [ keyPress WindowKeyPress
-                                , Time.every 500 Tick
+                                , Time.every (500) Tick
                                 ]
 
 
@@ -1045,9 +1120,9 @@ cometUpdateAll =
     }
 
 
-toGraphviz g = 
+toGraphviz g =
   (g
-      |> mapNodes (\(_, listOfCells) -> 
+      |> mapNodes (\(_, listOfCells) ->
           List.head listOfCells
               |> Maybe.withDefault emptyCell
               |> Debug.toString)

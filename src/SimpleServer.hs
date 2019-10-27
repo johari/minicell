@@ -5,12 +5,16 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
+module SimpleServer where
+
+import qualified Codec.Serialise as SSS
+
 -- Logger stuff
 
 import System.Log.Logger (Priority (DEBUG), debugM, infoM, setLevel,
                           updateGlobalLogger, warningM, noticeM,
                           rootLoggerName,
-                          setHandlers
+                          setHandlers, addHandler
                           )
 import System.Log.Handler.Simple
 import System.Log.Handler (setFormatter)
@@ -30,6 +34,7 @@ import Text.Mustache
 
 
 import Data.List (intercalate)
+import Data.List.Extra (splitOn)
 
 import Data.Aeson
 import qualified Data.Text as T
@@ -89,9 +94,30 @@ import System.Process
 
 import System.IO (stderr)
 
+import qualified Data.Map
+
+main2 = do
+  h <- streamHandler stderr DEBUG >>= \lh -> return $
+                  setFormatter lh (simpleLogFormatter "[$time : $loggername : $prio] $msg")
+
+  updateGlobalLogger rootLoggerName (setHandlers [h])
+
+  updateGlobalLogger "wiki.sheets.html" (setLevel DEBUG)
+
+  s <- eval emptySpreadsheet (EApp "TPL" [ESLit "../examples/poppet/views/test.html"])
+  print s
+
+addFileLogger = do
+    h <- fileHandler "/tmp/debug.log" DEBUG >>= \lh -> return $
+             setFormatter lh (simpleLogFormatter "[$time : $loggername : $prio] $msg")
+    updateGlobalLogger rootLoggerName (addHandler h)
+
 main = do
     let port = 3000
-    modelTVar <- atomically $ newTVar emptySpreadsheet
+    modelTVar1 <- atomically $ newTVar emptySpreadsheet
+    modelTVar2 <- atomically $ newTVar emptySpreadsheet
+
+    let modelTVars = Data.Map.fromList [([], modelTVar1), (["42"], modelTVar2)]
 
     -- updateGlobalLogger rootLoggerName (setFormatter $ simpleLogFormatter "[$loggername] $msg")
     h <- streamHandler stderr DEBUG >>= \lh -> return $
@@ -104,11 +130,13 @@ main = do
 
     infoM "wiki.sheets.http" ("Listening on port " ++ show port)
 
-    run port (app modelTVar)
+    addFileLogger
 
-app :: TVar Spreadsheet -> Application
-app modelTVar =
-    websocketsOr  defaultConnectionOptions wsApp (simpleCors $ anyRoute modelTVar)
+    run port (app modelTVars)
+
+app :: Data.Map.Map [String] (TVar Spreadsheet) -> Application
+app modelTVars =
+    websocketsOr  defaultConnectionOptions wsApp (simpleCors $ anyRoute modelTVars)
 
 wsApp :: ServerApp
 wsApp pending_conn = do
@@ -138,6 +166,12 @@ eexprToHttpResponse cellValue = do
                         [(hContentType, "text/plain")]
                         (fromString $ "HTML output not implemented for " ++ (show cellValue))
 
+
+
+eexprToHTML cellValue cometAddress  = do
+    case cellValue of
+        ESLit s -> return $ s
+        _ -> return $ mconcat ["html not implemented for ", (show cellValue)]
 
 eexprToComet cellValue cometAddress  = do
     -- This is the main point of integration betweenR
@@ -197,12 +231,37 @@ endpointPrepare modelTVar cometKey = do
     val <- eexprToComet cellValue cometAddress
     return val
 
+endpointPrepareHTML modelTVar cometKey = do
+    let cometAddress = (cometKeyToAddr $ cometKey)
+
+    model <- readTVarIO modelTVar
+
+
+    -- FIXME
+    -- This is a very wrong place to implement the cache
+    -- There should be one layer between `eval` and `eexprToComet` that handles the cache
+
+    cellValue <- eval model (ECellRef cometAddress)
+
+
+
+    val <- eexprToHTML cellValue cometAddress
+    return  val
+
+
 endpointShow modelTVar cometKey req res = do
     val <- endpointPrepare modelTVar (T.unpack cometKey)
 
     res $ responseLBS status200
                           [(hContentType, "application/json")]
                           (encode val)
+
+endpointShowHTML modelTVar cometKey req res = do
+    val <- endpointPrepareHTML modelTVar (T.unpack cometKey)
+
+    res $ responseLBS status200
+                          [(hContentType, "text/html")]
+                          (fromString val)
 
 endpointShowAll modelTVar req res = do
     model <- readTVarIO modelTVar
@@ -230,10 +289,48 @@ storeFiles (x:xs) = do
 
     return (["http://localhost:8000/minicell-cache/" ++ (uploadedFileName)] ++ otherUrls)
 
-anyRoute modelTVar req res =
+anyRoute modelTVars req res = do
+    let modelTVarsEl = Data.Map.elems modelTVars
+    case lookup "Host" (Network.Wai.requestHeaders req) of
+        Just "nima.127.0.0.1.xip.io:3000" -> anyRoute2 (modelTVarsEl !! 0)  req res
+        Just "cities-temporal.127.0.0.1.xip.io:3000" -> do
+            savedFile <- B.readFile "/tmp/cities-temporal.piet"
+
+            modelTVar1 <- atomically $ newTVar (SSS.deserialise savedFile)
+
+            anyRoute2 modelTVar1 req res
+
+        Just "cities.127.0.0.1.xip.io:3000" -> do
+            savedFile <- B.readFile "/tmp/cities.piet"
+
+            modelTVar1 <- atomically $ newTVar (SSS.deserialise savedFile)
+
+            anyRoute2 modelTVar1 req res
+
+        Just "load.127.0.0.1.xip.io:3000" -> do
+            savedFile <- B.readFile "/tmp/load-me.piet"
+
+            modelTVar1 <- atomically $ newTVar (SSS.deserialise savedFile)
+
+            anyRoute2 modelTVar1 req res
+
+        Just "save.127.0.0.1.xip.io:3000" -> do
+            let myTVar = (modelTVarsEl !! 0)
+            model <- readTVarIO myTVar
+
+            B.writeFile "/tmp/load-me.piet" (SSS.serialise model)
+
+            anyRoute2 (modelTVarsEl !! 0)  req res
+        Just "json.nima.127.0.0.1.xip.io:3000" -> endpointShow (modelTVarsEl !! 0)  "A1" req res
+        _ -> anyRoute2 (modelTVarsEl !! 0) req res
+
+anyRoute2 modelTVar req res =
     case pathInfo req of
         [ "minicell", "all.json" ] -> do
             endpointShowAll modelTVar req res
+
+        [ "html", cometKey ] -> do
+            endpointShowHTML modelTVar cometKey req res
 
         [ "minicell", cometKey, "show.json" ] -> do
             endpointShow modelTVar cometKey req res
@@ -303,9 +400,9 @@ anyRoute modelTVar req res =
             case (params ++ fileParams) of  -- FIXME: lookup the parameter by name
                 ((_,formula):_) -> do
 
-                    print formula
-
-                    case parse cellContent "REPL" (BU.toString formula) of 
+                    let parseRes = parse cellContent "REPL" (BU.toString formula)
+                    print parseRes
+                    case parseRes of
                         Left err -> do
                             let val = CometSLit cometAddress (show err)
                             res $ responseLBS status200
@@ -326,7 +423,7 @@ anyRoute modelTVar req res =
 
                     atomically $ do
                         modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress (EImage (fileUrls !! 0)))
-            
+
                     endpointShow modelTVar cometKey req res
 
 

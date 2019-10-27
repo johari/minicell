@@ -20,9 +20,14 @@ import Piet.DSL.Arithmetic
 import Piet.DSL.List
 import Piet.DSL.Graphsheet
 import Piet.DSL.Graphics.Shapes
+import Piet.DSL.HTML
 import Piet.DSL.Poppet
 import Piet.DSL.Lua.Hello
 import Piet.DSL.Debug
+import Piet.DSL.Git
+import Piet.DSL.FAM
+import Piet.DSL.File
+import Piet.DSL.Lambda
 -- import Piet.DSL.Media.Flickr
 
 -- import qualified System.IO.Streams as IOS
@@ -104,6 +109,7 @@ cellContent = do
     "" -> return $ EEmpty
     _ -> do
         s <- choice $ [ bangBang, formulaWithEqSign, numberLiteral, stringLiteral ]
+        eof
         return s
 
 bangBang :: Parser EExpr
@@ -121,8 +127,12 @@ formulaWithEqSign = do
   formula
 
 formula = do
-  s <- choice [ formulaCellRef
-              , formulaWithOperands, numberLiteral, stringLiteral ]
+  s <- choice [ try $ formulaCellRef
+              , try $ formulaWithOperands
+              , try $ numberLiteral
+              , try $ stringLiteralInQuotes
+              , try $ variableName
+              ]
   return s
 
 cometKeyToAddr cometKey =
@@ -133,7 +143,7 @@ cometKeyToAddr cometKey =
 excelStyleAddr :: Parser CellAddress
 excelStyleAddr =
   do
-    column <- letter
+    column <- try $ letter
     row <- many1 digit
     return $ (((read row) - 1), ((ord $ toLower $ column) - (ord 'a'))) -- This is ultra buggy (works only for A-F)
 
@@ -162,6 +172,16 @@ formulaWithOperands = do
 stringLiteral = do
   s <- many1 anyToken
   return $ ESLit s
+
+stringLiteralInQuotes = do
+  s <- between (char '"') (char '"') (try $ many1 (noneOf "\""))
+  return $ ESLit s
+
+
+variableName = do
+  s <- try $ many1 letter
+  return $ EVar s
+
 -- stringToEExpr buffer =
 --   if buffer |> String.startsWith "@" then
 --     EApp "exampleGraph" [(buffer |> String.dropLeft 1 |> ESLit)] |> eval emptySpreadsheet
@@ -222,7 +242,9 @@ pickEvalAndContinue eval [] model expr = evalBot model expr
 pickEvalAndContinue eval (eval':evals) model expr = do
   r <- eval' eval model expr
   case r of
-    ENotImplemented -> (pickEvalAndContinue eval evals model expr)
+    ENotImplemented -> do
+
+      (pickEvalAndContinue eval evals model expr)
     _ -> return r
 
 eval model expr = do
@@ -230,13 +252,21 @@ eval model expr = do
   case r of
     ENotImplemented -> do
       let evals =
-            [ Piet.DSL.Graphsheet.eval'
+            [ Piet.DSL.HTML.eval'
+            , Piet.DSL.Graphsheet.eval'
             , Piet.DSL.List.eval'
             , Piet.DSL.Arithmetic.eval'
             , Piet.DSL.Graphics.Shapes.eval'
             , Piet.DSL.Poppet.eval'
+<<<<<<< Updated upstream
             , Piet.DSL.Lua.Hello.eval'
             , Piet.DSL.Debug.eval'
+=======
+            , Piet.DSL.Git.eval'
+            , Piet.DSL.FAM.eval'
+            , Piet.DSL.File.eval'
+            , Piet.DSL.Lambda.eval'
+>>>>>>> Stashed changes
             ]
       pickEvalAndContinue eval evals model expr
     _ -> return r
@@ -278,6 +308,11 @@ evalTop model expr = case normalizeOp expr of
       Nothing ->
         return $ EError $ "#REF " ++ (addrToExcelStyle lookupAddr)
       Just cell -> eval model (value cell)
+
+  EApp "UNIXEPOCH" _ -> do
+    t <- getPOSIXTime
+    return $ EILit (round t)
+
   _ -> return $ ENotImplemented
 
 

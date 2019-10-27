@@ -13,6 +13,34 @@ prepare:
 purge:
 	curl -X post  http://localhost:3000/minicell/purge.json
 
+md: purge
+	curl -X post  http://localhost:3000/minicell/C1/write.json -F 'formula=''../docs/markdown-inside-cells.md'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -F 'formula=''=FILE(C1)'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=MD(B1)'
+	curl -X post  http://localhost:3000/minicell/A0/write.json -d 'formula=''=A1'
+
+	curl -X post  http://localhost:3000/minicell/G2/write.json -F 'formula=''../docs/gridlets.md'
+	curl -X post  http://localhost:3000/minicell/D2/write.json -F 'formula=''../docs/links-and-navigation.md'
+	curl -X post  http://localhost:3000/minicell/E2/write.json -F 'formula=''../docs/latex.md'
+	curl -X post  http://localhost:3000/minicell/F2/write.json -F 'formula=''../docs/graphsheet.md'
+	curl -X post  http://localhost:3000/minicell/C2/write.json -F 'formula=''=F2'
+	curl -X post  http://localhost:3000/minicell/B2/write.json -F 'formula=''=FILE(C2)'
+	curl -X post  http://localhost:3000/minicell/A2/write.json -d 'formula=''=MD(B2)'
+	curl -X post  http://localhost:3000/minicell/A0/write.json -d 'formula=''=A2'
+
+	curl -X post  http://localhost:3000/minicell/C3/write.json -F 'formula=''../docs/paper.md'
+	curl -X post  http://localhost:3000/minicell/B3/write.json -F 'formula=''=FILE(C3)'
+	curl -X post  http://localhost:3000/minicell/A3/write.json -d 'formula=''=MD(B3)'
+	curl -X post  http://localhost:3000/minicell/A0/write.json -d 'formula=''=A3'
+
+git:
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''README.md'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=README(B1)'
+
+TPL:
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''/tmp/glitch/poppet/views/test.html'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=TPL(B1)'
+
 CAL:
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''trip'
 	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''=CAL(B1)'
@@ -137,7 +165,7 @@ animation: diagrams
 	curl -X post  http://localhost:3000/minicell/E2/write.json -d 'formula=''=TURN(A2,D4,5)'
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''square'
 
-	curl -X post  http://localhost:3000/minicell/D5/write.json -d 'formula=''=DEP(D5)'
+	# curl -X post  http://localhost:3000/minicell/D5/write.json -d 'formula=''=DEP(D5)'
 
 diagrams: purge
 	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''circle'

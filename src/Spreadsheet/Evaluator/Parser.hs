@@ -21,17 +21,9 @@ import Piet.DSL.List
 import Piet.DSL.Graphsheet
 import Piet.DSL.Graphics.Shapes
 import Piet.DSL.Poppet
+import Piet.DSL.Lua.Hello
+import Piet.DSL.Debug
 -- import Piet.DSL.Media.Flickr
-
-# ifdef darwin_HOST_OS
-# else
-
--- QR
-
-import Codec.QRCode
-import Codec.QRCode.JuicyPixels
-
-# endif
 
 -- import qualified System.IO.Streams as IOS
 import System.IO
@@ -243,6 +235,8 @@ eval model expr = do
             , Piet.DSL.Arithmetic.eval'
             , Piet.DSL.Graphics.Shapes.eval'
             , Piet.DSL.Poppet.eval'
+            , Piet.DSL.Lua.Hello.eval'
+            , Piet.DSL.Debug.eval'
             ]
       pickEvalAndContinue eval evals model expr
     _ -> return r

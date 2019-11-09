@@ -1,0 +1,155 @@
+table.index-of tr:hover {
+  background-color: khaki;
+}
+
+kbd {
+  color: black;
+  display: inline-block;
+  margin: 0 2px;
+  padding: 4px 5px;
+  background-color: white;
+  border: 1px solid #cccbcb;
+  border-radius: 5px;
+  line-height: 1em;
+  box-shadow: 0 2px 0 #cccbcb;
+}
+
+.progress-fragment {
+    display: inline-block;
+    border: 1px solid black;
+}
+
+.progress-fragment.unchecked {
+    background-color: lightgrey;
+}
+
+.progress-fragment.checked {
+    background-color: lightgreen;
+}
+
+.progress-fragment.pending {
+    background-color: yellow;
+}
+
+.cursor {
+  font-weight: 100;
+  font-size: 30px;
+  color: red;
+  -webkit-animation: 1s my-blink step-end infinite;
+  -moz-animation: 1s my-blink step-end infinite;
+  -ms-animation: 1s my-blink step-end infinite;
+  -o-animation: 1s my-blink step-end infinite;
+  animation: 1s my-blink step-end infinite;
+}
+
+@keyframes "my-blink" {
+  from, to {
+    color: transparent;
+  }
+  50% {
+    color: black;
+  }
+}
+
+
+
+.wiki-link {
+    font-family: monospace;
+    font-weight: bold;
+}
+#container {
+    display: flex;
+}
+#toc-sticky {
+    flex: 1;
+    /*background: #eee;*/
+    /*font-size: 0.8em;*/
+    padding: 1em 2em;
+    margin: 0 1em 0.5em 0.5em;
+
+}
+#content {
+    flex: 3;
+    width: 70%;
+}
+.minimap {
+    border: 10px solid black;
+}
+
+h1 {
+    /*background: lightgrey;*/
+}
+
+h2 {
+    /*background: lightgray;*/
+}
+
+#content {
+    width: 70%;
+    /*border-left: 1px solid black;*/
+}
+.checked span {
+    background-color: #00B000;
+    /*font-weight: bold;*/
+}
+.faulty span {
+    background-color: #FF0000;
+    /*font-weight: bold;*/
+}
+.pending span {
+    background-color: lemonchiffon;
+    text-decoration: underline;
+}
+
+.unchecked code.box, .unchecked code.tt {
+    background-color: lightgray;
+}
+
+.checked code.box, .checked code.tt {
+    background-color: lightgreen;
+}
+
+.pending code.box, .pending code.tt {
+    background-color: yellow;
+}
+
+
+.box-item-pad {
+    background-color: white;
+    border: 0;
+    color: white;
+}
+
+.box-item {
+    /*float: left;*/
+}
+
+code.tt {
+    border:1px outset gray;
+}
+code.box {
+    border:1px outset #fafafa;
+}
+
+code {
+    /*background-color:#D99ED9;*/
+    font-family:monospace;
+    border-radius:3px;
+
+    padding-left:2px;
+    padding-right:2px;
+
+    margin: 5px;
+}
+
+.table-command {
+    border: 1px solid blue;
+}
+
+.xx-question {
+    background-color: cyan;
+}
+
+.xx-haskell {
+    background-color: red;
+}

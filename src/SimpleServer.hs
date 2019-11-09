@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 
 {-# LANGUAGE FlexibleContexts #-}
@@ -95,6 +96,14 @@ import System.Process
 import System.IO (stderr)
 
 import qualified Data.Map
+import qualified Data.List
+
+import Data.FileEmbed
+
+embeddedAssets :: [(FilePath, BS.ByteString)]
+embeddedAssets = $(embedDir "../build")
+
+-- embeddedAssets = [("main.html", $(embedFile "../static/main.html"))]
 
 main2 = do
   h <- streamHandler stderr DEBUG >>= \lh -> return $
@@ -453,7 +462,9 @@ anyRoute2 modelTVar req res =
             let (Just hostName) = requestHeaderHost req
             let messageToUser = mconcat ["Welcome to ", show hostName]
 
-            res $ responseFile status200 [(hContentType, "text/html")] "../static/main.html" Nothing
+            -- res $ responseFile status200 [(hContentType, "text/html")] "../static/main.html" Nothing
+            let (Just mainDotHtml) = Data.List.lookup "main.html" embeddedAssets
+            res $ responseLBS status200 [(hContentType, "text/html")] (B.fromStrict mainDotHtml)
 
         url -> do
             let messageToUser = mconcat [

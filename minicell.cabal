@@ -73,18 +73,75 @@ library
   other-extensions:    DuplicateRecordFields, ScopedTypeVariables, OverloadedLists, OverloadedStrings
 
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.10, containers >=0.5, fgl >=5.6, text,
-                       fgl,generic-random,
-                       QuickCheck,
-                       hspec,diagrams,palette,logict,
-                       HFuse,mysql-simple,z3,sbv,brick >=0.34,
-                       hslogger,aeson,
-                       fgl-visualize,
-                       parsec,
-                       scotty,
-                       graphviz,
-                       dhall,
-                       stache
+
+  build-depends:  base >=4.9
+                       , lens
+                       , process
+                       , directory
+                       , binary
+                       , parsec
+                       , split
+                       , blaze-html
+                       , blaze-markup
+                       , blaze-builder
+                       , mime-types
+                       , http-types
+                       , websockets
+                       , diagrams-lib
+                       , svg-builder
+                       , file-embed
+                       , stm
+                       , utf8-string
+                       , diagrams-svg
+                       , containers
+                       , text
+                       , fgl
+                       , scotty
+                       , bytestring
+                       , generic-random
+                       , QuickCheck
+                       , fgl-arbitrary
+                       , hspec
+                       , diagrams
+                       , palette
+                       , hslogger
+                       , wai
+                       , warp
+                       , aeson
+                       , wai-websockets
+                       , wai-extra
+                       , wai-cors
+                       , fgl-visualize
+                       , graphviz
+                       , wreq
+                       , stache
+                       , temporary
+                       , pureMD5
+                       , time
+                       , hxt
+                       , tagsoup
+                       , pandoc
+                       , probability
+                       , cborg
+                       , serialise
+                       , haxl
+                       , fb
+                       , http-conduit
+                       , http-client-tls
+                       , async
+                       , hashable
+                       , resourcet
+                       , extra
+                       , dhall
+                       , heterocephalus
+                       , csound-expression
+                       , hint
+                       , hlint
+                       , unix
+                       , libffi
+                       , hslua
+
+
   -- Directories containing source files.
   hs-source-dirs:      src
 
@@ -94,13 +151,77 @@ library
 executable minicell
   -- .hs or .lhs file containing the Main module.
   main-is:             Main.hs
+  ghc-options: -optl-static
 
   -- Modules included in this executable, other than Main.
   -- other-modules:
 
-  build-depends:  base >=4.10
-                , scotty
-                , aeson
+  build-depends:  base >=4.9
+                       , lens
+                       , process
+                       , directory
+                       , binary
+                       , parsec
+                       , split
+                       , blaze-html
+                       , blaze-markup
+                       , blaze-builder
+                       , mime-types
+                       , http-types
+                       , websockets
+                       , diagrams-lib
+                       , svg-builder
+                       , file-embed
+                       , stm
+                       , utf8-string
+                       , diagrams-svg
+                       , containers
+                       , text
+                       , fgl
+                       , scotty
+                       , bytestring
+                       , generic-random
+                       , QuickCheck
+                       , fgl-arbitrary
+                       , hspec
+                       , diagrams
+                       , palette
+                       , hslogger
+                       , wai
+                       , warp
+                       , aeson
+                       , wai-websockets
+                       , wai-extra
+                       , wai-cors
+                       , fgl-visualize
+                       , graphviz
+                       , wreq
+                       , stache
+                       , temporary
+                       , pureMD5
+                       , time
+                       , hxt
+                       , tagsoup
+                       , pandoc
+                       , probability
+                       , cborg
+                       , serialise
+                       , haxl
+                       , fb
+                       , http-conduit
+                       , http-client-tls
+                       , async
+                       , hashable
+                       , resourcet
+                       , extra
+                       , dhall
+                       , heterocephalus
+                       , csound-expression
+                       , hint
+                       , hlint
+                       , unix
+                       , libffi
+                       , hslua
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    DuplicateRecordFields, ScopedTypeVariables, OverloadedLists, OverloadedStrings

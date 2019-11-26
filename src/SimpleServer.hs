@@ -223,6 +223,19 @@ eexprToComet cellValue cometAddress  = do
         _ -> return $ CometSLit cometAddress (show cellValue)
 
 
+endpointPrepare0 modelTVar cometKey = do
+    let cometAddress = (cometKeyToAddr $ cometKey)
+
+    model <- readTVarIO modelTVar
+
+
+    -- FIXME
+    -- This is a very wrong place to implement the cache
+    -- There should be one layer between `eval` and `eexprToComet` that handles the cache
+
+    cellValue <- eval model (ECellRef cometAddress)
+    return (cellValue, cometAddress)
+
 endpointPrepare modelTVar cometKey = do
     let cometAddress = (cometKeyToAddr $ cometKey)
 
@@ -272,12 +285,29 @@ endpointShowHTML modelTVar cometKey req res = do
                           [(hContentType, "text/html")]
                           (fromString val)
 
+spillHelper cell =
+    case value cell of
+        EList vals -> [Cell { value = val, addr = (x0, y0+i)} | (i, val) <- zip [0..] vals, let (x0, y0) = addr cell ]
+        EEmpty -> []
+        _ -> [cell]
+
+
+spill :: List Cell -> List Cell
+spill el = concat $ (spillHelper <$> el)
+
 endpointShowAll modelTVar req res = do
     model <- readTVarIO modelTVar
 
     let existingKeys = addrToExcelStyle <$> addr <$> (database model)
 
-    allOfCells <- sequence $ ((endpointPrepare modelTVar) <$> existingKeys)
+    preSpillModel <- sequence $ (endpointPrepare0 modelTVar) <$> existingKeys
+
+    let newDatabase   = spill [ Cell { value = v, addr = a } | (v, a) <- preSpillModel ]
+    let existingKeys' = addrToExcelStyle <$> addr <$> newDatabase
+    modelTVar' <- atomically $ newTVar (model { database = newDatabase })
+
+
+    allOfCells <- sequence $ ((endpointPrepare modelTVar') <$> existingKeys')
 
     res $ responseLBS status200
                           [(hContentType, "application/json")]

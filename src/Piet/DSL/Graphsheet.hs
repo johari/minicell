@@ -8,7 +8,10 @@ import qualified Data.Map
 
 import System.Log.Logger
 
+-- HTTP stuff
+import Network.HTTP
 
+--
 
 import Data.String
 import Data.Char (toLower)
@@ -75,10 +78,34 @@ eval' eval model expr = case normalizeOp expr of
     -- print  $ (dotToGraph (okayGraph)  :: Gr Data.GraphViz.Attributes.Complete.Attributes Data.GraphViz.Attributes.Complete.Attributes)
     return $ EGraphFGL g
 
+  EApp op [ queryGraph_, baseGraph_ ] | op `elem` ["MATCH", "IMATCH"] -> do
+    EGraphFGL queryGraph <- eval model queryGraph_
+    EGraphFGL baseGraph  <- eval model baseGraph_
+
+    infoM "wiki.sheets.eval.sm" (show $ labNodes queryGraph)
+
+    let payload = [ show $ labNodes queryGraph
+                  , show $ labEdges queryGraph
+                  , show $ labNodes baseGraph
+                  , show $ labEdges baseGraph
+                  ]
+
+    let endpoint = case op of
+                    "MATCH"  -> "http://127.0.0.1:9999/sm-di"
+                    "IMATCH" -> "http://127.0.0.1:9999/sm"
+
+    b <- simpleHTTP (postRequestWithBody endpoint "application/json" (show payload)) >>= getResponseBody
+    let subgraphNodes = (read b) :: [[Int]]
+
+    case length subgraphNodes of
+      0 -> return (EError "No subgraph found")
+      -- n -> return $ EILit n
+      _ -> return $ EList $ nub $ ((\x -> (EGraphFGL $ subgraph (x) baseGraph)) <$> subgraphNodes)
+
   EApp op [ g, s, t ] | op `elem` ["MF", "SP"] -> do
     -- TODO: Return EError when pattern matching fails
 
-    infoM "wiki.sheets.eval.eapp" "applying MF or SP"
+    -- infoM "wiki.sheets.eval.eapp" "applying MF or SP"
 
     s1 <- eval model s
     infoM "wiki.sheets.eval.eapp" (show s1)

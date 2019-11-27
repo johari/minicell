@@ -223,6 +223,7 @@ data Cell = Cell
     { value :: Formula
     , buffer :: String
     , addr :: CellAddress
+    , formulaStr :: String
     -- Each time you edit a cell, you are modifying the "buffer".
     -- Once you press enter the buffer will be parsed, and we replace the "value" attribute with
     -- the result of the parser
@@ -235,7 +236,7 @@ instance Serialise Cell
 
 -- emptyGraph = Graph.fromNodesAndEdges [] []
 emptyGraph = ([], [])
-emptyCell = Cell EBot "" (0, 0) Nothing
+emptyCell = Cell { addr = (0, 0), value = EBot, buffer =  "", meta = Nothing }
 stringCell  addr str = emptyCell { addr = addr, value = ESLit str }
 intCell     addr i   = emptyCell { addr = addr, value = EILit i }
 graphCell   addr g   = emptyCell { addr = addr, value = EGraphFGL g }
@@ -314,61 +315,71 @@ addrToExcelStyle (rho, kappa) =
     mconcat [columnString, addrRhoToExcelStyle rho]
 
 
-data CometValue = CometAddr CellAddress
-                | CometSLit CellAddress String
-                | CometHTML CellAddress String
-                | CometILit CellAddress Int
-                | CometImage CellAddress String
-                | CometVideo CellAddress String
-                | CometEmpty CellAddress
+data CometValue = CometAddr String CellAddress
+                | CometSLit String CellAddress String
+                | CometHTML String CellAddress String
+                | CometILit String CellAddress Int
+                | CometImage String CellAddress String
+                | CometVideo String CellAddress String
+                | CometEmpty String CellAddress
+
+instance ToJSON EExpr where
+  toJSON s = object [ (T.pack "formula") .= (show s :: String) ]
 
 instance ToJSON CometValue where
-  toJSON (CometEmpty addr) =
+  toJSON (CometEmpty fx addr) =
     object
       [ (T.pack "valueType") .= (T.pack "EEmpty")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "formula") .= (T.pack $ fx)
       ]
 
 
-  toJSON (CometAddr addr) =
+  toJSON (CometAddr fx addr) =
     object
       [ (T.pack "value") .= (show addr :: String)
       , (T.pack "valueType") .= (T.pack "ESLit")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "formula") .= (T.pack $ fx)
       ]
 
-  toJSON (CometHTML addr str) =
+  toJSON (CometHTML fx addr str) =
     object
       [ (T.pack "value") .= str
       , (T.pack "valueType") .= (T.pack "EHTML")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "formula") .= (T.pack $ fx)
       ]
 
-  toJSON (CometSLit addr str) =
+  toJSON (CometSLit fx addr str) =
     object
       [ (T.pack "value") .= str
       , (T.pack "valueType") .= (T.pack "ESLit")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "formula") .= (T.pack $ fx)
       ]
 
-  toJSON (CometILit addr i) =
+  toJSON (CometILit fx addr i) =
     object
       [ (T.pack "value") .= i
       , (T.pack "valueType") .= (T.pack "EILit")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "formula") .= (T.pack $ fx)
       ]
 
 
-  toJSON (CometImage addr src) =
+  toJSON (CometImage fx addr src) =
     object
       [ (T.pack "value") .= src
       , (T.pack "valueType") .= (T.pack "EImage")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "formula") .= (T.pack $ fx)
       ]
 
-  toJSON (CometVideo addr src) =
+  toJSON (CometVideo fx addr src) =
     object
       [ (T.pack "value") .= src
       , (T.pack "valueType") .= (T.pack "EVideo")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "formula") .= (T.pack $ fx)
       ]

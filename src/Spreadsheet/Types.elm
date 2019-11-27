@@ -120,6 +120,7 @@ type alias Cell =
     { value : Formula
     , buffer : String
     , addr : CellAddress
+    , formula : String
     -- Each time you edit a cell, you are modifying the "buffer".
     -- Once you press enter the buffer will be parsed, and we replace the "value" attribute with
     -- the result of the parser
@@ -129,7 +130,9 @@ type alias Cell =
     }
 
 emptyGraph = Graph.fromNodesAndEdges [] []
-emptyCell = Cell EBot "" (0, 0) Nothing
+
+emptyCell : Cell
+emptyCell  = { value = EBot, buffer = "", addr = (0, 0), meta =  Nothing, formula = "" }
 stringCell  addr str = { emptyCell | addr = addr, value = ESLit str }
 intCell     addr i   = { emptyCell | addr = addr, value = EILit i }
 imageCell   addr src = { emptyCell | addr = addr, value = EImage src }

@@ -397,13 +397,13 @@ update msg model =
             case res of
                 Ok payload ->
                     let
-                        val = cometValueTOEExpr payload
+                        (_, (fx, val)) = decodeCometValue payload
                     in
                         --( { model | cometStorage = Dict.insert cometKey (Debug.log (Debug.toString cometKey) val) model.cometStorage}, Cmd.none )
-                        ( { model | cometStorage = Dict.insert cometKey val model.cometStorage}, cometUpdateAll )
+                        ( { model | cometStorage = Dict.insert cometKey ("", val) model.cometStorage}, cometUpdateAll model )
 
                 Err err ->
-                    ( { model | cometStorage = Dict.insert cometKey (Debug.toString err |> EError) model.cometStorage}, Cmd.none )
+                    ( { model | cometStorage = Dict.insert cometKey ("", (Debug.toString err |> EError)) model.cometStorage}, Cmd.none )
 
         CometUpdateAll res ->
             {-
@@ -422,7 +422,7 @@ update msg model =
                             let
                                 keyValPairs = (List.map decodeCometValue el)
                                 newDict = Dict.fromList ((Dict.toList model.cometStorage) ++ keyValPairs)
-                                newDatabase = List.map (\(cometKey, val) -> { emptyCell | addr = cometKeyToAddr cometKey, value = val})
+                                newDatabase = List.map (\(cometKey, (fx, val)) -> { emptyCell | addr = cometKeyToAddr cometKey, value = val, formula = fx, buffer = fx })
                                                        keyValPairs
                             in
                                 --( { model | cometStorage = newDict, database = newDatabase }, Debug.log (Debug.toString newDict) Cmd.none)
@@ -501,12 +501,16 @@ update msg model =
 -- This method tries to parse cometKey
 decodeCometValue payload =
     let
+        perhapsFx       = D.decodeValue (D.field "formula" D.string) payload
+        fx = case perhapsFx of
+            Ok str -> str
+            Err _  -> "no formula"
         perhapsCometKey = D.decodeValue (D.field "cometKey" D.string) payload
         cometKey = case perhapsCometKey of
             Ok str -> str
             Err _  -> "undefined" -- FIXME
     in
-        (cometKey, cometValueTOEExpr payload)
+        (cometKey, (fx, cometValueTOEExpr payload))
 
 
 -- This ignores cometKey
@@ -586,7 +590,7 @@ viewCell model res =
 
                 EComet cometKey ->
                      case (Dict.get cometKey model.cometStorage) of
-                        Just val -> viewCell model (Just { cell | value = val })
+                        Just (fx, val) -> viewCell model (Just { cell | value = val, formula = fx })
                         _ -> span [] [ text ("comet pending.." ++ cometKey) ]
 
                 EEmpty ->
@@ -905,7 +909,7 @@ alternativeViewByEExpr model value =
                   []
         EComet cometKey ->
             case (Dict.get cometKey model.cometStorage) of
-                Just resolvedVal ->
+                Just (fx, resolvedVal) ->
                     span [] [ text ("Resolved comet value with key " ++ cometKey)
                             , hr [] []
                             , alternativeViewByEExpr model resolvedVal ]
@@ -982,20 +986,21 @@ formulaBarValue model =
     case model.mode of
         IdleMode addr ->
             case find (\x -> x.addr == addr) model.database of
-                Just cell ->
-                    (Debug.toString cell.value)
+                Just cell -> cell.formula
                 Nothing -> "EMPTY CELL"
         EditMode addr ->
             case find (\x -> x.addr == addr) model.database of
                 Just cell ->
-                    (Debug.toString cell.buffer)
+                    case cell.buffer of
+                        "" -> cell.formula
+                        _  -> cell.buffer
                 Nothing -> "EMPTY CELL IN EDIT MODE"
 
         _ -> "What mode are you in, my friend?"
 
-formulaBar model = div [ id "formula-bar" ] [ span [] [ text "formula:" ]
+formulaBar model = div [ id "formula-bar" ] [ span [ id "widget-phi" ] [ text "fx" ]
                                         --  , img [ id "icon-formula-bar", src "/icons/formula-f.svg" ] []
-                                            , span [] [ input [ id "widget-formula-bar", value (formulaBarValue model) ] [] ] ]
+                                            , span [ id "widget-formula-bar-input-container"] [ input [ id "widget-formula-bar", value (formulaBarValue model) ] [] ] ]
 
 pinnedViewInterface model = []
                             --[ tr [] [ td [] [ sideviewRender model (0,0) ] ]

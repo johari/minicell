@@ -81,6 +81,7 @@ import qualified Data.ByteString as BS
 import Control.Concurrent.STM
 
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad (filterM)
 
 -- Minicell stuff
 
@@ -219,6 +220,8 @@ eexprToComet myFormulaStr cellValue cometAddress  = do
             system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
 
             return $ CometImage myFormulaStr cometAddress (targetSrc "png")
+
+        EJumpLink label src -> return $ CometJumpLink myFormulaStr cometAddress label src
 
         ESLit s -> return $ CometSLit myFormulaStr cometAddress s
         EHTML s -> return $ CometHTML myFormulaStr cometAddress s
@@ -387,8 +390,13 @@ anyRoute2 modelTVar req res =
             let myPath = joinPath (["."] <> (T.unpack <$> path))
             print myPath
             dirContents <- getDirectoryContents (myPath)
-            let cwdCells =  [stringCell (i, 0) itemPath | (i, itemPath) <- zip [0..] dirContents]
-                         <> [stringCell (i, 1) itemMime | (i, itemMime) <- zip [0..] (show <$> defaultMimeLookup <$> T.pack <$> dirContents)]
+
+            dirs <-     (pure dirContents) >>= filterM (\x -> doesDirectoryExist (joinPath [myPath, x]))
+            rawFiles <- (pure dirContents) >>= filterM (\x -> doesFileExist (joinPath [myPath, x]))
+
+            let cwdCells =  [jumpLinkCell (i, 0) itemPath (itemPath <> "/") | (i, itemPath) <- zip [0..] dirs]
+                         <> [jumpLinkCell (i, 1) itemPath itemPath | (i, itemPath) <- zip [0..] rawFiles]
+                         <> [stringCell (i, 2) itemMime | (i, itemMime) <- zip [0..] (show <$> defaultMimeLookup <$> T.pack <$> rawFiles)]
             let cwdSpreadsheet = emptySpreadsheet { database = cwdCells }
             cwdTVar <- atomically $ newTVar cwdSpreadsheet
             endpointShowAll cwdTVar req res

@@ -466,7 +466,13 @@ update msg model =
                         case key of
                             "Enter" -> -- [Keypress Enter]
                                 case model.mode of
-                                    IdleMode addr -> update (EditIntent addr Nothing) model
+                                    IdleMode addr ->
+                                        case find (\x -> x.addr == addr) model.database of
+                                            Just cell ->
+                                                case cell.value of
+                                                    EJumpLink _ src -> (model, Browser.Navigation.load src)
+                                                    _ -> update (EditIntent addr Nothing) model
+                                            Nothing -> update (EditIntent addr Nothing) model
                                     EditMode addr -> update (Save addr) model
                                     _ -> (model, Cmd.none)
                             "ArrowRight" -> case model.mode of
@@ -560,10 +566,17 @@ cometValueTOEExpr payload =
                 case D.decodeValue (D.field "value" D.string) payload of
                     Ok i -> EImage i
                     Err err -> EError (Debug.toString err)
+
+            Ok "EJumpLink" ->
+                case D.decodeValue (D.field "value" (D.map2 Tuple.pair (D.index 0 D.string) (D.index 1 D.string))) payload of
+                    Ok (label, str)  -> EJumpLink label str
+                    Err err -> EError (Debug.toString err)
+
             Ok "EVideo" ->
                 case D.decodeValue (D.field "value" D.string) payload of
                     Ok v -> EVideo v
                     Err err -> EError (Debug.toString err)
+
             Ok "EEmpty" ->
                 EEmpty
 
@@ -600,6 +613,9 @@ viewCell model res =
 
                 --ECellGraph g ->
                 --    span [ class "vizjs-compile-dot-to-svg" ] [ text (g |> mapNodes (\cellNode -> cellNode.value |> Debug.toString) |> Graph.DOT.output Just (always Nothing)) ]
+
+                EJumpLink label src ->
+                    span [] [ a [ href src ] [ text label ] ]
 
                 EImage imgSrc ->
                     --span [] [ text ("<img src=" ++ src ++">") ]

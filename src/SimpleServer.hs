@@ -187,7 +187,7 @@ eexprToHTML cellValue cometAddress  = do
         ESLit s -> return $ s
         _ -> return $ mconcat ["html not implemented for ", (show cellValue)]
 
-eexprToComet cellValue cometAddress  = do
+eexprToComet myFormulaStr cellValue cometAddress  = do
     -- This is the main point of integration betweenR
     -- A) Haskell values
     -- B) Elm values
@@ -210,7 +210,7 @@ eexprToComet cellValue cometAddress  = do
             renderToFile svgPath elem
             -- renderRasterific pngPath (mkWidth 250)
 
-            return $ CometImage cometAddress (targetSrc "svg")
+            return $ CometImage myFormulaStr cometAddress (targetSrc "svg")
 
         EGraphFGL g -> do
             let dot = showDot (fglToDot g)
@@ -218,14 +218,14 @@ eexprToComet cellValue cometAddress  = do
             writeFile dotPath dot
             system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
 
-            return $ CometImage cometAddress (targetSrc "png")
+            return $ CometImage myFormulaStr cometAddress (targetSrc "png")
 
-        ESLit s -> return $ CometSLit cometAddress s
-        EHTML s -> return $ CometHTML cometAddress s
-        EILit i -> return $ CometILit cometAddress i
-        EImage src -> return $ CometImage cometAddress src
-        EVideo src -> return $ CometVideo cometAddress src
-        _ -> return $ CometSLit cometAddress (show cellValue)
+        ESLit s -> return $ CometSLit myFormulaStr cometAddress s
+        EHTML s -> return $ CometHTML myFormulaStr cometAddress s
+        EILit i -> return $ CometILit myFormulaStr cometAddress i
+        EImage src -> return $ CometImage myFormulaStr cometAddress src
+        EVideo src -> return $ CometVideo myFormulaStr cometAddress src
+        _ -> return $ CometSLit myFormulaStr cometAddress (show cellValue)
 
 
 endpointPrepare0 modelTVar cometKey = do
@@ -239,7 +239,12 @@ endpointPrepare0 modelTVar cometKey = do
     -- There should be one layer between `eval` and `eexprToComet` that handles the cache
 
     cellValue <- eval model (ECellRef cometAddress)
-    return (cellValue, cometAddress)
+
+    case find (\x -> addr x == cometAddress) (database model) of
+      Nothing ->   return (("no formula", cellValue), cometAddress)
+      Just cell -> return ((formulaStr cell, cellValue), cometAddress)
+
+
 
 endpointPrepare modelTVar cometKey = do
     let cometAddress = (cometKeyToAddr $ cometKey)
@@ -255,7 +260,11 @@ endpointPrepare modelTVar cometKey = do
 
 
 
-    val <- eexprToComet cellValue cometAddress
+    let myFormulaStr = case find (\x -> addr x == cometAddress) (database model) of
+                          Nothing ->   "no formula"
+                          Just cell -> formulaStr cell
+
+    val <- eexprToComet myFormulaStr cellValue cometAddress
     return val
 
 endpointPrepareHTML modelTVar cometKey = do
@@ -292,7 +301,11 @@ endpointShowHTML modelTVar cometKey req res = do
 
 spillHelper cell =
     case value cell of
-        EList vals -> [Cell { value = val, addr = (x0, y0+i)} | (i, val) <- zip [0..] vals, let (x0, y0) = addr cell ]
+        EList vals -> [ Cell { value = val, addr = (x0, y0+i), formulaStr = myFormulaStr }
+                      | (i, val) <- zip [0..] vals
+                      , let (x0, y0) = addr cell
+                      , let myFormulaStr = if i == 0 then formulaStr cell else ""
+                      ]
         EEmpty -> []
         _ -> [cell]
 
@@ -307,7 +320,7 @@ endpointShowAll modelTVar req res = do
 
     preSpillModel <- sequence $ (endpointPrepare0 modelTVar) <$> existingKeys
 
-    let newDatabase   = spill [ Cell { value = v, addr = a } | (v, a) <- preSpillModel ]
+    let newDatabase   = spill [ Cell { value = v, addr = a, formulaStr = f } | ((f, v), a) <- preSpillModel ]
     let existingKeys' = addrToExcelStyle <$> addr <$> newDatabase
     modelTVar' <- atomically $ newTVar (model { database = newDatabase })
 
@@ -461,11 +474,11 @@ anyRoute2 modelTVar req res =
             case (params ++ fileParams) of  -- FIXME: lookup the parameter by name
                 ((_,formula):_) -> do
 
-                    let parseRes = parse cellContent "REPL" (BU.toString formula)
-                    print parseRes
+                    let myFormulaStr = (BU.toString formula)
+                    let parseRes = parse cellContent "REPL" myFormulaStr
                     case parseRes of
                         Left err -> do
-                            let val = CometSLit cometAddress (show err)
+                            let val = CometSLit "#ERR!" cometAddress (show err)
                             res $ responseLBS status200
                                                   [(hContentType, "application/json")]
                                                   (encode val)
@@ -475,7 +488,7 @@ anyRoute2 modelTVar req res =
                             -- TODO: delegate CometSLit transformation to a separate function
 
                             atomically $ do
-                                modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress ast)
+                                modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress myFormulaStr ast)
 
                             endpointShow modelTVar cometKey req res
 
@@ -483,7 +496,7 @@ anyRoute2 modelTVar req res =
                     -- TODO: what if multiple files were dropped on one cell?
 
                     atomically $ do
-                        modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress (EImage (fileUrls !! 0)))
+                        modifyTVar modelTVar (Mini.modifyModelWithNewCellValue cometAddress (fileUrls !! 0) (EImage (fileUrls !! 0)))
 
                     endpointShow modelTVar cometKey req res
 

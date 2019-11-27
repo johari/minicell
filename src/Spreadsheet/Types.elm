@@ -1,5 +1,6 @@
 module Spreadsheet.Types exposing (..)
 
+import Url exposing (Url)
 import Tuple
 import Dict
 import Graph exposing (Graph, nodes)
@@ -150,7 +151,7 @@ isStringCell cell = case cell.value of
     ESLit _ -> True
     _ -> False
 
-emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (millisToPosix 0) [] (Dict.fromList [])
+emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (millisToPosix 0) [] (Dict.fromList []) "/"
 
 type Mode
     = IdleMode CellAddress
@@ -183,7 +184,8 @@ type alias Spreadsheet =
     , demoEdges : TEdgeDemo
     , currentTime : Posix
     , previews : List String
-    , cometStorage : Dict.Dict CometKey EExpr
+    , cometStorage : Dict.Dict CometKey (String, EExpr)
+    , location : String
     -- , mouseInfo : { sideView : (Int, Int), window : (Int, Int) }
     }
 

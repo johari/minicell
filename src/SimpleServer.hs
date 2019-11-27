@@ -21,6 +21,11 @@ import System.Log.Handler.Simple
 import System.Log.Handler (setFormatter)
 import System.Log.Formatter
 
+-- File browser stuff
+
+import System.FilePath.Posix
+import System.Directory
+
 -- Diagrams stuff
 
 import Diagrams.Prelude hiding (value, (.=), (<>))
@@ -365,6 +370,23 @@ anyRoute modelTVars req res = do
 
 anyRoute2 modelTVar req res =
     case pathInfo req of
+        ("_":"browse":path) -> do
+            let myPath = joinPath (["."] <> (T.unpack <$> path))
+            print myPath
+            dirContents <- getDirectoryContents (myPath)
+            let cwdCells =  [stringCell (i, 0) itemPath | (i, itemPath) <- zip [0..] dirContents]
+                         <> [stringCell (i, 1) itemMime | (i, itemMime) <- zip [0..] (show <$> defaultMimeLookup <$> T.pack <$> dirContents)]
+            let cwdSpreadsheet = emptySpreadsheet { database = cwdCells }
+            cwdTVar <- atomically $ newTVar cwdSpreadsheet
+            endpointShowAll cwdTVar req res
+
+        ("*":"browse":path) -> do
+            let (Just hostName) = requestHeaderHost req
+
+            -- res $ responseFile status200 [(hContentType, "text/html")] "../static/main.html" Nothing
+            let (Just mainDotHtml) = Data.List.lookup "main.html" embeddedAssets
+            res $ responseLBS status200 [(hContentType, "text/html")] (B.fromStrict mainDotHtml)
+
         [ "minicell", "all.json" ] -> do
             endpointShowAll modelTVar req res
 

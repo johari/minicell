@@ -1,10 +1,14 @@
 port module Spreadsheet exposing (..)
 
+import Url
+
 import Html.Parser
 import Html.Parser.Util
 
 import Debug
 import Browser
+import Browser.Navigation
+
 import Html exposing (..)
 import Html.Events exposing (onClick, onDoubleClick, onInput, onBlur, onMouseOver, keyCode, on, preventDefaultOn)
 import Html.Attributes exposing (id, class, href, value, autofocus, src, property, height, width, style, controls)
@@ -85,6 +89,8 @@ type Msg
     | CometUpdate CometKey (Result Http.Error E.Value)
     | CometUpdateAll (Result Http.Error E.Value)
 
+    | NoOp
+
     -- | SelectCell CellAddress -- e.g. Select the first column
     -- | SelectRange ( CellAddress, CellAddress ) -- e.g. (A2, D5)
 
@@ -101,7 +107,13 @@ cometKeyToAddr cometKey =
 
         _ -> (0, 0)
 
-minicellEndpoint = ""
+minicellEndpoint model =
+    case Url.fromString (model.location) of
+        Nothing -> ""
+        Just url ->
+            case String.toList (url.path) of
+                ('/'::'*'::rest) -> String.fromList ('/'::'_'::rest)
+                _ -> ""
 
 addrToExcelStyle addr =
     let (rho, kappa) = addr
@@ -109,8 +121,8 @@ addrToExcelStyle addr =
     in
         columnString ++ (String.fromInt (rho+1))
 
-curlXPOST addr formula =
-    Http.post { url = (minicellEndpoint ++ "/minicell/" ++ (addrToExcelStyle addr) ++ "/write.json")
+curlXPOST model addr formula =
+    Http.post { url = ((minicellEndpoint model) ++ "/minicell/" ++ (addrToExcelStyle addr) ++ "/write.json")
               , body = (postBodyUpdateFormula formula)
               , expect = Http.expectJson (CometUpdate (addrToExcelStyle addr)) D.value
     }
@@ -126,10 +138,16 @@ type alias Model =
     Spreadsheet
 
 
+initWithLocation : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+initWithLocation _ url _ =
+    let model = {emptySpreadsheet | location = Url.toString url } in
+    (model, Cmd.batch [ cometUpdateAll model ])
+
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( emptySpreadsheet
-    , Cmd.batch [ cometUpdateAll
+    let model = emptySpreadsheet in
+    ( model
+    , Cmd.batch [ cometUpdateAll model
                 ]
     )
 
@@ -308,7 +326,7 @@ update msg model =
         Tick t ->
             case model.mode of
                 EditMode _ -> (model, Cmd.none)
-                _ -> ( { model | currentTime = t }, cometUpdateAll)
+                _ -> ( { model | currentTime = t }, cometUpdateAll model)
 
         CollectVertexDemo addr ->
             if addrInVertexDemo addr model.demoVertices then
@@ -363,7 +381,8 @@ update msg model =
                             let (v1, v2) = (update (UpdateCellBuffer addr firstInput) model)
                             in
                                 v1 -- [update trick], discards the Cmd values :(
-                        Nothing -> model
+                        Nothing ->
+                            model
             in
                 ( { newModel | mode = EditMode addr }, fixAutoFocusBug cssKeyForEditCellInput)
 
@@ -386,7 +405,7 @@ update msg model =
             ({ model | database = updateCellValue model.database addr (addrToExcelStyle addr |> EComet)
                      , mode = IdleMode (rho+1, kappa)
                      }
-            , curlXPOST addr (currentBuffer model.database addr))
+            , curlXPOST model addr (currentBuffer model.database addr))
 
         ChangeCandidateCell addr ->
             ( { model | mode = IdleMode addr }, Cmd.none)
@@ -1066,7 +1085,8 @@ debugView model =
             , hr [] []
             , text (Debug.toString model) ]
     ]
-main =
+
+mainSimple =
     Browser.element
         { init = init
         , update = update
@@ -1074,10 +1094,19 @@ main =
         , subscriptions = subscriptions
         }
 
+main =
+    Browser.application
+        { init = initWithLocation
+        , update = update
+        , view = (\model -> { title = "Piet", body = [view model]})
+        , subscriptions = subscriptions
+        , onUrlChange = (\_ -> NoOp)
+        , onUrlRequest = (\_ -> NoOp)
+        }
 
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.batch [ keyPress WindowKeyPress
-                                , Time.every (500) Tick
+                                , Time.every (500*4) Tick
                                 ]
 
 
@@ -1110,17 +1139,17 @@ hijack msg =
   (msg, True)
 
 
-cometUpdate : CometKey -> Cmd Msg
-cometUpdate cometKey =
+cometUpdate : Model -> CometKey -> Cmd Msg
+cometUpdate model cometKey =
   Http.get
-    { url = (minicellEndpoint ++ "/minicell/" ++ cometKey ++ "/show.json")
+    { url = ((minicellEndpoint model) ++ "/minicell/" ++ cometKey ++ "/show.json")
     , expect = Http.expectJson (CometUpdate cometKey) D.value
     }
 
-cometUpdateAll : Cmd Msg
-cometUpdateAll =
+cometUpdateAll : Model -> Cmd Msg
+cometUpdateAll model =
   Http.get
-    { url = (minicellEndpoint ++ "/minicell/all.json")
+    { url = (minicellEndpoint model) ++ "/minicell/all.json"
     , expect = Http.expectJson (CometUpdateAll) (D.value)
     }
 

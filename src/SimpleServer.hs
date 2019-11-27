@@ -506,13 +506,20 @@ anyRoute2 modelTVar req res =
         -- Assets
         ["assets", "spreadsheet.js"] -> do
 
-            res $ responseFile status200 [(hContentType, "text/javascript")] ("../build/spreadsheet.js") Nothing
+
+            -- res $ responseFile status200 [(hContentType, "text/javascript")] ("../build/spreadsheet.js") Nothing
+            let (Just spreadsheetDotJS) = Data.List.lookup "spreadsheet.js" embeddedAssets
+            res $ responseLBS status200 [(hContentType, "application/javascript")] (B.fromStrict spreadsheetDotJS)
 
         ("assets":pathToAsset) -> do
             let fullPath = intercalate "/" (T.unpack <$> pathToAsset)
             let myMime = (defaultMimeLookup $ fromString fullPath)
             print myMime
-            res $ responseFile status200 [(hContentType, myMime)] ("../static/" <> fullPath) Nothing
+            -- res $ responseFile status200 [(hContentType, myMime)] ("../static/" <> fullPath) Nothing
+            -- res $ responseFile status200 [(hContentType, myMime)] ("../static/" <> fullPath) Nothing
+            print pathToAsset
+            let (Just assetContents) = Data.List.lookup fullPath embeddedAssets
+            res $ responseLBS status200 [(hContentType, myMime)] (B.fromStrict assetContents)
 
         ("minicell-cache":pathToAsset) -> do
             let fullPath = intercalate "/" (T.unpack <$> pathToAsset)

@@ -904,9 +904,11 @@ videoElemForUrl model url =
            --, div [] [text (toString model.videoState)]
            ]
 
+alternativeViewByEExpr : Model -> EExpr -> Html a
+
 alternativeViewByEExpr model value =
     case value of
-        EILit num -> text ("Found a number! " ++ (Debug.toString num))
+        EILit num -> text ((Debug.toString num))
         EImage url -> img [ src url ] [ ]
         EVideo url -> videoElemForUrl model url
         ESuperFancyGraph g -> pre [ ] [ toGraphviz g |> text ]
@@ -947,6 +949,7 @@ textHtml t =
         Err _ ->
             []
 
+sideviewRender : Model -> CellAddress -> Html a
 sideviewRender model addr =
     case find (\x -> x.addr == addr) model.database of
         Just cell ->
@@ -954,14 +957,18 @@ sideviewRender model addr =
         Nothing -> span [ ] []
         --Nothing -> mondrian
 
+sidePane : Model -> CellAddress -> Html a
+sidePane model addr =
+    table [ ] [
+          tr [] [ td [] [ sideviewRender model (-1, 0) ], td [] [ sideviewRender model (-1, 1) ] ]
+        , tr [] [ td [] [ sideviewRender model addr ] ]
+    ]
+
+alternativeViewInterface : Model -> Html a
 alternativeViewInterface model =
     case model.mode of
-        IdleMode addr ->
-            -- No need to display if its already pinned
-            -- sideviewRender model addr
-            sideviewRender model (-1,0)
-        EditMode addr ->
-            sideviewRender model (-1,0)
+        IdleMode addr -> sidePane model addr
+        EditMode addr -> sidePane model addr
         -- _ -> span [] []
         _ -> mondrian
     --table [ id "container-alternative-view" ] [
@@ -1029,6 +1036,7 @@ pinnedViewInterface model = []
                             --, tr [] [ td [] [ sideviewRender model (4,0) ] ]
                             --]
 
+paneB : Model -> Html a
 paneB model = table []  ([ tr [ ] [ td [] [ alternativeViewInterface model ] ] ] ++ pinnedViewInterface model)
 
 containerPanes model =
@@ -1056,15 +1064,16 @@ footerContent model =
     div [ id "container-footer", class "container-row" ] [
         table []
             [ tr [] [ td [ id "clippy" ] [ clippy model ] -- Summon Clippy
-                  , td [ ] [ text (Debug.toString model.mode)
+                  , td [ ] [ text (Debug.toString model.mode) ]
+                  , td [ ] [ text (Debug.toString model.location) ]
+                  , td [ ] [ text (Debug.toString (minicellEndpoint model)) ]
                   -- , td [ ] [ text (Debug.toString model.mouseInfo)]
-                  ]
             --, tr [] [ td [] [ text (Debug.toString model.cometStorage) ] ]
             ]
         ]
     ]
 
-a0 model = table [ class "spreadsheet" ] ([ topRow model ] ++ (viewRow -1 model)) -- viewRow 0 model -- div [ id "A0" ] [text "A0"]
+a0 model = table [ class "spreadsheet a0" ] ([ topRow model ] ++ (viewRow -1 model)) -- viewRow 0 model -- div [ id "A0" ] [text "A0"]
 
 view : Model -> Html Msg
 view model =

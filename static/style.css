@@ -1,6 +1,11 @@
 .spreadsheet img {
   max-width: 100%;
-  height: 40px;
+  max-height: 80px;
+}
+
+.spreadsheet .row0 img {
+  max-width: 100%;
+  height: 100px;
 }
 
 .spreadsheet td:not(:first-of-type) {
@@ -13,7 +18,7 @@
 }
 
 input.widget-edit-mode-cell-input {
-  width: 100%;
+  display: block;
   box-sizing:border-box;
   border: none;
   /*box-shadow: none;*/
@@ -21,19 +26,24 @@ input.widget-edit-mode-cell-input {
   border-width: 0;
   outline: none;
 }
+
+#widget-phi {
+  display: table-cell;
+  padding: 10px;
+
+}
+#widget-formula-bar-input-container {
+  display: table-cell;
+  width: 100%;
+}
+
 input#widget-formula-bar {
-  width: 70%;
-  /*box-sizing:border-box;*/
-  /*border: none;*/
+  width: 90%;
   box-shadow: none;
   font-family: monospace !important;
-  /*border-width: 0; */
-  /*outline: none;*/
-  /*height: 50px;*/
-
   padding-left: 10px;
-  border-left: 1px solid cyan;
 }
+
 html, body {
   height: 100%;
   margin: 0;
@@ -155,6 +165,28 @@ body #container-box {
   padding: 0;
 
 }
+
+#pane-b tr {
+  max-height: 30%
+  width: 100%;
+}
+
+#pane-b img {
+  max-height: 50%;
+}
+
+#pane-b table td {
+  border: 1px solid lightgrey;
+}
+
+#pane-b table {
+  width: 100%;
+}
+
+#pane-b table tr {
+  width: 100%;
+}
+
 
 table {
   border-collapse: collapse;

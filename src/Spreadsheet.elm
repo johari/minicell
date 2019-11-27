@@ -107,13 +107,19 @@ cometKeyToAddr cometKey =
 
         _ -> (0, 0)
 
-minicellEndpoint model =
+minicellEndpoint : Model -> Endpoint -> String
+minicellEndpoint model ep =
     case Url.fromString (model.location) of
         Nothing -> ""
         Just url ->
             case String.toList (url.path) of
                 ('/'::'*'::rest) -> String.fromList ('/'::'_'::rest)
-                _ -> ""
+                _ ->
+                    case ep of
+                        EPAll        -> "/minicell/all.json"
+                        EPWrite ck -> "/minicell/" ++ ck ++ "/write.json"
+                        EPShow  ck -> "/minicell/" ++ ck ++ "/show.json"
+
 
 addrToExcelStyle addr =
     let (rho, kappa) = addr
@@ -122,7 +128,7 @@ addrToExcelStyle addr =
         columnString ++ (String.fromInt (rho+1))
 
 curlXPOST model addr formula =
-    Http.post { url = ((minicellEndpoint model) ++ "/minicell/" ++ (addrToExcelStyle addr) ++ "/write.json")
+    Http.post { url = (minicellEndpoint model (EPWrite (addrToExcelStyle addr)))
               , body = (postBodyUpdateFormula formula)
               , expect = Http.expectJson (CometUpdate (addrToExcelStyle addr)) D.value
     }
@@ -1066,7 +1072,7 @@ footerContent model =
             [ tr [] [ td [ id "clippy" ] [ clippy model ] -- Summon Clippy
                   , td [ ] [ text (Debug.toString model.mode) ]
                   , td [ ] [ text (Debug.toString model.location) ]
-                  , td [ ] [ text (Debug.toString (minicellEndpoint model)) ]
+                  , td [ ] [ text (Debug.toString (minicellEndpoint model EPAll)) ]
                   -- , td [ ] [ text (Debug.toString model.mouseInfo)]
             --, tr [] [ td [] [ text (Debug.toString model.cometStorage) ] ]
             ]
@@ -1151,14 +1157,14 @@ hijack msg =
 cometUpdate : Model -> CometKey -> Cmd Msg
 cometUpdate model cometKey =
   Http.get
-    { url = ((minicellEndpoint model) ++ "/minicell/" ++ cometKey ++ "/show.json")
+    { url = ((minicellEndpoint model (EPShow cometKey)))
     , expect = Http.expectJson (CometUpdate cometKey) D.value
     }
 
 cometUpdateAll : Model -> Cmd Msg
 cometUpdateAll model =
   Http.get
-    { url = (minicellEndpoint model) ++ "/minicell/all.json"
+    { url = (minicellEndpoint model EPAll)
     , expect = Http.expectJson (CometUpdateAll) (D.value)
     }
 

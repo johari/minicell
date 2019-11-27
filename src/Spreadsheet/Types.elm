@@ -43,6 +43,8 @@ type alias TEdgeDemo   = List SuperEdge
 
 type alias EFunctor = String
 
+type Endpoint = EPAll | EPWrite CometKey | EPShow CometKey
+
 type EExpr = EApp EFunctor (List EExpr) -- CellFormula, I guess..
            | EILit Int -- CellInt
            | ESLit String --CellString

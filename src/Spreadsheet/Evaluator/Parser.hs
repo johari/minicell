@@ -22,7 +22,7 @@ import Piet.DSL.Graphsheet
 import Piet.DSL.Graphics.Shapes
 import Piet.DSL.HTML
 import Piet.DSL.Poppet
-import Piet.DSL.Lua.Hello
+-- import Piet.DSL.Lua.Hello
 import Piet.DSL.Debug
 import Piet.DSL.Git
 import Piet.DSL.FAM
@@ -258,15 +258,12 @@ eval model expr = do
             , Piet.DSL.Arithmetic.eval'
             , Piet.DSL.Graphics.Shapes.eval'
             , Piet.DSL.Poppet.eval'
-<<<<<<< Updated upstream
-            , Piet.DSL.Lua.Hello.eval'
+            -- , Piet.DSL.Lua.Hello.eval'
             , Piet.DSL.Debug.eval'
-=======
             , Piet.DSL.Git.eval'
             , Piet.DSL.FAM.eval'
             , Piet.DSL.File.eval'
             , Piet.DSL.Lambda.eval'
->>>>>>> Stashed changes
             ]
       pickEvalAndContinue eval evals model expr
     _ -> return r

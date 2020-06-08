@@ -128,7 +128,7 @@ body #container-box {
 
 #container-panes {
     display: grid;
-    grid-template-columns: 70%;
+    grid-template-columns: 60%;
     /* grid-template-rows: 50% 50%; */
     grid-template-areas: "minicell-grid minicell-sideview";
 

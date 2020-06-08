@@ -55,6 +55,7 @@ eval' eval model expr = case normalizeOp expr of
       ESLit "cities" -> return (EGraphFGL vor)
       ESLit "hello" -> return (EGraphFGL helloGraph)
       ESLit "ouroboros" -> return $ dep
+      ESLit "observed-activity" -> return (EGraphPtr "observed-activity")
       _ -> return (EError $ (mconcat ["graph `", show loadName, "` not found :("] :: String))
 
 
@@ -77,6 +78,28 @@ eval' eval model expr = case normalizeOp expr of
     -- let okayGraph = mapDotGraph (const 0) dotGraph :: DotGraph Node
     -- print  $ (dotToGraph (okayGraph)  :: Gr Data.GraphViz.Attributes.Complete.Attributes Data.GraphViz.Attributes.Complete.Attributes)
     return $ EGraphFGL g
+
+  EApp op [ queryGraph_, baseGraph_ ] | op `elem` ["XMATCH"] -> do
+    EGraphFGLAttr queryGraph <- eval model queryGraph_
+    EGraphPtr baseGraphLabel  <- eval model baseGraph_
+
+    infoM "wiki.sheets.eval.sm" (show $ labNodes queryGraph)
+
+    let payload = [ show $ labNodes queryGraph
+                  , show $ labEdges queryGraph
+                  , show $ baseGraphLabel
+                  ]
+
+    let endpoint = case op of
+                    "XMATCH"  -> "http://127.0.0.1:5000/sm-live-demo"
+
+    b <- simpleHTTP (postRequestWithBody endpoint "application/json" (show payload)) >>= getResponseBody
+    let df = (read b) :: [[String]]
+    return $ EDataFrame (df !! 0) (tail df)
+    -- case length subgraphNodes of
+      -- 0 -> return (EError "No subgraph found")
+      -- n -> return $ EILit n
+      -- _ -> return $ EList $ nub $ ((\x -> (EGraphFGL $ subgraph (x) baseGraph)) <$> subgraphNodes)
 
   EApp op [ queryGraph_, baseGraph_ ] | op `elem` ["MATCH", "IMATCH"] -> do
     EGraphFGL queryGraph <- eval model queryGraph_
@@ -133,6 +156,33 @@ eval' eval model expr = case normalizeOp expr of
           print (n1, n2)
           return (EILit $ fromMaybe 0 $ spLength n1 n2  g')
         _ -> return (EError $ "error evaluating " ++ op)
+
+  EApp "XX" [ECellRange (rhoL, kappaL) (rhoR, kappaR)] -> do
+    let vertexAddrs = ([ (x, kappaL) | x <- [rhoL .. rhoR] ] ++ [ (x, kappaL + 2) | x <- [rhoL .. rhoR] ])
+    verticesWithAddr <- sequence [ do val <- eval model (ECellRef addr); return (addr, val) | addr <- vertexAddrs ]
+    let newVertices = Data.List.nub (catMaybes $ (maybeVertex <$> verticesWithAddr))
+
+    edgeAttrs <- sequence [ do val <- eval model (ECellRef addr); return (addr, val) | addr <- [(x, kappaL + 1)| x <- [rhoL .. rhoR]] ]
+    let newEdgeAttrs = catMaybes $ maybeEdge <$> edgeAttrs
+
+    let (newNodes, nm) = mkNodes new (snd <$> newVertices)
+    let newEdges = catMaybes $
+          [
+            do
+              v1 <- lookup (x, kappaL) newVertices
+              v2 <- lookup (x, kappaL + 2) newVertices
+              str <- lookup (x, kappaL + 1) newEdgeAttrs
+              return $ (v1, v2, str)
+          | x <- [rhoL .. rhoR]
+          ]
+    return $ EGraphFGLAttr $ mkGraph newNodes (fromMaybe [] $ mkEdges nm newEdges)
+
+    where
+      maybeVertex (addr, (ESLit s)) = Just (addr, s)
+      maybeVertex (addr, (EILit i)) = Just (addr, show i)
+      maybeVertex _ = Nothing
+      maybeEdge (addr, (ESLit str)) = Just (addr, str)
+      maybeEdge _ = Nothing
 
   EApp "X" [ECellRange (rhoL, kappaL) (rhoR, kappaR)] -> do
     let headerRow = [ (rhoL, kappa) | kappa <- [ (kappaL + 1) .. kappaR] ]

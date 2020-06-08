@@ -117,6 +117,8 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | ESLit String --CellString
            | EHTML String --CellString
 
+           | EJumpLink String String
+
            | EList [EExpr] -- Should we allow [ESLit, EIlit]? Perhaps not :(
            | ETuple2 (EExpr, EExpr)
            | ETuple3 (EExpr, EExpr, EExpr)
@@ -148,6 +150,12 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
 
 
         | EGraphFGL (Gr String Int)
+        | EGraphFGLAttr (Gr String String)
+        | EGraphPtr String
+        | EDataFrame [String] [[String]]
+
+        -- | EGraphFGLX (Gr EExpr EExpr)
+
         | EDiag XDiagram
         | ENotImplemented
 
@@ -198,6 +206,7 @@ instance Serialise XDiagram where
    return $ XDiagram $ circle 1
 
 instance Serialise (Gr String Int)
+instance Serialise (Gr String String)
 
 instance Serialise EExpr
 
@@ -236,7 +245,10 @@ instance Serialise Cell
 
 -- emptyGraph = Graph.fromNodesAndEdges [] []
 emptyGraph = ([], [])
-emptyCell = Cell { addr = (0, 0), value = EBot, buffer =  "", meta = Nothing }
+emptyCell = Cell { addr = (0, 0), value = EBot, buffer =  "", meta = Nothing, formulaStr = "" }
+
+jumpLinkCell  addr label src = emptyCell { addr = addr, value = EJumpLink label src }
+
 stringCell  addr str = emptyCell { addr = addr, value = ESLit str }
 intCell     addr i   = emptyCell { addr = addr, value = EILit i }
 graphCell   addr g   = emptyCell { addr = addr, value = EGraphFGL g }
@@ -322,6 +334,7 @@ data CometValue = CometAddr String CellAddress
                 | CometImage String CellAddress String
                 | CometVideo String CellAddress String
                 | CometEmpty String CellAddress
+                | CometJumpLink String CellAddress String String
 
 instance ToJSON EExpr where
   toJSON s = object [ (T.pack "formula") .= (show s :: String) ]
@@ -339,6 +352,14 @@ instance ToJSON CometValue where
     object
       [ (T.pack "value") .= (show addr :: String)
       , (T.pack "valueType") .= (T.pack "ESLit")
+      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "formula") .= (T.pack $ fx)
+      ]
+
+  toJSON (CometJumpLink fx addr label src) =
+    object
+      [ (T.pack "value") .= [label, src]
+      , (T.pack "valueType") .= (T.pack "EJumpLink")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
       , (T.pack "formula") .= (T.pack $ fx)
       ]

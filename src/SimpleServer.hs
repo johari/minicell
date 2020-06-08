@@ -221,6 +221,14 @@ eexprToComet myFormulaStr cellValue cometAddress  = do
 
             return $ CometImage myFormulaStr cometAddress (targetSrc "png")
 
+        EGraphFGLAttr g -> do
+            let dot = showDot (fglToDot g)
+
+            writeFile dotPath dot
+            system ("dot -Tpng -o" ++ pngPath ++ " " ++ dotPath)
+
+            return $ CometImage myFormulaStr cometAddress (targetSrc "png")
+
         EJumpLink label src -> return $ CometJumpLink myFormulaStr cometAddress label src
 
         ESLit s -> return $ CometSLit myFormulaStr cometAddress s
@@ -309,8 +317,21 @@ spillHelper cell =
                       , let (x0, y0) = addr cell
                       , let myFormulaStr = if i == 0 then formulaStr cell else ""
                       ]
+        EDataFrame headerColumn vals ->
+                        [ Cell { value = ESLit val, addr = (x0, y0 +i), formulaStr = myFormulaStr }
+                        | (i, val) <- zip [0..] headerColumn
+                        , let (x0, y0) = addr cell
+                        , let myFormulaStr = if i == 0 then formulaStr cell else ""
+                        ] ++ (concat $ rowToListOfCells <$> (zip [1..] vals))
+
         EEmpty -> []
         _ -> [cell]
+    where
+        rowToListOfCells (shiftedIndex, row) = 
+            [ Cell { value = ESLit val, addr = (x0 + shiftedIndex, y0 + i), formulaStr = "" }
+            | (i, val) <- zip [0..] row
+            , let (x0, y0) = addr cell
+            ]
 
 
 spill :: List Cell -> List Cell

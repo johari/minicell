@@ -116,7 +116,21 @@ def smC():
     res = []
 
     headers = set()
-    for iso in c_sm.match(baseGraph, queryGraph):
+
+    base_roles = []
+    for k, v in baseGraph.nodes.items():
+        base_roles.append([elem.lower() for elem in v.keys() if elem.endswith("Node")][0][:-4])
+    print(base_roles)
+
+    query_labels = []
+    for k, v in queryGraph.nodes.items():
+        r = str.maketrans('', '', digits)
+        query_labels.append(v["label"].translate(r))
+
+    match_results = c_sm.match(baseGraph, queryGraph, base_roles, query_labels)
+    headers = set()
+
+    for iso in match_results:
         # base graph -> query graph
         # we need to find the subgraph of basegraph corresponding to the query graph
         # and extract all the metadata information from it
@@ -126,7 +140,6 @@ def smC():
         #       retrieve "data" from the node
         #   wildcard for edges
         ans = {}
-        print(iso.items())
         for k, v in iso.items():
             # print(queryGraph.nodes.keys())
             qdata = queryGraph.nodes[k]["label"]
@@ -141,7 +154,10 @@ def smC():
     for result in res:
         row = []
         for elem in headers:
-            row.append(result[elem])
+            try:
+                row.append(result[elem])
+            except:
+                row.append("KEY NOT FOUND")
         dataFrame.append(row)
 
     # nodesQ, edgesQ, graphPtr = parsePayload(payload)

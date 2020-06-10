@@ -1,5 +1,7 @@
 import networkx as nx
 
+import c_sm
+
 from pprint import pprint
 
 import json
@@ -101,6 +103,57 @@ def smDi():
     return flask.jsonify([r.keys() for r in res])
 
 @app.route('/sm-live-demo', methods=["POST"])
+def smC():
+    payload = request.get_json()
+
+    payload = [eval(u) for u in payload]
+    queryGraph = nx.Graph()
+    queryGraph.add_nodes_from([(u, {"label": v}) for (u, v) in payload[0]])
+    queryGraph.add_edges_from([(u, v) for (u, v, w) in payload[1]])
+
+    baseGraph = observed_activity.G
+
+    res = []
+
+    headers = set()
+    for iso in c_sm.match(baseGraph, queryGraph):
+        # base graph -> query graph
+        # we need to find the subgraph of basegraph corresponding to the query graph
+        # and extract all the metadata information from it
+        #
+        # there are two types of wildcard:
+        #   wildcard for nodes
+        #       retrieve "data" from the node
+        #   wildcard for edges
+        ans = {}
+        print(iso.items())
+        for k, v in iso.items():
+            # print(queryGraph.nodes.keys())
+            qdata = queryGraph.nodes[k]["label"]
+            if qdata[0] == "*":
+                # print(baseGraph.nodes.keys)
+                ans[qdata] = baseGraph.nodes[v+1]["label"]
+                headers.add(qdata)
+        res.append(ans)
+
+    headers = list(headers)
+    dataFrame = [headers]
+    for result in res:
+        row = []
+        for elem in headers:
+            row.append(result[elem])
+        dataFrame.append(row)
+
+    # nodesQ, edgesQ, graphPtr = parsePayload(payload)
+
+    # print nodesQ
+    # print edgesQ
+    # print graphPtr
+
+    print(dataFrame)
+    return flask.jsonify(dataFrame)
+
+@app.route('/sm-live-demo-2', methods=["POST"])
 def smLiveDemo():
     payload = request.get_json()
 

@@ -4,7 +4,7 @@ import struct
 
 lib = ctypes.cdll.LoadLibrary('/Users/nima/johari/gunrock-sm/libgunrock.so')
 
-def match(base_graph, query_graph):
+def match(base_graph, query_graph, base_roles, query_labels):
 
     sp_base = nx.to_scipy_sparse_matrix(base_graph)
     sp_query = nx.to_scipy_sparse_matrix(query_graph)
@@ -76,6 +76,13 @@ def match(base_graph, query_graph):
     base_nodeLabels = ["davis", "berkeley"]
     c_base_nodeLabels = (ctypes.c_wchar_p * len(base_nodeLabels))()
     c_base_nodeLabels[:] = base_nodeLabels
+
+
+    c_base_roles = (ctypes.c_char_p * len(base_roles))()
+    c_base_roles[:] = [c.encode("utf-8") for c in base_roles]
+
+    c_query_labels = (ctypes.c_char_p * len(query_labels))()
+    c_query_labels[:] = [c.encode("utf-8") for c in query_labels]
 
     # Declare conditions on the edges of the base graph
 

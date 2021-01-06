@@ -106,8 +106,15 @@ import qualified Data.List
 
 import Data.FileEmbed
 
+-- Shake stuff
+
+import Development.Shake
+import Development.Shake.Database
+import Development.Shake.FilePath
+import Piet.DSL.Shake.PDF
+
 embeddedAssets :: [(FilePath, BS.ByteString)]
-embeddedAssets = $(embedDir "../build")
+embeddedAssets = $(embedDir "/Users/nima/johari/minicell/build")
 
 -- embeddedAssets = [("main.html", $(embedFile "../static/main.html"))]
 
@@ -128,9 +135,15 @@ addFileLogger = do
     updateGlobalLogger rootLoggerName (addHandler h)
 
 main = do
+    (createDb, after) <- shakeOpenDatabase shakeOptions shakeyPdfRules
+    db <- createDb
+
     let port = 3000
-    modelTVar1 <- atomically $ newTVar emptySpreadsheet
-    modelTVar2 <- atomically $ newTVar emptySpreadsheet
+
+    blobStorageTVar <- atomically $ newTVar (Data.Map.fromList [])
+
+    modelTVar1 <- atomically $ newTVar (emptySpreadsheet { shakeDatabase = XShakeDatabase db, blobStorage = XBlobStorage blobStorageTVar })
+    modelTVar2 <- atomically $ newTVar (emptySpreadsheet { shakeDatabase = XShakeDatabase db, blobStorage = XBlobStorage blobStorageTVar })
 
     let modelTVars = Data.Map.fromList [([], modelTVar1), (["42"], modelTVar2)]
 
@@ -148,6 +161,8 @@ main = do
     addFileLogger
 
     run port (app modelTVars)
+
+    shakeRunAfter shakeOptions [after]
 
 app :: Data.Map.Map [String] (TVar Spreadsheet) -> Application
 app modelTVars =
@@ -236,6 +251,7 @@ eexprToComet myFormulaStr cellValue cometAddress  = do
         EILit i -> return $ CometILit myFormulaStr cometAddress i
         EImage src -> return $ CometImage myFormulaStr cometAddress src
         EVideo src -> return $ CometVideo myFormulaStr cometAddress src
+        EBlobId blobId -> return $ CometImage myFormulaStr cometAddress ("/blob/" ++ blobId)
         _ -> return $ CometSLit myFormulaStr cometAddress (show cellValue)
 
 
@@ -327,7 +343,7 @@ spillHelper cell =
         EEmpty -> []
         _ -> [cell]
     where
-        rowToListOfCells (shiftedIndex, row) = 
+        rowToListOfCells (shiftedIndex, row) =
             [ Cell { value = ESLit val, addr = (x0 + shiftedIndex, y0 + i), formulaStr = "" }
             | (i, val) <- zip [0..] row
             , let (x0, y0) = addr cell
@@ -410,10 +426,10 @@ anyRoute2 modelTVar req res =
         ("_":"browse":path) -> do
             let myPath = joinPath (["."] <> (T.unpack <$> path))
             print myPath
-            dirContents <- getDirectoryContents (myPath)
+            dirContents <- System.Directory.getDirectoryContents (myPath)
 
-            dirs <-     (pure dirContents) >>= filterM (\x -> doesDirectoryExist (joinPath [myPath, x]))
-            rawFiles <- (pure dirContents) >>= filterM (\x -> doesFileExist (joinPath [myPath, x]))
+            dirs <-     (pure dirContents) >>= filterM (\x -> System.Directory.doesDirectoryExist (joinPath [myPath, x]))
+            rawFiles <- (pure dirContents) >>= filterM (\x -> System.Directory.doesFileExist (joinPath [myPath, x]))
 
             let cwdCells =  [jumpLinkCell (i, 0) itemPath (itemPath <> "/") | (i, itemPath) <- zip [0..] dirs]
                          <> [jumpLinkCell (i, 1) itemPath itemPath | (i, itemPath) <- zip [0..] rawFiles]
@@ -483,7 +499,8 @@ anyRoute2 modelTVar req res =
                                           (encode $ mconcat $ ["Hello HTTP server at cell ", cometKey, " !", T.pack $ show tail])
 
         [ "minicell", "purge.json" ] -> do
-            atomically $ modifyTVar modelTVar (const emptySpreadsheet)
+            model <- readTVarIO modelTVar
+            atomically $ modifyTVar modelTVar (const (emptySpreadsheet { shakeDatabase = shakeDatabase model, blobStorage = blobStorage model }))
             res $ responseLBS status200 [(hContentType, "application/json")] (encode $ T.pack "success")
 
         [ "minicell", cometKey, "write.json" ] -> do
@@ -558,6 +575,15 @@ anyRoute2 modelTVar req res =
             let pathToFile = mconcat [cachePath, "/", fullPath]
 
             res $ responseFile status200 [(hContentType, myMime)] (pathToFile) Nothing
+
+        ("blob":[blobId]) -> do
+            let myMime = "image/png"
+            model <- readTVarIO modelTVar
+            let XBlobStorage blobStorageTVar = blobStorage model
+            myBlobStorage <- readTVarIO blobStorageTVar
+            case Data.Map.lookup (T.unpack blobId) myBlobStorage  of
+                Just blob -> res $ responseLBS status200 [(hContentType, myMime)] (B.fromStrict blob)
+                _ -> res $ responseLBS status404 [(hContentType, "application/json")] (encode $ ("blob not found." :: String))
 
         [] -> do
             let (Just hostName) = requestHeaderHost req

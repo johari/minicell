@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TypeSynonymInstances #-}
@@ -6,9 +8,20 @@
 
 module Spreadsheet.Types where
 
+import Control.Concurrent.STM
+
 import Data.Char (ord, toLower, toUpper)
 
 --
+
+import Development.Shake.Database
+
+import Data.Typeable
+import Data.Hashable
+import Control.DeepSeq
+import Data.Binary
+
+import GHC.Generics
 
 import GHC.Generics
 import Codec.Serialise
@@ -16,6 +29,8 @@ import Codec.Serialise.Encoding
 import Codec.CBOR
 
 ----
+
+import qualified Data.ByteString as B
 
 
 import Text.Read
@@ -101,6 +116,11 @@ type EFunctor = String
 
 data XDiagram = XDiagram (Diagram B)
 
+instance Serialise XDiagram where
+  encode _ = encodeInt 1
+  decode = do
+   return $ XDiagram $ circle 1
+
 instance Eq XDiagram where
   (==) _ _ = True
 
@@ -110,12 +130,92 @@ instance Show XDiagram where
 instance Read XDiagram where
   readsPrec _ = const []
 
+instance NFData XDiagram where
+  rnf _ = ()
+
+instance Binary XDiagram where
+  put _ = mempty
+  get = return (XDiagram mempty)
+
+instance Hashable XDiagram where
+  hash _ = 0
+  hashWithSalt _ _ = 0
+
+instance Hashable (Gr String Int) where
+  hash _ = 0
+  hashWithSalt _ _ = 0
+
+instance Hashable (Gr String String) where
+  hash _ = 0
+  hashWithSalt _ _ = 0
+
 -- </hack>
+
+-- Another hack for Shake:
+data XShakeDatabase = XShakeDatabase ShakeDatabase | XNoShakeDatabase
+
+instance Eq XShakeDatabase where
+  (==) _ _ = True
+
+instance Show XShakeDatabase where
+  show _ = ""
+
+instance Read XShakeDatabase where
+  readsPrec _ = const []
+
+instance NFData XShakeDatabase where
+  rnf _ = ()
+
+instance Binary XShakeDatabase where
+  put _ = mempty
+  get = return XNoShakeDatabase
+
+instance Hashable XShakeDatabase where
+  hash _ = 0
+  hashWithSalt _ _ = 0
+
+instance Serialise XShakeDatabase where
+  encode _ = encodeInt 1
+  decode = do
+   return $ XNoShakeDatabase
+
+--
+
+-- Another hack for Shake:
+data XBlobStorage = XBlobStorage (TVar (Data.Map.Map String B.ByteString)) | XNoBlobStorage
+
+instance Eq XBlobStorage where
+  (==) _ _ = True
+
+instance Show XBlobStorage where
+  show _ = ""
+
+instance Read XBlobStorage where
+  readsPrec _ = const []
+
+instance NFData XBlobStorage where
+  rnf _ = ()
+
+instance Binary XBlobStorage where
+  put _ = mempty
+  get = return XNoBlobStorage
+
+instance Hashable XBlobStorage where
+  hash _ = 0
+  hashWithSalt _ _ = 0
+
+instance Serialise XBlobStorage where
+  encode _ = encodeInt 1
+  decode = do
+   return $ XNoBlobStorage
 
 data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | EILit Int -- CellInt
            | ESLit String --CellString
            | EHTML String --CellString
+
+           | EBlob B.ByteString
+           | EBlobId String
 
            | EJumpLink String String
 
@@ -190,7 +290,7 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            --             read from DAT
            --             read from Phone video library
            --       [ ] basic operations
-           deriving (Show, Eq, Read, Generic)
+           deriving (Show, Eq, Read, Generic, Hashable, NFData, Typeable, Binary)
 
 
 normalizeOp expr =
@@ -200,15 +300,16 @@ normalizeOp expr =
 
 type Formula = EExpr
 
-instance Serialise XDiagram where
-  encode _ = encodeInt 1
-  decode = do
-   return $ XDiagram $ circle 1
-
 instance Serialise (Gr String Int)
 instance Serialise (Gr String String)
 
 instance Serialise EExpr
+
+instance Binary (Gr String String)
+-- instance Hashable (Gr String String)
+
+instance Binary (Gr String Int)
+-- instance Hashable (Gr String Int)
 
 eexprToHtml cellValue = do
     case cellValue of
@@ -259,7 +360,7 @@ isStringCell cell = case value cell of
     _ -> False
 
 -- emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (millisToPosix 0)
-emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (Data.Map.fromList [])
+emptySpreadsheet = Spreadsheet [] (IdleMode (0, 0)) [] [] (Data.Map.fromList []) XNoShakeDatabase XNoBlobStorage
 
 
 
@@ -295,6 +396,8 @@ data Spreadsheet = Spreadsheet
     , demoEdges :: TEdgeDemo
     -- , currentTime :: Posix
     , cache :: Data.Map.Map String EExpr
+    , shakeDatabase :: XShakeDatabase
+    , blobStorage :: XBlobStorage
     } deriving (Show, Read, Eq, Generic)
 
 instance Serialise Spreadsheet

@@ -1,38 +1,19 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE OverloadedStrings #-}
-
-{-# LANGUAGE TupleSections #-}
-
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
-
-{-# LANGUAGE ScopedTypeVariables #-}
-
-
 module Spreadsheet.Evaluator.Parser where
 
-
-import Data.Char (ord, toLower)
-
-import Piet.DSL.Arithmetic
-import Piet.DSL.List
-import Piet.DSL.Graphsheet
-import Piet.DSL.Graphics.Shapes
-import Piet.DSL.HTML
-import Piet.DSL.Poppet
+import qualified Control.Exception as E
 -- import Piet.DSL.Lua.Hello
-import Piet.DSL.Debug
-import Piet.DSL.Git
-import Piet.DSL.FAM
-import Piet.DSL.File
-import Piet.DSL.Lambda
+
 -- import Piet.DSL.Media.Flickr
 
 -- import qualified System.IO.Streams as IOS
-import System.IO
-
 
 -- Calendar
 
@@ -41,13 +22,9 @@ import System.IO
 
 -- Logger
 
-import System.Log.Logger
-
 -- Interop
 
 -- import Minicell.Interop.GitHub
-import Minicell.Interop.PDF as PDF
-import Minicell.Interop.YouTube as YT
 
 -- Tar
 
@@ -55,52 +32,70 @@ import Minicell.Interop.YouTube as YT
 
 -- Time stuff
 
-import Data.Time.Clock.POSIX
-
-
 -- Bytestring stuff
-
-import qualified Data.ByteString.Lazy as LB
 
 -- MD5 stuff
 
-import Data.Digest.Pure.MD5
-
 -- Posix stuff
-
-import System.IO.Temp
-import System.Directory
-import System.Process
 
 -- Haskell stuff
 
-import Data.List
-import Data.Maybe
-import qualified Data.Map
-
 import Control.Monad
-
 -- Minicell stuff
-import Spreadsheet.Types
-
 
 -- Parsec stuff
-import Text.ParserCombinators.Parsec
-import Text.ParserCombinators.Parsec.Char
-
 
 -- Stache stuff
 
+import Data.Aeson
+import qualified Data.ByteString.Lazy as LB
+import Data.Char (ord, toLower)
+import Data.Digest.Pure.MD5
+import Data.List
+import qualified Data.Map
+import Data.Maybe
 import Data.String
-import Data.Aeson
-import Text.Mustache hiding (Node)
-import Data.Aeson
-import qualified Data.Text.Lazy as L
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as L
+import Data.Time.Clock.POSIX
+-- import Minicell.Interop.YouTube as YT
+
+-- import Piet.DSL.Debug
+
+-- import Piet.DSL.File
+-- import Piet.DSL.Git
+
+-- import Piet.DSL.HTML
+-- import Piet.DSL.Lambda
+
+-- import Piet.DSL.Poppet
 
 -- MySQL stuff
 
-import Database.MySQL.Simple
+-- import Database.MySQL.Simple
+
+-- Shake stuff
+
+import Development.Shake
+import Development.Shake.Database
+import Development.Shake.FilePath
+import Piet.DSL.Arithmetic
+import Piet.DSL.FAM
+import Piet.DSL.Graphics.PDF
+import Piet.DSL.Graphics.Shapes
+import Piet.DSL.Graphsheet
+import Piet.DSL.List
+import Piet.ShakeUtils
+import Spreadsheet.Types
+import System.Directory
+import System.IO
+import System.IO.Temp
+import System.Log.Logger
+import System.Process
+import Text.Mustache hiding (Node)
+import Text.ParserCombinators.Parsec
+import Text.ParserCombinators.Parsec.Char
+import Control.Concurrent.STM
 
 cellContent :: Parser EExpr
 cellContent = do
@@ -108,15 +103,15 @@ cellContent = do
   case rest of
     "" -> return $ EEmpty
     _ -> do
-        s <- choice $ [ bangBang, formulaWithEqSign, numberLiteral, stringLiteral ]
-        eof
-        return s
+      s <- choice $ [bangBang, formulaWithEqSign, numberLiteral, stringLiteral]
+      eof
+      return s
 
 bangBang :: Parser EExpr
 bangBang = do
   string "!!"
-  return (EApp "PDF" [ESLit "http://bangbangcon.com/west/images/logo.png", EILit 0])
-
+  -- return (EApp "PDF" [ESLit "http://bangbangcon.com/west/images/logo.png", EILit 0])
+  return (EApp "PDF" [ESLit "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Reddot-small.svg/240px-Reddot-small.svg.png", EILit 0])
 numberLiteral :: Parser EExpr
 numberLiteral = do
   num <- many1 digit
@@ -127,18 +122,20 @@ formulaWithEqSign = do
   formula
 
 formula = do
-  s <- choice [ try $ formulaCellRef
-              , try $ formulaWithOperands
-              , try $ numberLiteral
-              , try $ stringLiteralInQuotes
-              , try $ variableName
-              ]
+  s <-
+    choice
+      [ try $ formulaCellRef,
+        try $ formulaWithOperands,
+        try $ numberLiteral,
+        try $ stringLiteralInQuotes,
+        try $ variableName
+      ]
   return s
 
 cometKeyToAddr cometKey =
   case parse excelStyleAddr "" cometKey of
     Right addr -> addr
-    Left err  -> (-1, -1)
+    Left err -> (-1, -1)
 
 excelStyleAddr :: Parser CellAddress
 excelStyleAddr =
@@ -177,7 +174,6 @@ stringLiteralInQuotes = do
   s <- between (char '"') (char '"') (try $ many1 (noneOf "\""))
   return $ ESLit s
 
-
 variableName = do
   s <- try $ many1 letter
   return $ EVar s
@@ -197,7 +193,6 @@ variableName = do
 --   --  ELambda "(+1)"
 --   else
 --     ESLit (Debug.toString (buffer |> run sexp))
-
 
 -- Shortcuts to load dummy values (for demo purposes)
 --
@@ -237,33 +232,39 @@ variableName = do
 -- Sometimes I dream about fetching RSS and JSON as well.
 --
 
-
+pickEvalAndContinue :: (Spreadsheet -> EExpr -> IO EExpr) -> [(Spreadsheet -> Formula -> IO Formula) -> Spreadsheet -> Formula -> IO Formula] -> Spreadsheet -> Formula -> IO EExpr
 pickEvalAndContinue eval [] model expr = evalBot model expr
-pickEvalAndContinue eval (eval':evals) model expr = do
-  r <- eval' eval model expr
+pickEvalAndContinue eval (eval' : evals) model expr = do
+  r <- E.try (eval' eval model expr) :: IO (Either E.SomeException EExpr)
   case r of
-    ENotImplemented -> do
-
+    Left e -> do
+      print $ e
       (pickEvalAndContinue eval evals model expr)
-    _ -> return r
+    Right val -> do
+      case val of
+        ENotImplemented -> do
+          (pickEvalAndContinue eval evals model expr)
+        _ -> return val
 
+eval :: Spreadsheet -> EExpr -> IO EExpr
 eval model expr = do
   r <- evalTop model expr
   case r of
     ENotImplemented -> do
       let evals =
-            [ Piet.DSL.HTML.eval'
-            , Piet.DSL.Graphsheet.eval'
-            , Piet.DSL.List.eval'
-            , Piet.DSL.Arithmetic.eval'
-            , Piet.DSL.Graphics.Shapes.eval'
-            , Piet.DSL.Poppet.eval'
-            -- , Piet.DSL.Lua.Hello.eval'
-            , Piet.DSL.Debug.eval'
-            , Piet.DSL.Git.eval'
-            , Piet.DSL.FAM.eval'
-            , Piet.DSL.File.eval'
-            , Piet.DSL.Lambda.eval'
+            [ Piet.DSL.Graphsheet.eval',
+              Piet.DSL.List.eval',
+              Piet.DSL.Arithmetic.eval',
+              Piet.DSL.Graphics.Shapes.eval',
+              Piet.DSL.Graphics.PDF.eval',
+              -- Piet.DSL.Poppet.eval',
+              -- Piet.DSL.Lua.Hello.eval'
+              -- Piet.DSL.Debug.eval',
+              -- Piet.DSL.Git.eval',
+              -- Piet.DSL.HTML.eval',
+              -- Piet.DSL.File.eval',
+              -- Piet.DSL.Lambda.eval',
+              Piet.DSL.FAM.eval'
             ]
       pickEvalAndContinue eval evals model expr
     _ -> return r
@@ -296,7 +297,6 @@ eval3 model expr = do
 evalBot model expr = case normalizeOp expr of
   EApp op args -> do
     return $ ESLit $ (show op) ++ " " ++ show args ++ " is not implemented"
-
   _ -> return expr
 
 evalTop model expr = case normalizeOp expr of
@@ -305,18 +305,27 @@ evalTop model expr = case normalizeOp expr of
       Nothing ->
         return $ EError $ "#REF " ++ (addrToExcelStyle lookupAddr)
       Just cell -> eval model (value cell)
-
   EApp "UNIXEPOCH" _ -> do
     t <- getPOSIXTime
     return $ EILit (round t)
-
+  EApp "BLOB" [blobId] -> do
+    let XShakeDatabase db = shakeDatabase model
+    case blobId of
+      EImage url -> do
+        ([EBlob blob], after0) <- shakeRunDatabase db [(askOracle (HttpGet url))]
+        shakeRunAfter shakeOptions after0
+        return $ EBlob blob
+      EBlobId blobId -> do
+        let XBlobStorage blobStorageTVar = blobStorage model
+        myBlobStorage <- readTVarIO blobStorageTVar
+        case Data.Map.lookup blobId myBlobStorage  of
+            Just blob -> return (EBlob blob)
+            _ -> return (EError "blob ID not found in blob storage")
+      _ -> return $ EError (show blobId ++ " was not found in BLOB storage.")
   _ -> return $ ENotImplemented
-
 
 eval2 :: Spreadsheet -> Formula -> IO Formula
 eval2 model expr = case normalizeOp expr of
-
-
   EApp "MUSTACHE" args -> do
     let mustacheText = "Hello {{A1}} <a href=\".{{A2}}\">{{A2}}</a>"
     let compiledTemplate = compileMustacheText "foo" mustacheText
@@ -327,10 +336,15 @@ eval2 model expr = case normalizeOp expr of
     case compiledTemplate of
       Left _ -> return $ EError "Mustache compile failed"
       Right template ->
-        return $ ESLit (L.unpack $ renderMustache template $ object [ "A1" .= (T.pack $ a1InHtml)
-                                                                    , "A2" .= (T.pack $ a2InHtml)
-                                                                    ])
-
+        return $
+          ESLit
+            ( L.unpack $
+                renderMustache template $
+                  object
+                    [ "A1" .= (T.pack $ a1InHtml),
+                      "A2" .= (T.pack $ a2InHtml)
+                    ]
+            )
 
   {-
 
@@ -341,30 +355,26 @@ eval2 model expr = case normalizeOp expr of
 
   -}
 
-
-
-
   EApp "MAKE" args -> do
     case args of
       [ECellRange (rhoL, kappaL) (rhoR, kappaR)] -> do
-        let matrix = [ (rho, kappa) | rho <- [rhoL .. rhoR], kappa <- [kappaL .. kappaR] ]
-        vals <- sequence [ do val <- eval model (ECellRef addr); return (addr, val) | addr <- matrix ]
+        let matrix = [(rho, kappa) | rho <- [rhoL .. rhoR], kappa <- [kappaL .. kappaR]]
+        vals <- sequence [do val <- eval model (ECellRef addr); return (addr, val) | addr <- matrix]
 
-        return $ ESLit $ intercalate "\n" (curl <$> (filter (\(_,v) -> (eexprToASCII v) /= "") vals))
-
+        return $ ESLit $ intercalate "\n" (curl <$> (filter (\(_, v) -> (eexprToASCII v) /= "") vals))
       _ -> return $ EError "Invalid arguments to MAKE"
-
     where
-      curl (addr, val) = mconcat ["curl -X post  http://localhost:3000/minicell/"
-                                 , (addrToExcelStyle addr)
-                                 , "/write.json -d 'formula="
-                                 , eexprToASCII val
-                                 , "'" ]
+      curl (addr, val) =
+        mconcat
+          [ "curl -X post  http://localhost:3000/minicell/",
+            (addrToExcelStyle addr),
+            "/write.json -d 'formula=",
+            eexprToASCII val,
+            "'"
+          ]
       eexprToASCII val =
         case val of
           ESLit s -> s
           EILit i -> show i
           EError _ -> ""
           _ -> ""
-
-

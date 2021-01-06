@@ -94,9 +94,9 @@ pdf-3: pdf-2
 
 pdf-crop: purge
 	# curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''https://csiflabs.cs.ucdavis.edu/~johari/refs/rt-frp.pdf'
-	# curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''http://web.cs.ucdavis.edu/~su/publications/emi.pdf'
-	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''http://localhost/augment/manuscripts/graph-extract/latex/output.pdf'
-	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=PDF(A1,1)'
+	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''http://web.cs.ucdavis.edu/~su/publications/emi.pdf'
+	curl -X post  http://localhost:3000/minicell/A1/write.json -d 'formula=''https://johari.me/minicell.pdf'
+	curl -X post  http://localhost:3000/minicell/B1/write.json -d 'formula=''=PDF(A1,0)'
 	curl -X post  http://localhost:3000/minicell/C1/write.json -d 'formula=''=CROP(B1,0,300,0,0)'
 	curl -X post  http://localhost:3000/minicell/D1/write.json -d 'formula=''=CROP(B1,400,290,0,300)'
 

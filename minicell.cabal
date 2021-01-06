@@ -64,7 +64,29 @@ test-suite spec
 
 library
   -- Modules exported by the library.
-  exposed-modules:     Main, Spreadsheet.Evaluator.Parser, Spreadsheet.Examples.Graphs, Spreadsheet.Types, Spreadsheet.Wrangling.ListOfVertexTuples
+  exposed-modules:
+    Spreadsheet,
+    Spreadsheet.Evaluator.Parser,
+    Spreadsheet.Examples.Graphs,
+    Spreadsheet.Types,
+    Spreadsheet.Wrangling.ListOfVertexTuples,
+    SimpleServer,
+    Minicell.Cache,
+    Piet.DSL.FAM,
+    Piet.DSL.Graphics.Shapes,
+    Piet.DSL.Graphics.PDF,
+    Piet.DSL.Shake.PDF,
+    Piet.ShakeUtils,
+    Piet.DSL.FAM.Parser,
+    Piet.DSL.FAM.Syntax,
+    Piet.DSL.FAM.Parser.Inline,
+    Piet.DSL.FAM.Parser.Singleton,
+    Piet.DSL.FAM.Parser.Common,
+    Piet.DSL.FAM.Markup.IO,
+    Piet.DSL.FAM.Markup.Pure,
+    Piet.DSL.List,
+    Piet.DSL.Arithmetic,
+    Piet.DSL.Graphsheet
 
   -- Modules included in this library but not exported.
   -- other-modules:
@@ -89,6 +111,7 @@ library
                        , websockets
                        , diagrams-lib
                        , svg-builder
+                       , HTTP
                        , file-embed
                        , stm
                        , utf8-string
@@ -98,9 +121,6 @@ library
                        , fgl
                        , scotty
                        , bytestring
-                       , generic-random
-                       , QuickCheck
-                       , fgl-arbitrary
                        , hspec
                        , diagrams
                        , palette
@@ -111,10 +131,10 @@ library
                        , wai-websockets
                        , wai-extra
                        , wai-cors
-                       , fgl-visualize
                        , graphviz
                        , wreq
                        , stache
+                       , shake
                        , temporary
                        , pureMD5
                        , time
@@ -125,21 +145,24 @@ library
                        , cborg
                        , serialise
                        , haxl
-                       , fb
                        , http-conduit
                        , http-client-tls
                        , async
                        , hashable
                        , resourcet
                        , extra
-                       , dhall
-                       , heterocephalus
-                       , csound-expression
                        , hint
                        , hlint
                        , unix
                        , libffi
                        , hslua
+                       , deepseq
+                       , fgl-visualize
+                       , base64-bytestring
+                       , filepath
+                       , Glob
+                       , dataurl
+                       , cryptohash
 
 
   -- Directories containing source files.
@@ -151,10 +174,31 @@ library
 executable minicell
   -- .hs or .lhs file containing the Main module.
   main-is:             Main.hs
-  ghc-options: -optl-static
+  ghc-options:
 
-  -- Modules included in this executable, other than Main.
-  -- other-modules:
+  exposed-modules:
+    Spreadsheet,
+    Spreadsheet.Evaluator.Parser,
+    Spreadsheet.Examples.Graphs,
+    Spreadsheet.Types,
+    Spreadsheet.Wrangling.ListOfVertexTuples,
+    SimpleServer,
+    Minicell.Cache,
+    Piet.DSL.FAM,
+    Piet.DSL.Graphics.Shapes,
+    Piet.DSL.Graphics.PDF,
+    Piet.DSL.Shake.PDF,
+    Piet.ShakeUtils,
+    Piet.DSL.FAM.Parser,
+    Piet.DSL.FAM.Syntax,
+    Piet.DSL.FAM.Parser.Inline,
+    Piet.DSL.FAM.Parser.Singleton,
+    Piet.DSL.FAM.Parser.Common,
+    Piet.DSL.FAM.Markup.IO,
+    Piet.DSL.FAM.Markup.Pure,
+    Piet.DSL.List,
+    Piet.DSL.Arithmetic,
+    Piet.DSL.Graphsheet
 
   build-depends:  base >=4.9
                        , lens
@@ -196,14 +240,16 @@ executable minicell
                        , fgl-visualize
                        , graphviz
                        , wreq
-                       , stache
+                       , dhall
                        , temporary
                        , pureMD5
                        , time
                        , hxt
                        , tagsoup
                        , pandoc
+                       , stache
                        , probability
+                       , HTTP
                        , cborg
                        , serialise
                        , haxl
@@ -214,14 +260,20 @@ executable minicell
                        , hashable
                        , resourcet
                        , extra
-                       , dhall
-                       , heterocephalus
-                       , csound-expression
                        , hint
+                       , filepath
                        , hlint
                        , unix
                        , libffi
                        , hslua
+                       , shake
+                       , fgl-visualize
+                       , deepseq
+                       , base64-bytestring
+                       , bytestring
+                       , Glob
+                       , dataurl
+                       , cryptohash
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    DuplicateRecordFields, ScopedTypeVariables, OverloadedLists, OverloadedStrings

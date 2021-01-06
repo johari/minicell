@@ -1,17 +1,28 @@
+module Piet.DSL.Graphics.PDF where
 
-  EApp "PDF" [ urlE, pageE ] -> do
+import Piet.DSL.Shake.PDF
+import Spreadsheet.Types
+
+
+eval' :: (Spreadsheet -> Formula -> IO Formula) -> Spreadsheet -> Formula -> IO Formula
+eval' eval model expr = case normalizeOp expr of
+  EApp "PDF" [urlE, pageNumberE] -> do
     ESLit url <- eval model urlE
-    EILit page <- eval model pageE
-    imagePath <- PDF.magicPdf url page
-    -- Retrieve the PDF from url
-    -- Convert PDF to a collection of PNGs
-    -- Pick the appropriate PNG
-    -- Save it in Minicell's cache
-    -- Return the address so that cells can render it
-    return (EImage $ imagePath)
+    EILit pageNumber <- eval model pageNumberE
 
-  EApp "CROP" [ imgE, wE, hE, x0E, y0E ] -> do
-    EImage sourceImagePath <- eval model imgE
+    putStrLn "fetching PDF"
+    let XShakeDatabase db = shakeDatabase model
+    blobIds <- shakeyFetchPdf model url
+    print blobIds
+    putStrLn "PDF fetched"
+
+    -- return (EImage $ "data:text/plain;base64," ++ (encodedPages !! page))
+    return (EBlobId (blobIds !! pageNumber))
+    -- return (ESLit ":)")
+
+  EApp "CROP" [imgE, wE, hE, x0E, y0E] -> do
+    img <- eval model imgE
+    EBlob blob <- eval model (EApp "BLOB" [img])
 
     EILit x0 <- eval model x0E
     EILit y0 <- eval model y0E
@@ -19,5 +30,15 @@
     EILit w <- eval model wE
     EILit h <- eval model hE
 
-    imagePath <- PDF.crop sourceImagePath (w, h, x0, y0)
-    return (EImage $ imagePath)
+    let XShakeDatabase db = shakeDatabase model
+    encodedImage <- shakeyCropImage db blob (w, h, x0, y0)
+    return (EImage $ "data:text/plain;base64," ++ encodedImage)
+
+  EApp "MONO" [imgE] -> do
+    EImage sourceImagePath <- eval model imgE
+    EBlob blob <- eval model (EApp "BLOB" [EImage sourceImagePath])
+
+    let XShakeDatabase db = shakeDatabase model
+    encodedImage <- shakeyMonochrome db blob
+    return (EImage $ "data:text/plain;base64," ++ encodedImage)
+  _ -> return $ ENotImplemented

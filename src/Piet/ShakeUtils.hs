@@ -24,11 +24,15 @@ import qualified Crypto.Hash.SHA1 as H
 import qualified Data.ByteString.Char8 as C
 import Text.Printf (printf)
 
+import Network.URI
+
 import Spreadsheet.Types
 
 import Web.DataUrl
 
+
 import Data.Map
+import Data.String
 
 newtype HttpGet = HttpGet String deriving (Generic, Show, Typeable, Eq, Hashable, Binary, NFData)
 
@@ -39,8 +43,23 @@ shakeyRules = do
   shakeHttpGet <- addOracleCache $ \(HttpGet url) -> do
     case parseDataUrl (fromString url) of
       Left _ -> do
-        Stdout out <- command [BinaryPipes] "curl" ["-L", url, "--output", "-"] -- Nima being super lazy. No error handling.
-        pure $ EBlob out "application/octet-stream"
+        let encodedUri = escapeURIString isUnescapedInURI url
+        case parseURI encodedUri of
+          Just uri -> do
+            let Just myAuthority = uriAuthority uri
+            if (uriRegName myAuthority) `Prelude.elem` ["youtu.be", "youtube.com", "mobile.youtube.com", "www.youtube.com", "vimeo.com", "soundcloud.com"] then do
+              withTempDir $ \myDir -> do
+                let outputPath = myDir </> "output.%(ext)s"
+                cmd_ "youtube-dl" ["-x", url, "-o", outputPath, "--audio-format=mp3"]
+                blob <- liftIO $ C.readFile (outputPath -<.> "mp3")
+                pure $ EBlob blob "application/octet-stream"
+            else do
+              Stdout out <- command [BinaryPipes] "curl" ["-L", url, "--output", "-"] -- Nima being super lazy. No error handling.
+              pure $ EBlob out "application/octet-stream"
+          _ -> do
+            Stdout out <- command [BinaryPipes] "curl" ["-L", url, "--output", "-"] -- Nima being super lazy. No error handling.
+            pure $ EBlob out "application/octet-stream"
+
       Right rawData -> pure $ EBlob (du_data rawData) "application/octet-stream"
 
   return ()

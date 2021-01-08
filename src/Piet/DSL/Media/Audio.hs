@@ -24,7 +24,19 @@ eval' eval model expr = case normalizeOp expr of
 
     return (EBlobId blobId "audio/mpeg")
 
-  EApp "LOOP" [ audioE, numE ] -> do
+  EApp "ACONCAT" [ expr0, expr1 ] -> do
+    preBlob0 <- eval model expr0
+    EBlob blob0 _ <- eval model (EApp "BLOB" [preBlob0])
+
+    preBlob1 <- eval model expr1
+    EBlob blob1 _ <- eval model (EApp "BLOB" [preBlob1])
+
+    let XShakeDatabase db = shakeDatabase model
+    blobId <- shakeyAudioConcat model blob0 blob1
+
+    return (EBlobId blobId "audio/mpeg")
+
+  EApp "ALOOP" [ audioE, numE ] -> do
     preBlob <- eval model audioE
     EILit num <- eval model numE
 
@@ -35,34 +47,29 @@ eval' eval model expr = case normalizeOp expr of
 
     return (EBlobId blobId "audio/mpeg")
 
+  EApp "AWAVE" [ audioE ] -> do
+    preBlob <- eval model audioE
+
+    EBlob blob _ <- eval model (EApp "BLOB" [preBlob])
+
+    let XShakeDatabase db = shakeDatabase model
+    blobId <- shakeyAudioWaveform model blob
+
+    return (EBlobId blobId "image/png")
+
+  EApp "ACUT" [ audioE, startPosE, endPosE ] -> do
+    preBlob <- eval model audioE
+    ESLit startPos <- (eval model startPosE) >>= (\x -> return $ upcastToDurationString x)
+    ESLit endPos <- (eval model endPosE) >>= (\x -> return $ upcastToDurationString x)
+
+    EBlob blob _ <- eval model (EApp "BLOB" [preBlob])
+
+    let XShakeDatabase db = shakeDatabase model
+    blobId <- shakeyAudioCut model blob (Just startPos) (Just endPos)
+
+    return (EBlobId blobId "audio/mpeg")
+
+  EApp "ACROP" args -> do
+    eval model (EApp "ACROP" args)
+
   _ -> return ENotImplemented
-  -- EApp "ACONCAT" [ expr1, expr2 ] -> do
-  --   EAudio src1 <- eval model expr1
-  --   EAudio src2 <- eval model expr2
-  --   audioPath <- do
-  --                   h <- getHomeDirectory
-  --                   return (h ++ "/Dropbox/minicell-uploads/audio/")
-
-  --   let fullSrc1 = mconcat [ audioPath, src1 ]
-  --       fullSrc2 = mconcat [ audioPath, src2 ]
-
-  --   fileContent1 <- LB.readFile fullSrc1
-  --   fileContent2 <- LB.readFile fullSrc2
-  --   let cacheKey = mconcat ["ACONCAT", show $ md5 fileContent1, show $ md5 fileContent2 ]
-
-  --   let targetPath = mconcat [ audioPath, cacheKey, ".mp3" ]
-
-  --   exists <- doesFileExist targetPath
-
-  --   if exists then return () else
-  --     withSystemTempDirectory "minicell-audio" $ \tmp -> do
-  --       print tmp
-  --       readProcess "sox" [ fullSrc1
-  --                         , fullSrc2
-  --                         , "output.mp3"
-  --                         ] ""
-
-  --       copyFile "output.mp3" targetPath
-  --       return ()
-
-  --   return (EAudio $ targetPath)

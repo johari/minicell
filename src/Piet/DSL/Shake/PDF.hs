@@ -53,7 +53,7 @@ shakeyPdfRules = do
       let pngPath = myDir </> "foo.png"
       liftIO $ B.writeFile pdfPath pdf
 
-      cmd_
+      quietly $ cmd_
         "convert"
         [ "-density",
           "100",
@@ -81,7 +81,7 @@ shakeyPdfRules = do
 
       liftIO $ B.writeFile originalImagePath originalImage
 
-      cmd_
+      quietly $ cmd_
         "convert"
         [ originalImagePath,
           "-crop",
@@ -97,7 +97,7 @@ shakeyPdfRules = do
       let originalImagePath = myDir </> "orig.png" -- png?
       let monoImagePath = myDir </> "mono.png"
       liftIO $ B.writeFile originalImagePath originalImage
-      cmd_
+      quietly $ cmd_
         "convert"
         [ originalImagePath,
           "-monochrome",

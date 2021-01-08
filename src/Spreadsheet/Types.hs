@@ -223,6 +223,8 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | ETuple2 (EExpr, EExpr)
            | ETuple3 (EExpr, EExpr, EExpr)
 
+           | EDouble Double
+
            | ECellRef CellAddress
            | ECellRange CellAddress CellAddress
 
@@ -291,6 +293,14 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            --             read from Phone video library
            --       [ ] basic operations
            deriving (Show, Eq, Read, Generic, Hashable, NFData, Typeable, Binary)
+
+upcastToDurationString :: EExpr -> EExpr
+upcastToDurationString expr =
+  case expr of
+    ESLit _ -> expr -- TODO: check format for hh:mm:ss.ms
+    EDouble num -> ESLit (show num)
+    EILit num -> ESLit (show num)
+    _ -> EError "Could not convert %s to number"
 
 
 normalizeOp expr =
@@ -434,6 +444,7 @@ data CometValue = CometAddr String CellAddress
                 | CometSLit String CellAddress String
                 | CometHTML String CellAddress String
                 | CometILit String CellAddress Int
+                | CometDouble String CellAddress Double
                 | CometImage String CellAddress String
                 | CometVideo String CellAddress String
                 | CometAudio String CellAddress String
@@ -488,6 +499,14 @@ instance ToJSON CometValue where
     object
       [ (T.pack "value") .= i
       , (T.pack "valueType") .= (T.pack "EILit")
+      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "formula") .= (T.pack $ fx)
+      ]
+
+  toJSON (CometDouble fx addr i) =
+    object
+      [ (T.pack "value") .= i
+      , (T.pack "valueType") .= (T.pack "EDouble")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
       , (T.pack "formula") .= (T.pack $ fx)
       ]

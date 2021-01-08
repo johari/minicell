@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-12.21
+resolver: lts-16.27
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -43,7 +43,11 @@ extra-deps:
 - dotgen-0.4.2@sha256:309b7cc8a3593a8e48bee7b53020d5f72db156d58edf78a0214f58fbb84b292b
 - HFuse-0.2.5.0@sha256:41620052c8029520634282b889bd64cf28f6b8524266290b1099c638d7e772a8
 - z3-4.3.1@sha256:fae9974759876d147cb4e63a1b83615dcf56b963ae7fcf1b645af455471d2329
-
+- fgl-arbitrary-0.2.0.6@sha256:aa400f247a0d892388a177d4f00ca7b0c42350b4976a22dc39332a5013799ee9,1743
+- serialise-0.2.3.0@sha256:39cc16a27b77be1eb6a8fc69da940430cf5ecbef88e32ce4b499e150e384e6dd,8670
+- haxl-2.3.0.0@sha256:4c9a7371a2c21df910628d582776cf52db72bcd6c808daa02823be0ab06f1eb9,3974
+- palette-0.3.0.2@sha256:583ab3b018a26ae8788c6a13007d72edeb9231315da8728b9bb4ff5f4236a374,1522
+- probability-0.2.7@sha256:3e9fe130af3bd75e791e1add902eb2caab170cc95373281c0a9626b01fc3b104,2869
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

@@ -112,6 +112,8 @@ import Development.Shake
 import Development.Shake.Database
 import Development.Shake.FilePath
 import Piet.DSL.Shake.PDF
+import Piet.DSL.Shake.Audio
+import Control.Concurrent
 
 embeddedAssets :: [(FilePath, BS.ByteString)]
 embeddedAssets = $(embedDir "/Users/nima/johari/minicell/build")
@@ -134,8 +136,32 @@ addFileLogger = do
              setFormatter lh (simpleLogFormatter "[$time : $loggername : $prio] $msg")
     updateGlobalLogger rootLoggerName (addHandler h)
 
+allShakeyRules = do
+    shakeyPdfRules
+    shakeyAudioRules
+
 main = do
-    (createDb, after) <- shakeOpenDatabase shakeOptions shakeyPdfRules
+
+    -- PietMusic.main
+
+    -- src <- selectInputDevice "please select an input device" Nothing
+
+    -- conn <- openSource src Nothing
+    -- putStrLn "connected"
+
+    -- threadid <- forkIO (mythread conn)
+
+    -- System.MIDI.start conn ; putStrLn "started. Press 'ENTER' to exit."
+    -- getLine
+    -- System.MIDI.stop conn    ; putStrLn "stopped."
+
+    -- killThread threadid
+
+    -- close conn   ; putStrLn "closed."
+
+
+
+    (createDb, after) <- shakeOpenDatabase shakeOptions allShakeyRules
     db <- createDb
 
     let port = 3000
@@ -251,7 +277,11 @@ eexprToComet myFormulaStr cellValue cometAddress  = do
         EILit i -> return $ CometILit myFormulaStr cometAddress i
         EImage src -> return $ CometImage myFormulaStr cometAddress src
         EVideo src -> return $ CometVideo myFormulaStr cometAddress src
-        EBlobId blobId -> return $ CometImage myFormulaStr cometAddress ("/blob/" ++ blobId)
+        EBlobId blobId blobMime ->
+            case blobMime of
+                "image/png" -> return $ CometImage myFormulaStr cometAddress ("/blob/" ++ blobId)
+                "audio/mpeg" -> return $ CometAudio myFormulaStr cometAddress ("/blob/" ++ blobId)
+                _ -> return $ CometImage myFormulaStr cometAddress ("/blob/" ++ blobId) -- FIXME
         _ -> return $ CometSLit myFormulaStr cometAddress (show cellValue)
 
 

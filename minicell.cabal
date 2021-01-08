@@ -89,6 +89,7 @@ library
     Piet.DSL.List,
     Piet.DSL.Arithmetic,
     Piet.DSL.Graphsheet
+    -- Piet.DSL.Music
 
   -- Modules included in this library but not exported.
   -- other-modules:
@@ -165,6 +166,8 @@ library
                        , Glob
                        , dataurl
                        , cryptohash
+                       , network-uri
+                       , uri-encode
 
 
   -- Directories containing source files.
@@ -176,9 +179,9 @@ library
 executable minicell
   -- .hs or .lhs file containing the Main module.
   main-is:             Main.hs
-  ghc-options:
+  ghc-options:  -Wall -threaded -rtsopts -with-rtsopts=-N
 
-  exposed-modules:
+  other-modules:
     Spreadsheet,
     Spreadsheet.Evaluator.Parser,
     Spreadsheet.Examples.Graphs,
@@ -203,6 +206,7 @@ executable minicell
     Piet.DSL.List,
     Piet.DSL.Arithmetic,
     Piet.DSL.Graphsheet
+    -- Piet.DSL.Music
 
   build-depends:  base >=4.9
                        , lens
@@ -255,7 +259,7 @@ executable minicell
                        , probability
                        , HTTP
                        , cborg
-                       , serialise
+                       , serialise >= 0.2.3.0
                        , haxl
                        , fb
                        , http-conduit
@@ -278,6 +282,8 @@ executable minicell
                        , Glob
                        , dataurl
                        , cryptohash
+                       , network-uri
+                       , uri-encode
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    DuplicateRecordFields, ScopedTypeVariables, OverloadedLists, OverloadedStrings

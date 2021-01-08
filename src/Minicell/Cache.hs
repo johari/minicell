@@ -4,22 +4,22 @@ module Minicell.Cache where
 -- Log
 
 
-import System.Log.Logger (infoM, setLevel)
+-- import System.Log.Logger (infoM, setLevel)
 
 --
 
 
-import System.IO.Temp
+-- import System.IO.Temp
 import System.Directory
 import System.Process
 
 
-import Data.Digest.Pure.MD5
+-- import Data.Digest.Pure.MD5
 
 import Data.String
 
-import Network.Wreq
-import Control.Lens
+-- import Network.Wreq
+-- import Control.Lens
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy.Char8 as BL
@@ -40,20 +40,8 @@ fullCacheRoot = do
     h <- getHomeDirectory
     return $ h ++ "/.cache/minicell"
 
--- e.g. storeObject (mconcat [tmp, "foo-", (show page), ".png"])
-storeObject :: CacheKey -> B.ByteString -> IO FilePath -- FIXME: return success/failure
-storeObject cacheKey@(ns, objectId) content = do
-    finalDestination <- fullPathForKey cacheKey
-
-    infoM "wiki.sheets.cache" ("writing to " ++ show finalDestination)
-
-    B.writeFile finalDestination content
-    return finalDestination
-
 cachePathFor namespace = do
     root <- fullCacheRoot
-
-    infoM "wiki.sheets.cache" ("full cache root is " ++ show root)
 
     let dirName = mconcat [root, "/", namespace]
     print (dirName, length dirName)
@@ -63,6 +51,17 @@ cachePathFor namespace = do
         False -> do
             createDirectory dirName
     return $ dirName
+
+{-
+-- e.g. storeObject (mconcat [tmp, "foo-", (show page), ".png"])
+storeObject :: CacheKey -> B.ByteString -> IO FilePath -- FIXME: return success/failure
+storeObject cacheKey@(ns, objectId) content = do
+    finalDestination <- fullPathForKey cacheKey
+
+    infoM "wiki.sheets.cache" ("writing to " ++ show finalDestination)
+
+    B.writeFile finalDestination content
+    return finalDestination
 
 -- cachePathFor keyName = do
 --     h <- getHomeDirectory
@@ -108,5 +107,7 @@ runReq defaultHttpConfig $ do
     jsonResponse -- specify how to interpret response
     mempty       -- query params, headers, explicit port number, etc.
   liftIO $ print (responseBody r :: Value)
+
+-}
 
 -}

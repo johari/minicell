@@ -98,6 +98,7 @@ import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Char
 import Control.Concurrent.STM
 
+
 cellContent :: Parser EExpr
 cellContent = do
   rest <- getInput
@@ -113,10 +114,15 @@ bangBang = do
   string "!!"
   -- return (EApp "PDF" [ESLit "http://bangbangcon.com/west/images/logo.png", EILit 0])
   return (EApp "PDF" [ESLit "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Reddot-small.svg/240px-Reddot-small.svg.png", EILit 0])
+
 numberLiteral :: Parser EExpr
 numberLiteral = do
-  num <- many1 digit
-  return $ EILit (read num :: Int)
+  num1 <- many1 digit
+
+  (try $ do
+    string "."
+    num2 <- many1 digit
+    return $ EDouble (read (num1++"."++num2) :: Double)) <|> (return $ EILit (read num1 :: Int))
 
 formulaWithEqSign = do
   char '='
@@ -320,7 +326,13 @@ evalTop model expr = case normalizeOp expr of
         return $ EBlobId blobId "image/png"
       EAudio url -> do
         -- ([EBlob blob "audio/mpeg"], after0) <- shakeRunDatabase db [(askOracle (HttpGet url))]
-        ([EBlob blob _], after0) <- shakeRunDatabase db [(askOracle (HttpGet url))]
+        (buildResult, after0) <- shakeRunDatabase db [(askOracle (HttpGet url))]
+        case buildResult of
+          [EBlob blob _] -> return ()
+          _ -> do
+            print url
+            print buildResult
+        let [EBlob blob _] = buildResult
         shakeRunAfter shakeOptions after0
         blobId <- addBlobToStorage model blob
         return $ EBlobId blobId "audio/mpeg"

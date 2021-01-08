@@ -17,12 +17,12 @@ eval' eval model expr = case normalizeOp expr of
     putStrLn "PDF fetched"
 
     -- return (EImage $ "data:text/plain;base64," ++ (encodedPages !! page))
-    return (EBlobId (blobIds !! pageNumber))
+    return (EBlobId (blobIds !! pageNumber) "image/png")
     -- return (ESLit ":)")
 
   EApp "CROP" [imgE, wE, hE, x0E, y0E] -> do
     img <- eval model imgE
-    EBlob blob <- eval model (EApp "BLOB" [img])
+    EBlob blob "image/png" <- eval model (EApp "BLOB" [img])
 
     EILit x0 <- eval model x0E
     EILit y0 <- eval model y0E
@@ -36,9 +36,10 @@ eval' eval model expr = case normalizeOp expr of
 
   EApp "MONO" [imgE] -> do
     EImage sourceImagePath <- eval model imgE
-    EBlob blob <- eval model (EApp "BLOB" [EImage sourceImagePath])
+    EBlob blob _ <- eval model (EApp "BLOB" [EImage sourceImagePath])
 
     let XShakeDatabase db = shakeDatabase model
     encodedImage <- shakeyMonochrome db blob
     return (EImage $ "data:text/plain;base64," ++ encodedImage)
+
   _ -> return $ ENotImplemented

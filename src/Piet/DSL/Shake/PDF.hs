@@ -26,8 +26,6 @@ import System.FilePath.Glob
 
 import qualified Data.Map
 
-import Web.DataUrl
-
 newtype PdfToPngs = PdfToPngs B.ByteString deriving (Generic, Show, Typeable, Eq, Hashable, Binary, NFData)
 
 type instance RuleResult PdfToPngs = ([B.ByteString], String)
@@ -47,12 +45,7 @@ type instance RuleResult Monochrome = (B.ByteString, String)
 shakeyPdfRules = do
   want ["my_phony"]
 
-  shakeHttpGet <- addOracleCache $ \(HttpGet url) -> do
-    case parseDataUrl (fromString url) of
-      Left _ -> do
-        Stdout out <- command [BinaryPipes] "curl" ["-L", url, "--output", "-"] -- Nima being super lazy. No error handling.
-        pure $ EBlob out
-      Right rawData -> pure $ EBlob (du_data rawData)
+  shakeyRules
 
   cachedPdfToPngs <- newCache $ \pdf -> do
     withTempDir $ \myDir -> do
@@ -115,7 +108,7 @@ shakeyPdfRules = do
 
   shakeUrlToPngs <- addOracleCache $ \(UrlToPngs url) -> do
     withTempDir $ \myDir -> do
-      EBlob pdf <- shakeHttpGet (HttpGet url)
+      EBlob pdf _ <- askOracle (HttpGet url)
       (pngs, _) <- cachedPdfToPngs pdf
       pure pngs
 
@@ -136,14 +129,12 @@ shakeyPdfRules = do
 shakeyFetchPdf :: Spreadsheet -> String -> IO [String]
 shakeyFetchPdf model url = do
   let XShakeDatabase db = shakeDatabase model
-  ([buildResult], after) <- shakeRunDatabase db [(askOracle (UrlToPngs url))]
+  ([blobs], after) <- shakeRunDatabase db [(askOracle (UrlToPngs url))]
   shakeRunAfter shakeOptions after
 
-  let res = [(sha1FromByteString blob, blob) | blob <- buildResult]
-  let XBlobStorage blobStorageTVar = blobStorage model
-  atomically $ modifyTVar blobStorageTVar (\t -> Data.Map.union t (Data.Map.fromList res))
+  blobIds <- addBlobsToStorage model blobs
 
-  return (fst <$> res)
+  return blobIds
 
 shakeyCropImage :: ShakeDatabase -> B.ByteString -> (Int, Int, Int, Int) -> IO String
 shakeyCropImage db img coords = do

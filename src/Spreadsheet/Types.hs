@@ -214,8 +214,8 @@ data EExpr = EApp EFunctor [EExpr] -- CellFormula, I guess..
            | ESLit String --CellString
            | EHTML String --CellString
 
-           | EBlob B.ByteString
-           | EBlobId String
+           | EBlob B.ByteString String
+           | EBlobId String String
 
            | EJumpLink String String
 
@@ -436,6 +436,7 @@ data CometValue = CometAddr String CellAddress
                 | CometILit String CellAddress Int
                 | CometImage String CellAddress String
                 | CometVideo String CellAddress String
+                | CometAudio String CellAddress String
                 | CometEmpty String CellAddress
                 | CometJumpLink String CellAddress String String
 
@@ -504,6 +505,14 @@ instance ToJSON CometValue where
     object
       [ (T.pack "value") .= src
       , (T.pack "valueType") .= (T.pack "EVideo")
+      , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
+      , (T.pack "formula") .= (T.pack $ fx)
+      ]
+
+  toJSON (CometAudio fx addr src) =
+    object
+      [ (T.pack "value") .= src
+      , (T.pack "valueType") .= (T.pack "EAudio")
       , (T.pack "cometKey") .= (T.pack $ addrToExcelStyle addr)
       , (T.pack "formula") .= (T.pack $ fx)
       ]

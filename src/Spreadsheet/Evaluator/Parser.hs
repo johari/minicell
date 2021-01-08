@@ -82,6 +82,7 @@ import Development.Shake.FilePath
 import Piet.DSL.Arithmetic
 import Piet.DSL.FAM
 import Piet.DSL.Graphics.PDF
+import Piet.DSL.Media.Audio
 import Piet.DSL.Graphics.Shapes
 import Piet.DSL.Graphsheet
 import Piet.DSL.List
@@ -257,6 +258,7 @@ eval model expr = do
               Piet.DSL.Arithmetic.eval',
               Piet.DSL.Graphics.Shapes.eval',
               Piet.DSL.Graphics.PDF.eval',
+              Piet.DSL.Media.Audio.eval',
               -- Piet.DSL.Poppet.eval',
               -- Piet.DSL.Lua.Hello.eval'
               -- Piet.DSL.Debug.eval',
@@ -312,14 +314,21 @@ evalTop model expr = case normalizeOp expr of
     let XShakeDatabase db = shakeDatabase model
     case blobId of
       EImage url -> do
-        ([EBlob blob], after0) <- shakeRunDatabase db [(askOracle (HttpGet url))]
+        ([EBlob blob _], after0) <- shakeRunDatabase db [(askOracle (HttpGet url))]
         shakeRunAfter shakeOptions after0
-        return $ EBlob blob
-      EBlobId blobId -> do
+        blobId <- addBlobToStorage model blob
+        return $ EBlobId blobId "image/png"
+      EAudio url -> do
+        -- ([EBlob blob "audio/mpeg"], after0) <- shakeRunDatabase db [(askOracle (HttpGet url))]
+        ([EBlob blob _], after0) <- shakeRunDatabase db [(askOracle (HttpGet url))]
+        shakeRunAfter shakeOptions after0
+        blobId <- addBlobToStorage model blob
+        return $ EBlobId blobId "audio/mpeg"
+      EBlobId blobId mime -> do
         let XBlobStorage blobStorageTVar = blobStorage model
         myBlobStorage <- readTVarIO blobStorageTVar
         case Data.Map.lookup blobId myBlobStorage  of
-            Just blob -> return (EBlob blob)
+            Just blob -> return (EBlob blob mime)
             _ -> return (EError "blob ID not found in blob storage")
       _ -> return $ EError (show blobId ++ " was not found in BLOB storage.")
   _ -> return $ ENotImplemented

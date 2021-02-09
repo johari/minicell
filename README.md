@@ -3,20 +3,13 @@
 
 ![Minicell screenshot (2018)](https://github.com/johari/minicell/blob/master/static/screenshot.png)
 
-Minicell provides first-class support for
-* networks and graphs, along with some formulas
-* values that flow in time
-* simple shapes and diagrams along with some geometrical transformations
-in a spreadsheet environment.
+Minicell is a rich spreadsheet enrivonment with first-class support for new values inside cells. This includes, but is not limited to
+* simple shapes and diagrams along with some geometrical transformations,
+* values that flow in time,
+* networks and graphs, along with some formulas.
 
-It makes it easy for [end-user programmers](https://en.wikipedia.org/wiki/End-user_development) to perform sophisticated graph modeling tasks,
+This makes it easy for [end-user programmers](https://en.wikipedia.org/wiki/End-user_development) to perform basic media manipulation tasks or find optimum answers to graph modeling problems
 including solving optimization problems such as shortest path problem or maximum flow.
-
-We believe graphs (i.e. networks) are an important mathematical tool,
-and we believe we can make end-user programmers effective in
-important tasks (often critical modeling tasks with real-life consequences)
-by providing a natural and effective support
-for graphs as a "whole value" in cells of a spreadsheet.
 
 # Hacking
 
